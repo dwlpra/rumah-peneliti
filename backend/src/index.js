@@ -5,7 +5,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
-const { stmts, parseArticle } = require("./db");
+const { stmts, parseArticle, parseArticles } = require("./db");
 
 const app = express();
 app.use(cors());
@@ -21,7 +21,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
-// Upload paper
 app.post("/api/papers", upload.single("file"), async (req, res) => {
   try {
     const { title, authors, abstract, price_wei, author_wallet } = req.body;
@@ -30,19 +29,11 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
     const result = stmts.insertPaper.run(title, authors || "", abstract || "", filePath, price_wei || "0", author_wallet || "");
     const paper = stmts.getPaper.get(result.lastInsertRowid);
     res.json({ success: true, paper });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
 });
 
-// List papers
-app.get("/api/papers", (req, res) => {
-  const papers = stmts.listPapers.all();
-  res.json(papers);
-});
+app.get("/api/papers", (req, res) => { res.json(stmts.listPapers.all()); });
 
-// Get single paper + article
 app.get("/api/papers/:id", (req, res) => {
   const paper = stmts.getPaper.get(req.params.id);
   if (!paper) return res.status(404).json({ error: "Paper not found" });
@@ -50,8 +41,16 @@ app.get("/api/papers/:id", (req, res) => {
   res.json({ ...paper, article });
 });
 
+app.get("/api/articles", (req, res) => { res.json(parseArticles(stmts.listArticles.all())); });
+
+app.get("/api/articles/:id", (req, res) => {
+  let article = stmts.getArticle.get(req.params.id);
+  if (!article) article = stmts.getArticleById.get(req.params.id);
+  if (!article) return res.status(404).json({ error: "Article not found" });
+  const paper = stmts.getPaper.get(article.paper_id);
+  res.json({ ...parseArticle(article), paper });
+});
+
 const { db } = require("./db");
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`RumahPeneliti API running on port ${PORT}`);
-});
+app.listen(PORT, () => { console.log(`RumahPeneliti API running on port ${PORT}`); });
