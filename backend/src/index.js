@@ -5,7 +5,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
-const { stmts } = require("./db");
+const { stmts, parseArticle } = require("./db");
 
 const app = express();
 app.use(cors());
@@ -34,6 +34,20 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// List papers
+app.get("/api/papers", (req, res) => {
+  const papers = stmts.listPapers.all();
+  res.json(papers);
+});
+
+// Get single paper + article
+app.get("/api/papers/:id", (req, res) => {
+  const paper = stmts.getPaper.get(req.params.id);
+  if (!paper) return res.status(404).json({ error: "Paper not found" });
+  const article = parseArticle(stmts.getArticle.get(req.params.id));
+  res.json({ ...paper, article });
 });
 
 const { db } = require("./db");
