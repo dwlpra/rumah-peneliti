@@ -41,6 +41,17 @@ app.get("/api/papers/:id", (req, res) => {
   res.json({ ...paper, article });
 });
 
+app.post("/api/papers/:id/purchase", async (req, res) => {
+  try {
+    const { buyer_wallet, tx_hash, amount } = req.body;
+    const paper = stmts.getPaper.get(req.params.id);
+    if (!paper) return res.status(404).json({ error: "Paper not found" });
+    if (!buyer_wallet) return res.status(400).json({ error: "buyer_wallet required" });
+    stmts.insertPurchase.run(req.params.id, buyer_wallet, tx_hash || "", amount || paper.price_wei);
+    res.json({ success: true, message: "Purchase recorded" });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get("/api/articles", (req, res) => { res.json(parseArticles(stmts.listArticles.all())); });
 
 app.get("/api/articles/:id", (req, res) => {
