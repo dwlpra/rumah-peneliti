@@ -6,34 +6,79 @@ const path = require("path");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const { stmts, parseArticle, parseArticles } = require("./db");
+const { generateArticle } = require("./services/kurasi");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Static files for uploads
 const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 app.use("/uploads", express.static(UPLOAD_DIR));
 
+// Multer
 const storage = multer.diskStorage({
   destination: UPLOAD_DIR,
   filename: (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`),
 });
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
+// ============ PAPER ROUTES ============
+
+// Upload paper
 app.post("/api/papers", upload.single("file"), async (req, res) => {
   try {
     const { title, authors, abstract, price_wei, author_wallet } = req.body;
     if (!title) return res.status(400).json({ error: "title is required" });
+
     const filePath = req.file ? req.file.path : "";
-    const result = stmts.insertPaper.run(title, authors || "", abstract || "", filePath, price_wei || "0", author_wallet || "");
-    const paper = stmts.getPaper.get(result.lastInsertRowid);
+
+    const result = stmts.insertPaper.run(
+      title,
+      authors || "",
+      abstract || "",
+      filePath,
+      price_wei || "0",
+      author_wallet || ""
+    );
+
+    const paperId = result.lastInsertRowid;
+
+    // Trigger AI curation in background
+    const textContent = req.file
+      ? fs.readFileSync(req.file.path, "utf-8").slice(0, 50000)
+      : abstract || "";
+    generateArticle(paperId, title, abstract, textContent)
+      .then((article) => {
+        stmts.insertArticle.run(
+          paperId,
+          article.curated_title,
+          article.summary,
+          JSON.stringify(article.key_takeaways),
+          article.body,
+          JSON.stringify(article.tags),
+          article.mock ? 1 : 0
+        );
+        console.log("Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
+      })
+      .catch((e) => console.warn("AI curation failed:", e.message));
+
+    const paper = stmts.getPaper.get(paperId);
     res.json({ success: true, paper });
-  } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.get("/api/papers", (req, res) => { res.json(stmts.listPapers.all()); });
+// List papers
+app.get("/api/papers", (req, res) => {
+  const papers = stmts.listPapers.all();
+  res.json(papers);
+});
 
+// Get single paper + article
 app.get("/api/papers/:id", (req, res) => {
   const paper = stmts.getPaper.get(req.params.id);
   if (!paper) return res.status(404).json({ error: "Paper not found" });
@@ -41,32 +86,54 @@ app.get("/api/papers/:id", (req, res) => {
   res.json({ ...paper, article });
 });
 
+// Purchase paper
 app.post("/api/papers/:id/purchase", async (req, res) => {
   try {
     const { buyer_wallet, tx_hash, amount } = req.body;
     const paper = stmts.getPaper.get(req.params.id);
     if (!paper) return res.status(404).json({ error: "Paper not found" });
     if (!buyer_wallet) return res.status(400).json({ error: "buyer_wallet required" });
+
     stmts.insertPurchase.run(req.params.id, buyer_wallet, tx_hash || "", amount || paper.price_wei);
     res.json({ success: true, message: "Purchase recorded" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// Check access
 app.get("/api/papers/:id/access/:wallet", (req, res) => {
   const purchase = stmts.getPurchase.get(req.params.id, req.params.wallet);
   res.json({ hasAccess: !!purchase });
 });
 
-app.get("/api/articles", (req, res) => { res.json(parseArticles(stmts.listArticles.all())); });
+// ============ ARTICLE ROUTES ============
+
+app.get("/api/articles", (req, res) => {
+  const articles = parseArticles(stmts.listArticles.all());
+  res.json(articles);
+});
 
 app.get("/api/articles/:id", (req, res) => {
+  // Try by paper_id first, then by article id
   let article = stmts.getArticle.get(req.params.id);
   if (!article) article = stmts.getArticleById.get(req.params.id);
   if (!article) return res.status(404).json({ error: "Article not found" });
+
+  // Also get paper info
   const paper = stmts.getPaper.get(article.paper_id);
   res.json({ ...parseArticle(article), paper });
 });
 
+// Health
+app.get("/api/health", (req, res) => {
+  const paperCount = db.prepare("SELECT COUNT(*) as c FROM papers").get().c;
+  const articleCount = db.prepare("SELECT COUNT(*) as c FROM articles").get().c;
+  res.json({ status: "ok", papers: paperCount, articles: articleCount });
+});
+
 const { db } = require("./db");
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => { console.log(`RumahPeneliti API running on port ${PORT}`); });
+app.listen(PORT, () => {
+  console.log(`RumahPeneliti API running on port ${PORT}`);
+});
