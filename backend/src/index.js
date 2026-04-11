@@ -52,6 +52,11 @@ app.post("/api/papers/:id/purchase", async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.get("/api/papers/:id/access/:wallet", (req, res) => {
+  const purchase = stmts.getPurchase.get(req.params.id, req.params.wallet);
+  res.json({ hasAccess: !!purchase });
+});
+
 app.get("/api/articles", (req, res) => { res.json(parseArticles(stmts.listArticles.all())); });
 
 app.get("/api/articles/:id", (req, res) => {
