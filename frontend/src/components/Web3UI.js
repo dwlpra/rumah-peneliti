@@ -78,3 +78,26 @@ export function StaggerContainer({ children, style = {} }) {
 export function StaggerItem({ children, style = {} }) {
   return <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} style={style}>{children}</motion.div>;
 }
+
+export function Footer() {
+  return (
+    <footer style={{ borderTop: "1px solid var(--border)", padding: "3rem 1.5rem", marginTop: "4rem", background: "var(--glass-bg)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1.5rem" }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: 8 }}>🔮 RumahPeneliti</div>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Decentralized research platform.</p>
+        </div>
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: 8, fontSize: "0.9rem", color: "var(--text-secondary)" }}>Quick Links</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <Link href="/browse" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem" }}>Browse</Link>
+            <Link href="/upload" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem" }}>Upload</Link>
+          </div>
+        </div>
+      </div>
+      <div style={{ textAlign: "center", marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid var(--border)", color: "var(--text-dim)", fontSize: "0.78rem" }}>
+        © 2026 RumahPeneliti.com — Built for 0G APAC Hackathon 2026
+      </div>
+    </footer>
+  );
+}
