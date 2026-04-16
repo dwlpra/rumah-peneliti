@@ -3,7 +3,7 @@
  * Converts academic papers into engaging articles in English
  */
 
-const API_KEY = "1a1798a54c6a4c0eacad6de7fb04c84f.AZi1XAVO3Uo1R4bZ";
+const API_KEY = process.env.LLM_API_KEY || "";
 const API_BASE = "https://api.z.ai/api/paas/v4";
 const MODEL = "glm-5.1";
 
