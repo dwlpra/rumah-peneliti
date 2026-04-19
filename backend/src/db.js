@@ -48,6 +48,13 @@ db.exec(`
   );
 `);
 
+// Migration: add storage_hash column if not exists
+try {
+  db.exec("ALTER TABLE papers ADD COLUMN storage_hash TEXT DEFAULT ''");
+} catch (e) {
+  // Column already exists, ignore
+}
+
 // Prepared statements
 const stmts = {
   insertPaper: db.prepare(
