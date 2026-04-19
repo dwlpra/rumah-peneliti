@@ -7,6 +7,7 @@ const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const { stmts, parseArticle, parseArticles } = require("./db");
 const { generateArticle } = require("./services/kurasi");
+const { uploadTo0G } = require("./services/storage");
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,18 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
     if (!title) return res.status(400).json({ error: "title is required" });
 
     const filePath = req.file ? req.file.path : "";
+
+    // Upload to 0G Storage if file provided
+    let storageHash = "";
+    if (req.file) {
+      try {
+        const result0g = await uploadTo0G(req.file.path);
+        storageHash = result0g.rootHash;
+        console.log("0G Storage hash:", storageHash);
+      } catch (e) {
+        console.warn("0G Storage upload failed, keeping local file:", e.message);
+      }
+    }
 
     const result = stmts.insertPaper.run(
       title,
