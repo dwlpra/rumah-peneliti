@@ -37,13 +37,56 @@ function ArticleContent() {
     if (!address) { await connect(); return; }
     setPaying(true);
     try {
+      const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2";
+      const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16602");
+
+      // Switch to 0G testnet if needed
+      const currentChain = await window.ethereum.request({ method: "eth_chainId" });
+      if (parseInt(currentChain, 16) !== chainId) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: `0x${chainId.toString(16)}` }],
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: `0x${chainId.toString(16)}`,
+                chainName: "0G Galileo Testnet",
+                nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
+                rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || "https://evmrpc-testnet.0g.ai"],
+                blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
+              }],
+            });
+          } else throw switchError;
+        }
+      }
+
+      // Call purchasePaper(uint256) on the contract
       const priceWei = paper?.price_wei || "1000000000000000";
-      await window.ethereum.request({
+      // Function signature: purchasePaper(uint256) = 0x6047a3d7 + padded paperId
+      const paperIdParam = BigInt(id).toString(16).padStart(64, "0");
+      const txHash = await window.ethereum.request({
         method: "eth_sendTransaction",
-        params: [{ from: address, to: "0x0000000000000000000000000000000000000001", value: `0x${BigInt(priceWei).toString(16)}` }],
+        params: [{
+          from: address,
+          to: contractAddress,
+          data: `0x6047a3d7${paperIdParam}`,
+          value: `0x${BigInt(priceWei).toString(16)}`,
+        }],
       });
+
+      // Record purchase in backend
+      const { purchasePaper } = await import("@/lib/api");
+      await purchasePaper(id, address, txHash, priceWei);
       setUnlocked(true);
-    } catch (e) { if (e.code !== 4001) setUnlocked(true); }
+    } catch (e) {
+      console.error("Payment error:", e);
+      if (e.code === 4001) { /* user rejected */ }
+      else { alert("Payment failed: " + (e.message || "Unknown error")); }
+    }
     setPaying(false);
   };
 
