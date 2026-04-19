@@ -52,6 +52,7 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
       authors || "",
       abstract || "",
       filePath,
+      storageHash,
       price_wei || "0",
       author_wallet || ""
     );

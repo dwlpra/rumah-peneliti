@@ -18,6 +18,7 @@ db.exec(`
     authors TEXT DEFAULT '',
     abstract TEXT DEFAULT '',
     file_path TEXT DEFAULT '',
+    storage_hash TEXT DEFAULT '',
     upload_date TEXT DEFAULT (datetime('now')),
     price_wei TEXT DEFAULT '0',
     author_wallet TEXT DEFAULT ''
@@ -50,7 +51,7 @@ db.exec(`
 // Prepared statements
 const stmts = {
   insertPaper: db.prepare(
-    "INSERT INTO papers (title, authors, abstract, file_path, price_wei, author_wallet) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO papers (title, authors, abstract, file_path, storage_hash, price_wei, author_wallet) VALUES (?, ?, ?, ?, ?, ?, ?)"
   ),
   getPaper: db.prepare("SELECT * FROM papers WHERE id = ?"),
   listPapers: db.prepare("SELECT * FROM papers ORDER BY upload_date DESC"),
