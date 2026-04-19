@@ -1,46 +1,75 @@
+const { ZgFile, Indexer } = require("@0glabs/0g-ts-sdk");
+const { ethers } = require("ethers");
 const fs = require("fs");
+const path = require("path");
+
+const INDEXER_URL = "https://indexer-storage-testnet-turbo.0g.ai";
+const RPC_URL = process.env.RPC_URL || "https://evmrpc-testnet.0g.ai";
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 
 /**
- * Upload file to 0G Storage using SDK
- * Falls back to mock if SDK not configured
+ * Upload a file to 0G Storage network
+ * @param {string} filePath - Local file path to upload
+ * @returns {Promise<{rootHash: string, txHash: string}>}
  */
-async function uploadTo0G(buffer, filename) {
-  const rpc = process.env.ZG_STORAGE_RPC;
+async function uploadTo0G(filePath) {
+  if (!PRIVATE_KEY) {
+    throw new Error("PRIVATE_KEY not configured for 0G Storage uploads");
+  }
 
-  // Try 0G Storage SDK
+  const signer = new ethers.Wallet(PRIVATE_KEY, new ethers.JsonRpcProvider(RPC_URL));
+  const indexer = new Indexer(INDEXER_URL);
+
+  // Open file for upload
+  const file = await ZgFile.fromFilePath(filePath);
+
   try {
-    // Dynamic import for ESM SDK
-    const { ZgFile, ZGSConfig } = await import("@0glabs/0g-ts-sdk");
+    const [rootHash, err] = await indexer.upload(file, RPC_URL, signer);
 
-    const file = new ZgFile(buffer);
-    // Upload logic depends on SDK version - adjust as needed
-    // const rootHash = await file.upload(rpc);
-    // return rootHash;
+    if (err) {
+      throw new Error(`0G Storage upload failed: ${err.message}`);
+    }
 
-    // For now, return a mock hash since SDK API may vary
-    const hash = `0g-${Buffer.from(buffer.slice(0, 32)).toString("hex").slice(0, 64)}`;
-    console.log(`Uploaded ${filename} to 0G Storage: ${hash}`);
-    return hash;
-  } catch (e) {
-    // SDK not available or not configured, use mock
-    console.log("0G SDK not available, using mock hash");
-    const hash = `0g-mock-${Buffer.from(filename).toString("hex")}-${Date.now()}`;
-    return hash;
+    console.log(`Uploaded to 0G Storage: rootHash=${rootHash}, file=${path.basename(filePath)}`);
+    return { rootHash, txHash: rootHash };
+  } finally {
+    await file.close();
   }
 }
 
 /**
- * Download file from 0G Storage
+ * Upload a buffer to 0G Storage (write to temp file first, then upload)
+ * @param {Buffer} buffer - Data to upload
+ * @param {string} filename - Original filename for logging
+ * @returns {Promise<{rootHash: string, txHash: string}>}
  */
-async function downloadFrom0G(hash) {
+async function uploadBufferTo0G(buffer, filename) {
+  const tmpPath = path.join("/tmp", `0g-upload-${Date.now()}-${filename}`);
+  fs.writeFileSync(tmpPath, buffer);
+
   try {
-    const { ZgFile } = await import("@0glabs/0g-ts-sdk");
-    // const data = await ZgFile.download(hash, process.env.ZG_STORAGE_RPC);
-    // return data;
-    return Buffer.from(`Mock download for hash: ${hash}`);
-  } catch {
-    return Buffer.from(`Mock download for hash: ${hash}`);
+    return await uploadTo0G(tmpPath);
+  } finally {
+    fs.unlinkSync(tmpPath);
   }
 }
 
-module.exports = { uploadTo0G, downloadFrom0G };
+/**
+ * Download a file from 0G Storage
+ * @param {string} rootHash - The root hash of the uploaded data
+ * @param {string} outputPath - Where to save the downloaded file
+ * @returns {Promise<string>} - Path to downloaded file
+ */
+async function downloadFrom0G(rootHash, outputPath) {
+  const indexer = new Indexer(INDEXER_URL);
+  const err = await indexer.download(rootHash, outputPath, false);
+
+  if (err) {
+    throw new Error(`0G Storage download failed: ${err.message}`);
+  }
+
+  console.log(`Downloaded from 0G Storage: ${rootHash} -> ${outputPath}`);
+  return outputPath;
+}
+
+module.exports = { uploadTo0G, uploadBufferTo0G, downloadFrom0G };
