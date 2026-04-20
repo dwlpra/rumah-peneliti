@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@0gfoundation/0g-ts-sdk": "^1.2.1",
+    "@0glabs/0g-serving-broker": "^0.7.5",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",

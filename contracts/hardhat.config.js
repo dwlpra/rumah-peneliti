@@ -5,8 +5,9 @@ module.exports = {
   solidity: "0.8.20",
   networks: {
     zeroTestnet: {
-      url: process.env.ZERO_TESTNET_RPC || "https://evm-rpc.zero-testnet.xdao.ai",
+      url: process.env.ZERO_TESTNET_RPC || "https://evmrpc-testnet.0g.ai",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 16602,
     },
     zeroMainnet: {
       url: process.env.ZERO_MAINNET_RPC || "https://evm-rpc.0g.ai",

@@ -1,0 +1,77 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/home/clawuser/.openclaw/workspace/rumahpeneliti/contracts/contracts/JournalPayment.sol": {
+      "lastModificationDate": 1776538342657,
+      "contentHash": "a11296b7cfa843e5b0db6ffd38c4f6c5",
+      "sourceName": "contracts/JournalPayment.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "JournalPayment"
+      ]
+    },
+    "/home/clawuser/.openclaw/workspace/rumahpeneliti/contracts/contracts/PaperAnchor.sol": {
+      "lastModificationDate": 1776663466077,
+      "contentHash": "99042e26215d89169997b0f6094663ad",
+      "sourceName": "contracts/PaperAnchor.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "PaperAnchor"
+      ]
+    }
+  }
+}
