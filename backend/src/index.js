@@ -10,6 +10,7 @@ const { generateArticle } = require("./services/kurasi");
 const { uploadTo0G } = require("./services/storage");
 const { anchorPaper, anchorArticle } = require("./services/anchor");
 const { publishDAProof } = require("./services/da-layer");
+const { mintResearchNFT, getNFTByPaper, getTotalSupply } = require("./services/nft");
 
 const app = express();
 app.use(cors());
@@ -107,6 +108,21 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
             console.warn("[Pipeline] Article anchor failed:", e.message)
           );
         }
+
+        // Step 6: Mint research NFT (gasless)
+        if (anchorResult?.paperId && !article.mock) {
+          mintResearchNFT(
+            author_wallet || "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55",
+            Number(anchorResult.paperId),
+            storageHash,
+            article.body,
+            { title, authors, abstract }
+          ).then(nftResult => {
+            console.log("[Pipeline] NFT minted:", nftResult.tokenId);
+          }).catch(e => {
+            console.warn("[Pipeline] NFT minting failed:", e.message);
+          });
+        }
       })
       .catch((e) => console.warn("[Pipeline] AI curation failed:", e.message));
 
@@ -175,6 +191,51 @@ app.get("/api/articles/:id", (req, res) => {
   if (!article) return res.status(404).json({ error: "Article not found" });
   const paper = stmts.getPaper.get(article.paper_id);
   res.json({ ...parseArticle(article), paper });
+});
+
+// ============ PIPELINE STATUS ============
+
+// Mint NFT for existing paper
+app.post("/api/papers/:id/mint", async (req, res) => {
+  try {
+    const paper = stmts.getPaper.get(req.params.id);
+    if (!paper) return res.status(404).json({ error: "Paper not found" });
+    if (!paper.storage_hash) return res.status(400).json({ error: "Paper not stored on 0G" });
+
+    const article = parseArticle(stmts.getArticle.get(req.params.id));
+    if (!article) return res.status(400).json({ error: "No curated article yet" });
+
+    const { recipient } = req.body;
+    const to = recipient || paper.author_wallet || "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55";
+
+    const result = await mintResearchNFT(to, Number(req.params.id), paper.storage_hash, article.body, {
+      title: paper.title, authors: paper.authors, abstract: paper.abstract,
+    });
+
+    res.json({ success: true, nft: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get NFT info for paper
+app.get("/api/papers/:id/nft", async (req, res) => {
+  try {
+    const nft = await getNFTByPaper(Number(req.params.id));
+    res.json(nft);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+});
+
+// NFT stats
+app.get("/api/nfts/stats", async (req, res) => {
+  try {
+    const total = await getTotalSupply();
+    res.json({ totalSupply: total, contract: process.env.NFT_CONTRACT_ADDRESS });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ============ PIPELINE STATUS ============
