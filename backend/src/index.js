@@ -8,6 +8,8 @@ const { v4: uuidv4 } = require("uuid");
 const { stmts, parseArticle, parseArticles } = require("./db");
 const { generateArticle } = require("./services/kurasi");
 const { uploadTo0G } = require("./services/storage");
+const { anchorPaper, anchorArticle } = require("./services/anchor");
+const { publishDAProof } = require("./services/da-layer");
 
 const app = express();
 app.use(cors());
@@ -27,7 +29,7 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // ============ PAPER ROUTES ============
 
-// Upload paper
+// Upload paper (full pipeline: 0G Storage → DA → Anchor → AI Curation)
 app.post("/api/papers", upload.single("file"), async (req, res) => {
   try {
     const { title, authors, abstract, price_wei, author_wallet } = req.body;
@@ -35,18 +37,42 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
 
     const filePath = req.file ? req.file.path : "";
 
-    // Upload to 0G Storage if file provided
+    // Step 1: Upload to 0G Storage
     let storageHash = "";
     if (req.file) {
       try {
         const result0g = await uploadTo0G(req.file.path);
         storageHash = result0g.rootHash;
-        console.log("0G Storage hash:", storageHash);
+        console.log("[Pipeline] 0G Storage hash:", storageHash);
       } catch (e) {
-        console.warn("0G Storage upload failed, keeping local file:", e.message);
+        console.warn("[Pipeline] 0G Storage upload failed:", e.message);
       }
     }
 
+    // Step 2: Publish DA proof
+    let daProof = null;
+    if (storageHash) {
+      try {
+        const metadataHash = JSON.stringify({ title, authors, abstract });
+        daProof = await publishDAProof(storageHash, metadataHash);
+        console.log("[Pipeline] DA proof:", daProof.blobHash);
+      } catch (e) {
+        console.warn("[Pipeline] DA publish failed:", e.message);
+      }
+    }
+
+    // Step 3: Anchor on-chain
+    let anchorResult = null;
+    if (storageHash) {
+      try {
+        anchorResult = await anchorPaper(storageHash, title, authors || "", abstract || "");
+        console.log("[Pipeline] Anchored on-chain. ID:", anchorResult.paperId);
+      } catch (e) {
+        console.warn("[Pipeline] Chain anchor failed:", e.message);
+      }
+    }
+
+    // Save to DB
     const result = stmts.insertPaper.run(
       title,
       authors || "",
@@ -56,10 +82,9 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
       price_wei || "0",
       author_wallet || ""
     );
-
     const paperId = result.lastInsertRowid;
 
-    // Trigger AI curation in background
+    // Step 4: AI Curation (0G Compute → GLM → Mock)
     const textContent = req.file
       ? fs.readFileSync(req.file.path, "utf-8").slice(0, 50000)
       : abstract || "";
@@ -74,12 +99,28 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
           JSON.stringify(article.tags),
           article.mock ? 1 : 0
         );
-        console.log("Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
+        console.log("[Pipeline] Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
+
+        // Step 5: Anchor article hash on-chain
+        if (anchorResult?.paperId && !article.mock) {
+          anchorArticle(anchorResult.paperId, article.body).catch(e =>
+            console.warn("[Pipeline] Article anchor failed:", e.message)
+          );
+        }
       })
-      .catch((e) => console.warn("AI curation failed:", e.message));
+      .catch((e) => console.warn("[Pipeline] AI curation failed:", e.message));
 
     const paper = stmts.getPaper.get(paperId);
-    res.json({ success: true, paper });
+    res.json({
+      success: true,
+      paper,
+      pipeline: {
+        storageUploaded: !!storageHash,
+        daProof: daProof?.blobHash || null,
+        chainAnchor: anchorResult?.txHash || null,
+        chainPaperId: anchorResult?.paperId || null,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -129,14 +170,23 @@ app.get("/api/articles", (req, res) => {
 });
 
 app.get("/api/articles/:id", (req, res) => {
-  // Try by paper_id first, then by article id
   let article = stmts.getArticle.get(req.params.id);
   if (!article) article = stmts.getArticleById.get(req.params.id);
   if (!article) return res.status(404).json({ error: "Article not found" });
-
-  // Also get paper info
   const paper = stmts.getPaper.get(article.paper_id);
   res.json({ ...parseArticle(article), paper });
+});
+
+// ============ PIPELINE STATUS ============
+
+app.get("/api/pipeline/status", (req, res) => {
+  res.json({
+    storage: { configured: !!process.env.RPC_URL, indexer: "https://indexer-storage-testnet-turbo.0g.ai" },
+    da: { configured: true, endpoint: "https://da-testnet.0g.ai" },
+    anchor: { configured: true, contract: process.env.PAPER_ANCHOR_ADDRESS || "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE" },
+    compute: { configured: !!process.env.PRIVATE_KEY, provider: "0G Compute Network" },
+    chain: { rpc: process.env.RPC_URL, chainId: 16602, explorer: "https://chainscan-galileo.0g.ai" },
+  });
 });
 
 // Health
