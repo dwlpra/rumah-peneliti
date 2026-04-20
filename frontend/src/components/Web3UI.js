@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiHome, FiSearch, FiUpload, FiTwitter, FiGithub, FiMenu, FiX } from "react-icons/fi";
+import { FiHome, FiSearch, FiUpload, FiCpu, FiTwitter, FiGithub, FiMenu, FiX } from "react-icons/fi";
 import { useWallet } from "@/lib/wallet";
 import { useLanguage } from "@/LanguageContext";
 import { useTheme } from "@/ThemeContext";
@@ -48,6 +48,7 @@ export function Nav() {
     { href: "/", label: t("nav_home"), icon: <FiHome /> },
     { href: "/browse", label: t("nav_browse"), icon: <FiSearch /> },
     { href: "/upload", label: t("nav_upload"), icon: <FiUpload /> },
+    { href: "/pipeline", label: "Pipeline", icon: <FiCpu /> },
   ];
 
 
@@ -269,6 +270,7 @@ export function Footer() {
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <Link href="/browse" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>{t("nav_browse")}</Link>
             <Link href="/upload" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>{t("nav_upload")}</Link>
+            <Link href="/pipeline" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>Pipeline</Link>
           </div>
         </div>
         <div>
