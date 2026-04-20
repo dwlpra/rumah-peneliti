@@ -1,4 +1,4 @@
-const { ZgFile, Indexer } = require("@0glabs/0g-ts-sdk");
+const { ZgFile, Indexer } = require("@0gfoundation/0g-ts-sdk");
 const { ethers } = require("ethers");
 const fs = require("fs");
 const path = require("path");
@@ -30,8 +30,12 @@ async function uploadTo0G(filePath) {
       throw new Error(`0G Storage upload failed: ${err.message}`);
     }
 
-    console.log(`Uploaded to 0G Storage: rootHash=${rootHash}, file=${path.basename(filePath)}`);
-    return { rootHash, txHash: rootHash };
+    // SDK v1.2.1 returns {txHash, rootHash} object
+    const rootHashStr = typeof rootHash === 'string' ? rootHash : rootHash.rootHash;
+    const txHashStr = typeof rootHash === 'string' ? rootHash : rootHash.txHash;
+
+    console.log(`Uploaded to 0G Storage: rootHash=${rootHashStr}, txHash=${txHashStr}, file=${path.basename(filePath)}`);
+    return { rootHash: rootHashStr, txHash: txHashStr };
   } finally {
     await file.close();
   }

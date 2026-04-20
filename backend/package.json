@@ -7,7 +7,7 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "@0glabs/0g-ts-sdk": "^0.2.0",
+    "@0gfoundation/0g-ts-sdk": "^1.2.1",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
