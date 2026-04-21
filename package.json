@@ -1,0 +1,25 @@
+{
+  "name": "rumahpeneliti",
+  "version": "1.0.0",
+  "description": "> 🏆 Built for **0G APAC Hackathon 2026** — Leveraging 0G Storage, 0G DA Layer, 0G Compute, and 0G Chain",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test:api": "vitest run e2e/api-pipeline.test.js",
+    "test:e2e": "npx playwright test",
+    "test": "npm run test:api"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "fetch": "^1.1.0",
+    "vitest": "^4.1.5"
+  },
+  "dependencies": {
+    "form-data": "^4.0.5"
+  }
+}
