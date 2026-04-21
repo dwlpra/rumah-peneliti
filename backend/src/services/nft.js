@@ -50,7 +50,16 @@ async function mintResearchNFT(to, paperId, storageRoot, articleBody, metadata) 
 
   console.log("[NFT] Minting research NFT for paper:", paperId, "to:", to);
 
-  const tx = await contract.mintResearch(to, paperId, storageRoot, curationHash, metadataURI);
+  // Wait for any pending tx to confirm first
+  await provider.getBlockNumber();
+  const feeData = await provider.getFeeData();
+  const maxFeePerGas = feeData.maxFeePerGas * 2n;
+  const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas * 2n;
+
+  const tx = await contract.mintResearch(to, paperId, storageRoot, curationHash, metadataURI, {
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+  });
   const receipt = await tx.wait();
 
   let tokenId = null;

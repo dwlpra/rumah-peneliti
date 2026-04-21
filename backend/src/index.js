@@ -102,26 +102,25 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
         );
         console.log("[Pipeline] Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
 
-        // Step 5: Anchor article hash on-chain
+        // Step 5 & 6: Anchor article then mint NFT (sequential to avoid nonce conflict)
         if (anchorResult?.paperId) {
-          anchorArticle(anchorResult.paperId, article.body).catch(e =>
-            console.warn("[Pipeline] Article anchor failed:", e.message)
-          );
-        }
-
-        // Step 6: Mint research NFT (gasless)
-        if (anchorResult?.paperId) {
-          mintResearchNFT(
-            author_wallet || "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55",
-            Number(anchorResult.paperId),
-            storageHash,
-            article.body,
-            { title, authors, abstract }
-          ).then(nftResult => {
-            console.log("[Pipeline] NFT minted:", nftResult.tokenId);
-          }).catch(e => {
-            console.warn("[Pipeline] NFT minting failed:", e.message);
-          });
+          anchorArticle(anchorResult.paperId, article.body)
+            .then(() => {
+              console.log("[Pipeline] Article anchored, minting NFT...");
+              return mintResearchNFT(
+                author_wallet || "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55",
+                Number(anchorResult.paperId),
+                storageHash,
+                article.body,
+                { title, authors, abstract }
+              );
+            })
+            .then(nftResult => {
+              console.log("[Pipeline] NFT minted:", nftResult.tokenId);
+            })
+            .catch(e => {
+              console.warn("[Pipeline] Anchor/NFT failed:", e.message);
+            });
         }
       })
       .catch((e) => console.warn("[Pipeline] AI curation failed:", e.message));
