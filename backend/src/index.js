@@ -103,14 +103,14 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
         console.log("[Pipeline] Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
 
         // Step 5: Anchor article hash on-chain
-        if (anchorResult?.paperId && !article.mock) {
+        if (anchorResult?.paperId) {
           anchorArticle(anchorResult.paperId, article.body).catch(e =>
             console.warn("[Pipeline] Article anchor failed:", e.message)
           );
         }
 
         // Step 6: Mint research NFT (gasless)
-        if (anchorResult?.paperId && !article.mock) {
+        if (anchorResult?.paperId) {
           mintResearchNFT(
             author_wallet || "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55",
             Number(anchorResult.paperId),
