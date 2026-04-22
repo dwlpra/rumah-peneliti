@@ -18,19 +18,19 @@ export default createConfig({
       network: "zeroTestnet",
       abi: PaperAnchor.abi,
       address: "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE",
-      startBlock: 28937000,
+      startBlock: 28937500,
     },
     ResearchNFT: {
       network: "zeroTestnet",
       abi: ResearchNFT.abi,
       address: "0x5495b92aca76B4414C698f60CdaAD85B364011a1",
-      startBlock: 28937000,
+      startBlock: 28939000,
     },
     JournalPayment: {
       network: "zeroTestnet",
       abi: JournalPayment.abi,
       address: "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2",
-      startBlock: 28937000,
+      startBlock: 28937500,
     },
   },
   database: {
