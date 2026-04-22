@@ -358,3 +358,114 @@ app.get("/api/wallet/status", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============ PROFILE ============
+app.get("/api/profile/:address", async (req, res) => {
+  try {
+    const address = req.params.address.toLowerCase();
+    const { stmts, db } = require("./db");
+
+    // Papers authored by this address
+    const authoredPapers = db.prepare(
+      "SELECT p.*, a.curated_title, a.summary FROM papers p LEFT JOIN articles a ON p.id = a.paper_id WHERE LOWER(p.author_wallet) = ? ORDER BY p.upload_date DESC"
+    ).all(address);
+
+    // Papers purchased by this address
+    const purchases = db.prepare(
+      "SELECT pr.*, p.title as paper_title, a.curated_title FROM purchases pr LEFT JOIN papers p ON pr.paper_id = p.id LEFT JOIN articles a ON pr.paper_id = a.paper_id WHERE LOWER(pr.buyer_wallet) = ? ORDER BY pr.purchase_date DESC"
+    ).all(address);
+
+    // Get on-chain data from indexer
+    let onChainData = { anchors: [], nfts: [], payments: [] };
+    try {
+      const [anchorRes, nftRes, paymentRes] = await Promise.all([
+        queryPonder(`{ paperAnchorEventss { items { paperId storageRoot author txHash blockNumber timestamp } } }`),
+        queryPonder(`{ researchNFTEventss { items { tokenId paperId researcher txHash blockNumber timestamp } } }`),
+        queryPonder(`{ paymentEventss { items { paperId buyer amount txHash blockNumber timestamp } } }`),
+      ]);
+      const allAnchors = anchorRes?.data?.paperAnchorEventss?.items || [];
+      const allNfts = nftRes?.data?.researchNFTEventss?.items || [];
+      const allPayments = paymentRes?.data?.paymentEventss?.items || [];
+
+      onChainData.anchors = allAnchors.filter(a => a.author?.toLowerCase() === address);
+      onChainData.nfts = allNfts.filter(n => n.researcher?.toLowerCase() === address);
+      onChainData.payments = allPayments.filter(p => p.buyer?.toLowerCase() === address);
+    } catch (_) {}
+
+    res.json({
+      address,
+      authoredPapers: authoredPapers || [],
+      purchases: purchases || [],
+      onChain: onChainData,
+      stats: {
+        papersAuthored: (authoredPapers || []).length,
+        papersPurchased: (purchases || []).length,
+        nftsMinted: onChainData.nfts.length,
+        totalAnchors: onChainData.anchors.length,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============ VERIFY ============
+app.get("/api/verify/:hash", async (req, res) => {
+  try {
+    const hash = req.params.hash;
+    const result = {
+      hash,
+      verified: false,
+      type: null,
+      data: null,
+    };
+
+    // Check paper anchors
+    try {
+      const anchorRes = await queryPonder(`{ paperAnchorEventss { items { paperId storageRoot curationHash metadataHash author txHash blockNumber timestamp } } }`);
+      const anchors = anchorRes?.data?.paperAnchorEventss?.items || [];
+      const match = anchors.find(a =>
+        a.storageRoot?.toLowerCase() === hash.toLowerCase() ||
+        a.curationHash?.toLowerCase() === hash.toLowerCase() ||
+        a.metadataHash?.toLowerCase() === hash.toLowerCase()
+      );
+      if (match) {
+        result.verified = true;
+        result.type = "paper_anchor";
+        result.data = match;
+      }
+    } catch (_) {}
+
+    // Check article anchors if not yet verified
+    if (!result.verified) {
+      try {
+        const articleRes = await queryPonder(`{ articleAnchorEventss { items { paperId articleHash txHash blockNumber timestamp } } }`);
+        const articles = articleRes?.data?.articleAnchorEventss?.items || [];
+        const match = articles.find(a => a.articleHash?.toLowerCase() === hash.toLowerCase());
+        if (match) {
+          result.verified = true;
+          result.type = "article_anchor";
+          result.data = match;
+        }
+      } catch (_) {}
+    }
+
+    // Check NFTs if not yet verified
+    if (!result.verified) {
+      try {
+        const nftRes = await queryPonder(`{ researchNFTEventss { items { tokenId paperId storageRoot researcher txHash blockNumber timestamp } } }`);
+        const nfts = nftRes?.data?.researchNFTEventss?.items || [];
+        const match = nfts.find(n => n.storageRoot?.toLowerCase() === hash.toLowerCase());
+        if (match) {
+          result.verified = true;
+          result.type = "research_nft";
+          result.data = match;
+        }
+      } catch (_) {}
+    }
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
