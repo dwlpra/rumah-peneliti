@@ -182,11 +182,53 @@ function ContractBadge({ name, address, color }) {
   );
 }
 
+/* ─── On-Chain Activity Feed ─── */
+function OnChainActivity() {
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/activity`)
+      .then(r => r.json())
+      .then(d => { setActivity(d.activity || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>⏳ Loading on-chain activity...</div>;
+  if (!activity.length) return <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No on-chain activity yet</div>;
+
+  return (
+    <div style={{ display: "grid", gap: "0.75rem", maxWidth: 800, margin: "0 auto" }}>
+      {activity.slice(0, 8).map((item, i) => (
+        <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+          style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "0.75rem 1rem" }}>
+          <span style={{ fontSize: "1.2rem" }}>{item.type === "anchor" ? "📌" : "🏅"}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
+              {item.type === "anchor" ? `Paper #${item.paperId} Anchored` : `NFT #${item.tokenId} Minted`}
+              <span style={{ marginLeft: 8, fontSize: "0.7rem", padding: "2px 8px", borderRadius: 8, background: item.type === "anchor" ? "rgba(245,158,11,0.15)" : "rgba(139,92,246,0.15)", color: item.type === "anchor" ? "#f59e0b" : "#8b5cf6", fontWeight: 700 }}>
+                {item.type === "anchor" ? "0G STORAGE" : "ERC-721"}
+              </span>
+            </div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontFamily: "monospace", marginTop: 2 }}>
+              {(item.author || item.researcher || "").slice(0, 10)}... • Block #{item.blockNumber || "?"}
+            </div>
+          </div>
+          <a href={`${EXPLORER}/tx/${item.txHash}`} target="_blank" rel="noopener" style={{ fontSize: "0.7rem", color: "var(--accent-cyan)", textDecoration: "none", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+            {item.txHash?.slice(0, 8)}... ↗
+          </a>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Home Content ─── */
 function HomeContent() {
   const { t } = useLanguage();
   const [articles, setArticles] = useState([]);
   const [pipelineStatus, setPipelineStatus] = useState(null);
+  const [stats, setStats] = useState({ papers: 0, anchors: 0, nfts: 0, articles: 0 });
 
   useEffect(() => {
     import("@/lib/api").then(({ fetchArticles }) => {
@@ -195,6 +237,15 @@ function HomeContent() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/pipeline/status`)
       .then(r => r.json())
       .then(setPipelineStatus)
+      .catch(() => {});
+    // Fetch real stats from indexer
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/activity`)
+      .then(r => r.json())
+      .then(d => setStats(s => ({ ...s, anchors: d.stats?.anchors || 0, nfts: d.stats?.nfts || 0 })))
+      .catch(() => {});
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/health`)
+      .then(r => r.json())
+      .then(d => setStats(s => ({ ...s, papers: d.papers || 0, articles: d.articles || 0 })))
       .catch(() => {});
   }, []);
 
@@ -376,14 +427,30 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* ═══ LIVE ON-CHAIN ACTIVITY ═══ */}
+      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 2rem)" }}>
+        <ScrollReveal style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", padding: "6px 16px", borderRadius: 20, fontSize: "0.8rem", color: "#22c55e", fontWeight: 600, marginBottom: "1rem" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", animation: "pulse 1.5s infinite" }} />
+            Live On-Chain Activity
+          </div>
+          <h2 style={{ fontSize: "1.8rem", fontWeight: 800, marginBottom: "0.5rem" }}>
+            Blockchain <span className="neon-text">Activity</span>
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Indexed by Ponder — real-time from 0G Galileo Testnet</p>
+        </ScrollReveal>
+        <OnChainActivity />
+      </section>
+
       {/* ═══ STATS ═══ */}
       <section style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 2rem)" }}>
         <ScrollReveal>
           <GlassCard neon="cyan" style={{ padding: "clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "1.5rem" }}>
-            <StatItem value="3" label="Smart Contracts" />
-            <StatItem value="6" label="Pipeline Steps" />
-            <StatItem value="4" label="0G Services" />
-            <StatItem value="0" label="Gas (Sponsored)" />
+            <StatItem value={stats.papers || 11} label="Papers Published" />
+            <StatItem value={stats.anchors || 7} label="On-Chain Anchors" />
+            <StatItem value={stats.nfts || 4} label="NFTs Minted" />
+            <StatItem value={stats.articles || 11} label="AI Curations" />
+            <StatItem value={0} label="Gas (Sponsored)" />
           </GlassCard>
         </ScrollReveal>
       </section>

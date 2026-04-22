@@ -292,8 +292,8 @@ app.get("/api/papers/:id/onchain", async (req, res) => {
 app.get("/api/activity", async (req, res) => {
   try {
     const [anchorRes, nftRes] = await Promise.all([
-      queryPonder(`{ paperAnchorEventss { items { paperId author txHash timestamp } totalCount } }`),
-      queryPonder(`{ researchNFTEventss { items { tokenId paperId researcher txHash timestamp } totalCount } }`),
+      queryPonder(`{ paperAnchorEventss { items { paperId author txHash timestamp blockNumber } totalCount } }`),
+      queryPonder(`{ researchNFTEventss { items { tokenId paperId researcher txHash timestamp blockNumber } totalCount } }`),
     ]);
 
     const anchors = (anchorRes?.data?.paperAnchorEventss?.items || []).map(e => ({ ...e, type: "anchor" }));
