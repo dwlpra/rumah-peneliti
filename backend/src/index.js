@@ -33,6 +33,16 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 // Upload paper (full pipeline: 0G Storage → DA → Anchor → AI Curation)
 app.post("/api/papers", upload.single("file"), async (req, res) => {
   try {
+    // Pre-flight: check wallet balance for gas sponsorship
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || "https://evmrpc-testnet.0g.ai");
+      const bal = await provider.getBalance("0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55");
+      if (Number(ethers.formatEther(bal)) < 0.005) {
+        console.warn("[Pipeline] Wallet balance low:", ethers.formatEther(bal), "0G");
+      }
+    } catch (_) {}
+
     const { title, authors, abstract, price_wei, author_wallet } = req.body;
     if (!title) return res.status(400).json({ error: "title is required" });
 
@@ -326,4 +336,25 @@ const { db } = require("./db");
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`RumahPeneliti API running on port ${PORT}`);
+});
+
+// ============ WALLET STATUS ============
+app.get("/api/wallet/status", async (req, res) => {
+  try {
+    const { ethers } = await import("ethers");
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || "https://evmrpc-testnet.0g.ai");
+    const balance = await provider.getBalance("0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55");
+    const balance0G = Number(ethers.formatEther(balance));
+    res.json({
+      address: "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55",
+      balance: balance0G.toFixed(4) + " 0G",
+      balanceRaw: balance0G,
+      canSponsor: balance0G > 0.01,
+      network: "0G Galileo Testnet",
+      chainId: 16602,
+      faucet: "https://faucet.0g.ai",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
