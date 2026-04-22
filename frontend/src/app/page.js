@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WalletProvider } from "@/lib/wallet";
 import { useLanguage } from "@/LanguageContext";
-import { Nav, Footer, GlassCard, StaggerContainer, StaggerItem, ScrollReveal, ParticleGrid, AnimatedCounter, EthIcon } from "@/components/Web3UI";
+import { Nav, Footer, GlassCard, StaggerContainer, StaggerItem, ScrollReveal, ParticleGrid, AnimatedCounter, TokenIcon } from "@/components/Web3UI";
 
 const EXPLORER = "https://chainscan-galileo.0g.ai";
 
@@ -45,7 +45,7 @@ function PaperCard({ title, summary, tags, price, href }) {
             📄
             <div style={{ position: "absolute", top: 12, right: 12 }}>
               <span className={isFree ? "badge-free" : "badge-premium"}>
-                {isFree ? t("price_free") : <><EthIcon size={10} />{price}</>}
+                {isFree ? t("price_free") : <>💎{price}</>}
               </span>
             </div>
           </div>
@@ -401,7 +401,7 @@ function HomeContent() {
                 title={a.curated_title || a.paper_title || "Untitled"}
                 summary={a.summary || ""}
                 tags={a.tags || []}
-                price={a.price_wei ? `${(Number(a.price_wei) / 1e18).toFixed(4)} ETH` : "FREE"}
+                price={a.price_wei ? `${(Number(a.price_wei) / 1e18).toFixed(4)} 0G` : "FREE"}
                 href={`/article/${a.paper_id || a.id}`}
               />
             ))}

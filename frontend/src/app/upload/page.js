@@ -91,7 +91,7 @@ function UploadForm() {
           <div className="animate-fade-in animate-fade-in-delay-3">
             <label style={labelStyle}>{t("label_price")}</label>
             <input type="text" value={priceWei} onChange={(e) => setPriceWei(e.target.value)} style={inputStyle} onFocus={(e) => e.target.style.borderColor = "rgba(139,92,246,0.3)"} onBlur={(e) => e.target.style.borderColor = "rgba(139,92,246,0.1)"} />
-            <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: 4 }}>≈ {(Number(priceWei) / 1e18).toFixed(4)} ETH</p>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: 4 }}>≈ {(Number(priceWei) / 1e18).toFixed(4)} 0G</p>
           </div>
           {loading && (
             <div style={{ background: "var(--bg-card-solid)", borderRadius: 8, overflow: "hidden", height: 6 }}>

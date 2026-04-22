@@ -406,17 +406,6 @@ export function ReadingProgressBar() {
 }
 
 /* ─── ETH Icon ─── */
-export function EthIcon({ size = 14 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 256 417" style={{ verticalAlign: "middle", marginRight: 4 }}>
-      <g fill="none">
-        <polygon fill="var(--accent-cyan)" points="127.9611 0 125.1661 9.5 125.1661 285.168 127.9611 287.958 255.9231 212.32" opacity="0.6"/>
-        <polygon fill="var(--accent-cyan)" points="127.962 0 0 212.32 127.962 287.959 127.962 154.158" opacity="0.8"/>
-        <polygon fill="var(--accent-cyan)" points="127.9611 312.1866 126.3861 314.1066 126.3861 412.3056 127.9611 416.9066 255.9991 236.5866" opacity="0.6"/>
-        <polygon fill="var(--accent-cyan)" points="127.962 416.9052 127.962 312.1852 0 236.5852" opacity="0.8"/>
-        <polygon fill="var(--accent-cyan)" points="127.9611 287.9577 255.9211 212.3207 127.9611 154.1587" opacity="0.4"/>
-        <polygon fill="var(--accent-cyan)" points="0.0009 212.3208 127.9609 287.9578 127.9609 154.1588" opacity="0.4"/>
-      </g>
-    </svg>
-  );
+export function TokenIcon({ size = 14 }) {
+  return <span style={{ fontSize: size, verticalAlign: "middle", marginRight: 4 }}>💎</span>;
 }

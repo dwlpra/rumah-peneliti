@@ -218,14 +218,14 @@ function ArticleContent() {
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent, var(--bg-primary) 40%, var(--bg-primary))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
                 <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🔒</div>
                 <p style={{ fontSize: "1.15rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--text-primary)" }}>{t("paywall_title")}</p>
-                <p style={{ color: "var(--accent)", fontWeight: 800, fontSize: "1.5rem", marginBottom: "1.5rem" }}>{priceEth} ETH</p>
+                <p style={{ color: "var(--accent)", fontWeight: 800, fontSize: "1.5rem", marginBottom: "1.5rem" }}>{priceEth} 0G</p>
                 <button onClick={handleUnlock} disabled={paying} style={{
                   padding: "14px 36px", background: paying ? "var(--text-dim)" : "linear-gradient(135deg, var(--accent), #6D28D9)",
                   color: "#fff", border: "none", borderRadius: 8, cursor: paying ? "not-allowed" : "pointer",
                   fontWeight: 700, fontSize: "1rem", transition: "all 0.2s",
                   boxShadow: paying ? "none" : "0 4px 20px rgba(139,92,246,0.3)",
                 }}>
-                  {paying ? "⏳ Processing..." : !address ? `🦊 ${t("connect_wallet")}` : `🔓 ${t("btn_unlock")} (${priceEth} ETH)`}
+                  {paying ? "⏳ Processing..." : !address ? `🦊 ${t("connect_wallet")}` : `🔓 ${t("btn_unlock")} (${priceEth} 0G)`}
                 </button>
               </div>
             </div>
@@ -250,7 +250,7 @@ function ArticleContent() {
             )}
             <div style={{ marginBottom: "1rem" }}>
               <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginBottom: 4 }}>{t("article_price")}</div>
-              <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>{priceEth} ETH</p>
+              <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>{priceEth} 0G</p>
             </div>
             <div style={{ padding: "0.75rem", borderRadius: 8, background: unlocked ? "rgba(34,197,94,0.1)" : "rgba(139,92,246,0.08)", textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: unlocked ? "#22c55e" : "#94A3B8" }}>
               {unlocked ? "✅ Unlocked" : "🔒 Locked"}

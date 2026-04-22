@@ -118,7 +118,7 @@ function BrowseContent() {
                         color: a.price_wei ? "#A78BFA" : "#22c55e",
                         padding: "2px 10px", borderRadius: 20, fontSize: "0.72rem", fontWeight: 600,
                       }}>
-                        {a.price_wei ? `${(Number(a.price_wei) / 1e18).toFixed(4)} ETH` : t("price_free")}
+                        {a.price_wei ? `${(Number(a.price_wei) / 1e18).toFixed(4)} 0G` : t("price_free")}
                       </span>
                       {a.nft_token_id && (
                         <span style={{ background: "rgba(139,92,246,0.15)", color: "#8b5cf6", padding: "2px 8px", borderRadius: 10, fontSize: "0.65rem", fontWeight: 700 }}>🏅 NFT</span>
@@ -166,7 +166,7 @@ function BrowseContent() {
                   <div style={{ height: 120, background: `linear-gradient(135deg, rgba(6,182,212,${0.08 + (i % 3) * 0.04}), rgba(139,92,246,${0.04 + (i % 3) * 0.03}))`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>📄</div>
                   <div style={{ padding: "1.2rem" }}>
                     <span style={{ background: "rgba(139,92,246,0.12)", color: "var(--accent)", padding: "2px 10px", borderRadius: 20, fontSize: "0.72rem", fontWeight: 600, marginBottom: 8, display: "inline-block" }}>
-                      💰 {(Number(p.price_wei) / 1e18).toFixed(4)} ETH
+                      💰 {(Number(p.price_wei) / 1e18).toFixed(4)} 0G
                     </span>
                     <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: 6, lineHeight: 1.4, color: "var(--text-primary)" }}>{p.title}</h3>
                     {p.authors && <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 8 }}>👤 {p.authors}</p>}
