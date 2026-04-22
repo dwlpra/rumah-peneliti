@@ -1,1 +1,2 @@
 node_modules/\n.ponder/\ndist/\n*.js\n!ponder.config.ts\n!ponder.schema.ts
+.ponder/
