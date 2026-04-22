@@ -1,7 +1,7 @@
 "use client";
 
 import "../globals.css";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiUploadCloud,
@@ -14,6 +14,9 @@ import {
   FiLoader,
   FiChevronDown,
   FiExternalLink,
+  FiX,
+  FiArrowRight,
+  FiArrowLeft,
 } from "react-icons/fi";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -27,6 +30,72 @@ const STEPS = [
   { id: 5, title: "NFT Minting", desc: "Mint research NFT as proof of publication", icon: FiAward, color: "#6366f1" },
 ];
 
+const TOUR_STEPS = [
+  { target: "form", title: "📝 Step 1: Fill Paper Details", desc: "Enter your paper title, authors, and abstract. The wallet address is where your NFT will be minted.", icon: "📋" },
+  { target: "upload", title: "📤 Step 2: Upload Your Paper", desc: "Click the upload area or drag your paper file (PDF, TXT, MD, DOCX). The file will be stored on 0G decentralized storage.", icon: "☁️" },
+  { target: "run", title: "🚀 Step 3: Run the Pipeline", desc: "Click the button to start the full 6-step pipeline. Each step runs automatically — watch the progress unfold!", icon: "⚡" },
+  { target: "progress", title: "📊 Step 4: Watch Progress", desc: "Each pipeline step will show real-time status: pending → running → completed. Click any step to see detailed logs.", icon: "📈" },
+  { target: "result", title: "✅ Step 5: View Results", desc: "After completion, you'll see the paper ID, on-chain transaction hash, and a link to view your NFT on the explorer.", icon: "🎉" },
+];
+
+/* ─── Guided Tour Overlay ─── */
+function GuidedTour({ step, onNext, onPrev, onClose, total }) {
+  return (
+    <AnimatePresence>
+      {step !== null && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+          style={{
+            position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)",
+            zIndex: 10000, background: "rgba(15,15,25,0.95)", backdropFilter: "blur(16px)",
+            border: "1px solid rgba(139,92,246,0.3)", borderRadius: 16,
+            padding: "1.2rem 1.5rem", maxWidth: 460, width: "90%",
+            boxShadow: "0 8px 40px rgba(139,92,246,0.15), 0 0 0 1px rgba(139,92,246,0.1)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: "1.3rem" }}>{TOUR_STEPS[step]?.icon}</span>
+              <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{TOUR_STEPS[step]?.title}</span>
+            </div>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer", padding: 4 }}>
+              <FiX size={16} />
+            </button>
+          </div>
+          <p style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: 14 }}>{TOUR_STEPS[step]?.desc}</p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              {Array.from({ length: total }).map((_, i) => (
+                <div key={i} style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: i === step ? "var(--accent, #8b5cf6)" : i < step ? "#22c55e" : "rgba(255,255,255,0.15)",
+                }} />
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {step > 0 && (
+                <button onClick={onPrev} style={{
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8, padding: "6px 14px", color: "#94A3B8", cursor: "pointer", fontSize: "0.8rem",
+                  display: "flex", alignItems: "center", gap: 4,
+                }}><FiArrowLeft size={12} /> Back</button>
+              )}
+              <button onClick={step < total - 1 ? onNext : onClose} style={{
+                background: "linear-gradient(135deg, #8b5cf6, #6D28D9)", border: "none",
+                borderRadius: 8, padding: "6px 14px", color: "#fff", cursor: "pointer", fontSize: "0.8rem",
+                fontWeight: 600, display: "flex", alignItems: "center", gap: 4,
+              }}>
+                {step < total - 1 ? <>Next <FiArrowRight size={12} /></> : "Let's Go! 🚀"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+
 export default function PipelinePage() {
   const [stepState, setStepState] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,6 +103,18 @@ export default function PipelinePage() {
   const [form, setForm] = useState({ title: "", authors: "", abstract: "", price_wei: "0", author_wallet: "" });
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(null);
+  const [tourStep, setTourStep] = useState(null);
+
+  // Show tour for first-time visitors
+  useEffect(() => {
+    const seen = typeof window !== "undefined" && localStorage.getItem("rp-tour-seen");
+    if (!seen) setTourStep(0);
+  }, []);
+
+  const closeTour = () => {
+    setTourStep(null);
+    localStorage.setItem("rp-tour-seen", "1");
+  };
 
   const addLog = (step, msg) => {
     setStepState((prev) => ({
@@ -150,11 +231,26 @@ export default function PipelinePage() {
           <p className="text-gray-400 mt-3">
             Upload, verify, curate, and mint your research paper — fully on-chain
           </p>
+          <button onClick={() => setTourStep(0)} className="mt-3 text-sm text-purple-400 hover:text-purple-300 transition-colors inline-flex items-center gap-1" style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", color: "#A78BFA" }}>
+            💡 How does this work?
+          </button>
         </motion.div>
 
+        {/* Guided Tour */}
+        <GuidedTour
+          step={tourStep}
+          onNext={() => setTourStep(s => Math.min(s + 1, TOUR_STEPS.length - 1))}
+          onPrev={() => setTourStep(s => Math.max(s - 1, 0))}
+          onClose={closeTour}
+          total={TOUR_STEPS.length}
+        />
+
         {/* Upload Form */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-          className="bg-gray-800/50 backdrop-blur border border-gray-700 rounded-2xl p-6 mb-8">
+        <motion.div id="tour-form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+          className="bg-gray-800/50 backdrop-blur border rounded-2xl p-6 mb-8"
+          style={{ borderColor: tourStep === 0 ? "rgba(139,92,246,0.5)" : undefined,
+            boxShadow: tourStep === 0 ? "0 0 30px rgba(139,92,246,0.15)" : undefined,
+            transition: "all 0.3s" }}>
           <h2 className="text-xl font-semibold mb-4">📄 Paper Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
@@ -167,7 +263,9 @@ export default function PipelinePage() {
               placeholder="Abstract" value={form.abstract} onChange={(e) => setForm({ ...form, abstract: e.target.value })} />
           </div>
 
-          <div className="mt-4 flex items-center gap-4">
+          <div id="tour-upload" className="mt-4 flex items-center gap-4" style={{
+            borderColor: tourStep === 1 ? "rgba(139,92,246,0.5)" : undefined,
+            transition: "all 0.3s" }}>
             <label className="flex-1 cursor-pointer border-2 border-dashed border-gray-600 hover:border-blue-500 rounded-xl p-6 text-center transition-colors">
               <input type="file" accept=".pdf,.txt,.md,.docx" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
               {file ? (
@@ -176,9 +274,10 @@ export default function PipelinePage() {
                 <div><FiUploadCloud className="mx-auto mb-2 text-gray-400" size={24} /><p className="text-sm text-gray-400">Drop or click to upload paper</p></div>
               )}
             </label>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            <motion.button id="tour-run" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={runPipeline} disabled={!file || !form.title}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-8 rounded-xl transition-all">
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-8 rounded-xl transition-all"
+              style={tourStep === 2 ? { boxShadow: "0 0 20px rgba(139,92,246,0.4)", animation: "pulse 1.5s infinite" } : {}}>
               🚀 Run Pipeline
             </motion.button>
           </div>

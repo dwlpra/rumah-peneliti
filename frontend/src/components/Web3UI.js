@@ -413,3 +413,82 @@ export function ReadingProgressBar() {
 export function TokenIcon({ size = 14 }) {
   return <span style={{ fontSize: size, verticalAlign: "middle", marginRight: 4 }}>💎</span>;
 }
+
+/* ─── Skeleton Loader ─── */
+export function Skeleton({ w = "100%", h = 20, r = 6, mb = 8, style = {} }) {
+  return (
+    <div style={{
+      width: w, height: h, borderRadius: r, marginBottom: mb,
+      background: "linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)",
+      backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", ...style,
+    }} />
+  );
+}
+
+export function SkeletonCard({ lines = 3 }) {
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "1.2rem" }}>
+      <Skeleton w="60%" h={18} mb={12} />
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton key={i} w={i === lines - 1 ? "40%" : "100%"} h={12} mb={6} />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Empty State ─── */
+export function EmptyState({ icon = "📭", title = "No data yet", desc = "", action }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      style={{ textAlign: "center", padding: "3rem 1.5rem", maxWidth: 400, margin: "0 auto" }}>
+      <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>{icon}</div>
+      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>{title}</h3>
+      {desc && <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 16 }}>{desc}</p>}
+      {action}
+    </motion.div>
+  );
+}
+
+/* ─── Toast Notification ─── */
+export function Toast({ message, type = "info", onClose }) {
+  const colors = {
+    success: { bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.3)", icon: "✅" },
+    error: { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.3)", icon: "❌" },
+    info: { bg: "rgba(0,240,255,0.08)", border: "rgba(0,240,255,0.2)", icon: "ℹ️" },
+    warning: { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", icon: "⚠️" },
+  };
+  const c = colors[type] || colors.info;
+  return (
+    <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}
+      onClick={onClose}
+      style={{
+        background: c.bg, border: `1px solid ${c.border}`, borderRadius: 10,
+        padding: "10px 16px", fontSize: "0.85rem", cursor: "pointer",
+        backdropFilter: "blur(12px)", display: "flex", alignItems: "center", gap: 8,
+        color: "var(--text-primary)", maxWidth: 380,
+      }}>
+      <span>{c.icon}</span><span>{message}</span>
+    </motion.div>
+  );
+}
+
+export function ToastContainer({ toasts, removeToast }) {
+  return (
+    <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 9999, display: "flex", flexDirection: "column-reverse", gap: 8 }}>
+      <AnimatePresence>
+        {toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const addToast = (message, type = "info", duration = 4000) => {
+    const id = Date.now() + Math.random();
+    setToasts(p => [...p, { id, message, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), duration);
+  };
+  const removeToast = (id) => setToasts(p => p.filter(t => t.id !== id));
+  return { toasts, addToast, removeToast, ToastContainer };
+}

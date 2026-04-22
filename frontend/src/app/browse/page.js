@@ -89,9 +89,24 @@ function BrowseContent() {
         </div>
 
         {loading && (
-          <div style={{ textAlign: "center", padding: "4rem" }}>
-            <div style={{ fontSize: "2rem", marginBottom: "1rem", animation: "pulse 1.5s ease-in-out infinite" }}>⏳</div>
-            <p style={{ color: "var(--text-muted)" }}>Loading data...</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.2rem" }}>
+            {Array.from({length: 6}).map((_, i) => (
+              <div key={i} style={{
+                background: "var(--bg-card-solid)", borderRadius: 12,
+                border: "1px solid rgba(139,92,246,0.08)", overflow: "hidden",
+              }}>
+                <div style={{ height: 120, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" }} />
+                <div style={{ padding: "1.2rem" }}>
+                  <div style={{ width: 80, height: 18, borderRadius: 10, marginBottom: 10, background: "linear-gradient(90deg, rgba(139,92,246,0.08) 25%, rgba(139,92,246,0.15) 50%, rgba(139,92,246,0.08) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" }} />
+                  <div style={{ width: "100%", height: 16, borderRadius: 4, marginBottom: 8, background: "rgba(255,255,255,0.04)" }} />
+                  <div style={{ width: "70%", height: 16, borderRadius: 4, marginBottom: 12, background: "rgba(255,255,255,0.03)" }} />
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <div style={{ width: 50, height: 20, borderRadius: 10, background: "rgba(139,92,246,0.06)" }} />
+                    <div style={{ width: 60, height: 20, borderRadius: 10, background: "rgba(139,92,246,0.06)" }} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -144,7 +159,9 @@ function BrowseContent() {
             {filteredArticles.length === 0 && !loading && (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "4rem", color: "var(--text-muted)" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
-                <p>No articles yet. <Link href="/upload" style={{ color: "var(--accent)" }}>{t("nav_upload")}</Link></p>
+                <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>No curated articles found</p>
+                <p style={{ fontSize: "0.85rem", marginBottom: 16 }}>Upload a paper and run the pipeline to generate curated articles.</p>
+                <Link href="/upload" style={{ color: "var(--accent)", textDecoration: "none", padding: "10px 24px", background: "rgba(139,92,246,0.1)", borderRadius: 10, fontWeight: 600, fontSize: "0.9rem", border: "1px solid rgba(139,92,246,0.2)" }}>📤 Upload Paper</Link>
               </div>
             )}
           </div>
@@ -181,7 +198,9 @@ function BrowseContent() {
             {filteredPapers.length === 0 && !loading && (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "4rem", color: "var(--text-muted)" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
-                <p>No papers yet.</p>
+                <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>No papers found</p>
+                <p style={{ fontSize: "0.85rem", marginBottom: 16 }}>Be the first to upload your research paper.</p>
+                <Link href="/upload" style={{ color: "var(--accent)", textDecoration: "none", padding: "10px 24px", background: "rgba(139,92,246,0.1)", borderRadius: 10, fontWeight: 600, fontSize: "0.9rem", border: "1px solid rgba(139,92,246,0.2)" }}>📤 Upload Paper</Link>
               </div>
             )}
           </div>

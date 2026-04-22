@@ -325,3 +325,7 @@ button:active {
     font-size: 16px !important; /* Prevent iOS zoom */
   }
 }
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
