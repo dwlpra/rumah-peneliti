@@ -120,6 +120,9 @@ function BrowseContent() {
                       }}>
                         {a.price_wei ? `${(Number(a.price_wei) / 1e18).toFixed(4)} ETH` : t("price_free")}
                       </span>
+                      {a.nft_token_id && (
+                        <span style={{ background: "rgba(139,92,246,0.15)", color: "#8b5cf6", padding: "2px 8px", borderRadius: 10, fontSize: "0.65rem", fontWeight: 700 }}>🏅 NFT</span>
+                      )}
                     </div>
                     <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: 6, lineHeight: 1.4, color: "var(--text-primary)" }}>{a.curated_title}</h3>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: 10 }}>{a.summary}</p>

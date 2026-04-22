@@ -48,6 +48,7 @@ export function Nav() {
     { href: "/", label: t("nav_home"), icon: <FiHome /> },
     { href: "/browse", label: t("nav_browse"), icon: <FiSearch /> },
     { href: "/upload", label: t("nav_upload"), icon: <FiUpload /> },
+    { href: "/nfts", label: "NFTs", icon: <span>🏅</span> },
     { href: "/pipeline", label: "Pipeline", icon: <FiCpu /> },
   ];
 
@@ -271,6 +272,7 @@ export function Footer() {
             <Link href="/browse" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>{t("nav_browse")}</Link>
             <Link href="/upload" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>{t("nav_upload")}</Link>
             <Link href="/pipeline" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>Pipeline</Link>
+            <Link href="/nfts" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.85rem", minHeight: 44, display: "flex", alignItems: "center" }}>🏅 NFT Gallery</Link>
           </div>
         </div>
         <div>
