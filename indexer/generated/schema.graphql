@@ -1,0 +1,438 @@
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+scalar BigInt
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Meta {
+  status: JSON
+}
+
+type Query {
+  paperAnchorEvents(id: String!): paperAnchorEvents
+  paperAnchorEventss(where: paperAnchorEventsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): paperAnchorEventsPage!
+  articleAnchorEvents(id: String!): articleAnchorEvents
+  articleAnchorEventss(where: articleAnchorEventsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): articleAnchorEventsPage!
+  researchNFTEvents(id: String!): researchNFTEvents
+  researchNFTEventss(where: researchNFTEventsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): researchNFTEventsPage!
+  paymentEvents(id: String!): paymentEvents
+  paymentEventss(where: paymentEventsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): paymentEventsPage!
+  _meta: Meta
+}
+
+type paperAnchorEvents {
+  id: String!
+  paperId: Int!
+  storageRoot: String!
+  title: String
+  authors: String
+  abstract: String
+  researcher: String!
+  txHash: String!
+  blockNumber: String!
+  timestamp: String!
+  contractAddress: String!
+}
+
+type paperAnchorEventsPage {
+  items: [paperAnchorEvents!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input paperAnchorEventsFilter {
+  AND: [paperAnchorEventsFilter]
+  OR: [paperAnchorEventsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  paperId: Int
+  paperId_not: Int
+  paperId_in: [Int]
+  paperId_not_in: [Int]
+  paperId_gt: Int
+  paperId_lt: Int
+  paperId_gte: Int
+  paperId_lte: Int
+  storageRoot: String
+  storageRoot_not: String
+  storageRoot_in: [String]
+  storageRoot_not_in: [String]
+  storageRoot_contains: String
+  storageRoot_not_contains: String
+  storageRoot_starts_with: String
+  storageRoot_ends_with: String
+  storageRoot_not_starts_with: String
+  storageRoot_not_ends_with: String
+  title: String
+  title_not: String
+  title_in: [String]
+  title_not_in: [String]
+  title_contains: String
+  title_not_contains: String
+  title_starts_with: String
+  title_ends_with: String
+  title_not_starts_with: String
+  title_not_ends_with: String
+  authors: String
+  authors_not: String
+  authors_in: [String]
+  authors_not_in: [String]
+  authors_contains: String
+  authors_not_contains: String
+  authors_starts_with: String
+  authors_ends_with: String
+  authors_not_starts_with: String
+  authors_not_ends_with: String
+  abstract: String
+  abstract_not: String
+  abstract_in: [String]
+  abstract_not_in: [String]
+  abstract_contains: String
+  abstract_not_contains: String
+  abstract_starts_with: String
+  abstract_ends_with: String
+  abstract_not_starts_with: String
+  abstract_not_ends_with: String
+  researcher: String
+  researcher_not: String
+  researcher_in: [String]
+  researcher_not_in: [String]
+  researcher_contains: String
+  researcher_not_contains: String
+  researcher_starts_with: String
+  researcher_ends_with: String
+  researcher_not_starts_with: String
+  researcher_not_ends_with: String
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  blockNumber: String
+  blockNumber_not: String
+  blockNumber_in: [String]
+  blockNumber_not_in: [String]
+  blockNumber_contains: String
+  blockNumber_not_contains: String
+  blockNumber_starts_with: String
+  blockNumber_ends_with: String
+  blockNumber_not_starts_with: String
+  blockNumber_not_ends_with: String
+  timestamp: String
+  timestamp_not: String
+  timestamp_in: [String]
+  timestamp_not_in: [String]
+  timestamp_contains: String
+  timestamp_not_contains: String
+  timestamp_starts_with: String
+  timestamp_ends_with: String
+  timestamp_not_starts_with: String
+  timestamp_not_ends_with: String
+  contractAddress: String
+  contractAddress_not: String
+  contractAddress_in: [String]
+  contractAddress_not_in: [String]
+  contractAddress_contains: String
+  contractAddress_not_contains: String
+  contractAddress_starts_with: String
+  contractAddress_ends_with: String
+  contractAddress_not_starts_with: String
+  contractAddress_not_ends_with: String
+}
+
+type articleAnchorEvents {
+  id: String!
+  paperId: Int!
+  articleHash: String!
+  txHash: String!
+  blockNumber: String!
+  timestamp: String!
+}
+
+type articleAnchorEventsPage {
+  items: [articleAnchorEvents!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input articleAnchorEventsFilter {
+  AND: [articleAnchorEventsFilter]
+  OR: [articleAnchorEventsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  paperId: Int
+  paperId_not: Int
+  paperId_in: [Int]
+  paperId_not_in: [Int]
+  paperId_gt: Int
+  paperId_lt: Int
+  paperId_gte: Int
+  paperId_lte: Int
+  articleHash: String
+  articleHash_not: String
+  articleHash_in: [String]
+  articleHash_not_in: [String]
+  articleHash_contains: String
+  articleHash_not_contains: String
+  articleHash_starts_with: String
+  articleHash_ends_with: String
+  articleHash_not_starts_with: String
+  articleHash_not_ends_with: String
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  blockNumber: String
+  blockNumber_not: String
+  blockNumber_in: [String]
+  blockNumber_not_in: [String]
+  blockNumber_contains: String
+  blockNumber_not_contains: String
+  blockNumber_starts_with: String
+  blockNumber_ends_with: String
+  blockNumber_not_starts_with: String
+  blockNumber_not_ends_with: String
+  timestamp: String
+  timestamp_not: String
+  timestamp_in: [String]
+  timestamp_not_in: [String]
+  timestamp_contains: String
+  timestamp_not_contains: String
+  timestamp_starts_with: String
+  timestamp_ends_with: String
+  timestamp_not_starts_with: String
+  timestamp_not_ends_with: String
+}
+
+type researchNFTEvents {
+  id: String!
+  tokenId: Int!
+  paperId: Int!
+  storageRoot: String!
+  researcher: String!
+  txHash: String!
+  blockNumber: String!
+  timestamp: String!
+  contractAddress: String!
+}
+
+type researchNFTEventsPage {
+  items: [researchNFTEvents!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input researchNFTEventsFilter {
+  AND: [researchNFTEventsFilter]
+  OR: [researchNFTEventsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  tokenId: Int
+  tokenId_not: Int
+  tokenId_in: [Int]
+  tokenId_not_in: [Int]
+  tokenId_gt: Int
+  tokenId_lt: Int
+  tokenId_gte: Int
+  tokenId_lte: Int
+  paperId: Int
+  paperId_not: Int
+  paperId_in: [Int]
+  paperId_not_in: [Int]
+  paperId_gt: Int
+  paperId_lt: Int
+  paperId_gte: Int
+  paperId_lte: Int
+  storageRoot: String
+  storageRoot_not: String
+  storageRoot_in: [String]
+  storageRoot_not_in: [String]
+  storageRoot_contains: String
+  storageRoot_not_contains: String
+  storageRoot_starts_with: String
+  storageRoot_ends_with: String
+  storageRoot_not_starts_with: String
+  storageRoot_not_ends_with: String
+  researcher: String
+  researcher_not: String
+  researcher_in: [String]
+  researcher_not_in: [String]
+  researcher_contains: String
+  researcher_not_contains: String
+  researcher_starts_with: String
+  researcher_ends_with: String
+  researcher_not_starts_with: String
+  researcher_not_ends_with: String
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  blockNumber: String
+  blockNumber_not: String
+  blockNumber_in: [String]
+  blockNumber_not_in: [String]
+  blockNumber_contains: String
+  blockNumber_not_contains: String
+  blockNumber_starts_with: String
+  blockNumber_ends_with: String
+  blockNumber_not_starts_with: String
+  blockNumber_not_ends_with: String
+  timestamp: String
+  timestamp_not: String
+  timestamp_in: [String]
+  timestamp_not_in: [String]
+  timestamp_contains: String
+  timestamp_not_contains: String
+  timestamp_starts_with: String
+  timestamp_ends_with: String
+  timestamp_not_starts_with: String
+  timestamp_not_ends_with: String
+  contractAddress: String
+  contractAddress_not: String
+  contractAddress_in: [String]
+  contractAddress_not_in: [String]
+  contractAddress_contains: String
+  contractAddress_not_contains: String
+  contractAddress_starts_with: String
+  contractAddress_ends_with: String
+  contractAddress_not_starts_with: String
+  contractAddress_not_ends_with: String
+}
+
+type paymentEvents {
+  id: String!
+  paperId: Int!
+  buyer: String!
+  amount: String!
+  txHash: String!
+  blockNumber: String!
+  timestamp: String!
+}
+
+type paymentEventsPage {
+  items: [paymentEvents!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input paymentEventsFilter {
+  AND: [paymentEventsFilter]
+  OR: [paymentEventsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  paperId: Int
+  paperId_not: Int
+  paperId_in: [Int]
+  paperId_not_in: [Int]
+  paperId_gt: Int
+  paperId_lt: Int
+  paperId_gte: Int
+  paperId_lte: Int
+  buyer: String
+  buyer_not: String
+  buyer_in: [String]
+  buyer_not_in: [String]
+  buyer_contains: String
+  buyer_not_contains: String
+  buyer_starts_with: String
+  buyer_ends_with: String
+  buyer_not_starts_with: String
+  buyer_not_ends_with: String
+  amount: String
+  amount_not: String
+  amount_in: [String]
+  amount_not_in: [String]
+  amount_contains: String
+  amount_not_contains: String
+  amount_starts_with: String
+  amount_ends_with: String
+  amount_not_starts_with: String
+  amount_not_ends_with: String
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  blockNumber: String
+  blockNumber_not: String
+  blockNumber_in: [String]
+  blockNumber_not_in: [String]
+  blockNumber_contains: String
+  blockNumber_not_contains: String
+  blockNumber_starts_with: String
+  blockNumber_ends_with: String
+  blockNumber_not_starts_with: String
+  blockNumber_not_ends_with: String
+  timestamp: String
+  timestamp_not: String
+  timestamp_in: [String]
+  timestamp_not_in: [String]
+  timestamp_contains: String
+  timestamp_not_contains: String
+  timestamp_starts_with: String
+  timestamp_ends_with: String
+  timestamp_not_starts_with: String
+  timestamp_not_ends_with: String
+}
