@@ -6,19 +6,18 @@ import { paperAnchorEvents, articleAnchorEvents, researchNFTEvents, paymentEvent
 // ═══════════════════════════════════════════
 
 ponder.on("PaperAnchor:PaperAnchored", async ({ event, context }) => {
-  const { paperId, storageRoot, title, authors, abstract, researcher } = event.args;
+  const { id, storageRoot, curationHash, metadataHash, author, timestamp } = event.args;
 
   await context.db.insert(paperAnchorEvents).values({
     id: `anchor-${event.transaction.hash}`,
-    paperId: Number(paperId),
+    paperId: Number(id),
     storageRoot,
-    title: title || "",
-    authors: authors || "",
-    abstract: abstract || "",
-    researcher,
+    curationHash,
+    metadataHash,
+    author,
+    timestamp: event.block.timestamp,
     txHash: event.transaction.hash,
     blockNumber: event.block.number,
-    timestamp: event.block.timestamp,
     contractAddress: event.log.address,
   }).onConflictDoNothing();
 });
@@ -61,12 +60,12 @@ ponder.on("ResearchNFT:ResearchMinted", async ({ event, context }) => {
 // ═══════════════════════════════════════════
 
 ponder.on("JournalPayment:PaperPurchased", async ({ event, context }) => {
-  const { paperId, buyer, amount } = event.args;
+  const { paperId, reader, amount } = event.args;
 
   await context.db.insert(paymentEvents).values({
     id: `payment-${event.transaction.hash}`,
     paperId: Number(paperId),
-    buyer,
+    buyer: reader,
     amount: amount.toString(),
     txHash: event.transaction.hash,
     blockNumber: event.block.number,

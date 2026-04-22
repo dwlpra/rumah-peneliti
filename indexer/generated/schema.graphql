@@ -32,10 +32,9 @@ type paperAnchorEvents {
   id: String!
   paperId: Int!
   storageRoot: String!
-  title: String
-  authors: String
-  abstract: String
-  researcher: String!
+  curationHash: String!
+  metadataHash: String!
+  author: String!
   txHash: String!
   blockNumber: String!
   timestamp: String!
@@ -79,46 +78,36 @@ input paperAnchorEventsFilter {
   storageRoot_ends_with: String
   storageRoot_not_starts_with: String
   storageRoot_not_ends_with: String
-  title: String
-  title_not: String
-  title_in: [String]
-  title_not_in: [String]
-  title_contains: String
-  title_not_contains: String
-  title_starts_with: String
-  title_ends_with: String
-  title_not_starts_with: String
-  title_not_ends_with: String
-  authors: String
-  authors_not: String
-  authors_in: [String]
-  authors_not_in: [String]
-  authors_contains: String
-  authors_not_contains: String
-  authors_starts_with: String
-  authors_ends_with: String
-  authors_not_starts_with: String
-  authors_not_ends_with: String
-  abstract: String
-  abstract_not: String
-  abstract_in: [String]
-  abstract_not_in: [String]
-  abstract_contains: String
-  abstract_not_contains: String
-  abstract_starts_with: String
-  abstract_ends_with: String
-  abstract_not_starts_with: String
-  abstract_not_ends_with: String
-  researcher: String
-  researcher_not: String
-  researcher_in: [String]
-  researcher_not_in: [String]
-  researcher_contains: String
-  researcher_not_contains: String
-  researcher_starts_with: String
-  researcher_ends_with: String
-  researcher_not_starts_with: String
-  researcher_not_ends_with: String
+  curationHash: String
+  curationHash_not: String
+  curationHash_in: [String]
+  curationHash_not_in: [String]
+  curationHash_contains: String
+  curationHash_not_contains: String
+  curationHash_starts_with: String
+  curationHash_ends_with: String
+  curationHash_not_starts_with: String
+  curationHash_not_ends_with: String
+  metadataHash: String
+  metadataHash_not: String
+  metadataHash_in: [String]
+  metadataHash_not_in: [String]
+  metadataHash_contains: String
+  metadataHash_not_contains: String
+  metadataHash_starts_with: String
+  metadataHash_ends_with: String
+  metadataHash_not_starts_with: String
+  metadataHash_not_ends_with: String
+  author: String
+  author_not: String
+  author_in: [String]
+  author_not_in: [String]
+  author_contains: String
+  author_not_contains: String
+  author_starts_with: String
+  author_ends_with: String
+  author_not_starts_with: String
+  author_not_ends_with: String
   txHash: String
   txHash_not: String
   txHash_in: [String]

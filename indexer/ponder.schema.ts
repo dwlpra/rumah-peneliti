@@ -2,6 +2,7 @@ import { pgTable, text, integer, bigint, index } from "drizzle-orm/pg-core";
 
 // ═══════════════════════════════════════════
 // PaperAnchor Events
+// PaperAnchored(id, storageRoot, curationHash, metadataHash, author, timestamp)
 // ═══════════════════════════════════════════
 
 export const paperAnchorEvents = pgTable(
@@ -10,10 +11,9 @@ export const paperAnchorEvents = pgTable(
     id: text("id").primaryKey(),
     paperId: integer("paper_id").notNull(),
     storageRoot: text("storage_root").notNull(),
-    title: text("title"),
-    authors: text("authors"),
-    abstract: text("abstract"),
-    researcher: text("researcher").notNull(),
+    curationHash: text("curation_hash").notNull(),
+    metadataHash: text("metadata_hash").notNull(),
+    author: text("author").notNull(),
     txHash: text("tx_hash").notNull(),
     blockNumber: bigint("block_number", { mode: "bigint" }).notNull(),
     timestamp: bigint("timestamp", { mode: "bigint" }).notNull(),
@@ -27,6 +27,7 @@ export const paperAnchorEvents = pgTable(
 
 // ═══════════════════════════════════════════
 // ArticleAnchor Events
+// ArticleAnchored(paperId, articleHash, timestamp)
 // ═══════════════════════════════════════════
 
 export const articleAnchorEvents = pgTable(
@@ -46,6 +47,7 @@ export const articleAnchorEvents = pgTable(
 
 // ═══════════════════════════════════════════
 // ResearchNFT Events
+// ResearchMinted(tokenId, paperId, storageRoot, researcher, timestamp)
 // ═══════════════════════════════════════════
 
 export const researchNFTEvents = pgTable(
@@ -69,6 +71,7 @@ export const researchNFTEvents = pgTable(
 
 // ═══════════════════════════════════════════
 // JournalPayment Events
+// PaperPurchased(paperId, reader, amount)
 // ═══════════════════════════════════════════
 
 export const paymentEvents = pgTable(
