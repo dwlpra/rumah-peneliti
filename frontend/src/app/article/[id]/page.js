@@ -7,6 +7,68 @@ import { useLanguage } from "@/LanguageContext";
 import { fetchArticle, fetchPaper, checkAccess } from "@/lib/api";
 import { Nav, Footer } from "@/app/page";
 
+function OnChainData({ paperId }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!paperId) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/papers/${paperId}/onchain`)
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [paperId]);
+
+  if (loading) return (
+    <div style={{ background: "var(--bg-card-solid)", borderRadius: 12, border: "1px solid rgba(139,92,246,0.08)", padding: "1.5rem", marginTop: "1rem" }}>
+      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textAlign: "center" }}>⏳ Loading on-chain data...</div>
+    </div>
+  );
+
+  if (!data?.anchor && !data?.nft) return null;
+
+  return (
+    <div style={{ background: "var(--bg-card-solid)", borderRadius: 12, border: "1px solid rgba(139,92,246,0.08)", padding: "1.5rem", marginTop: "1rem" }}>
+      <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", color: "var(--accent-cyan)", marginBottom: "1rem" }}>⛓️ On-Chain Data</div>
+
+      {data.anchor && (
+        <div style={{ marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <span style={{ fontSize: "1rem" }}>📌</span>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Anchored on 0G</span>
+            <span style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", padding: "2px 8px", borderRadius: 10, fontSize: "0.7rem", fontWeight: 700 }}>CONFIRMED</span>
+          </div>
+          <a href={`${data.explorerBase}/tx/${data.anchor.txHash}`} target="_blank" rel="noopener" style={{ fontSize: "0.75rem", color: "var(--accent)", wordBreak: "break-all", textDecoration: "none" }}>
+            Tx: {data.anchor.txHash.slice(0, 18)}... ↗
+          </a>
+          {data.anchor.storageRoot && data.anchor.storageRoot !== "0x" + "0".repeat(64) && (
+            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 4, wordBreak: "break-all" }}>📦 Storage: {data.anchor.storageRoot.slice(0, 18)}...</div>
+          )}
+        </div>
+      )}
+
+      {data.nft && (
+        <div style={{ marginBottom: "0.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <span style={{ fontSize: "1rem" }}>🏅</span>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>Research NFT #{data.nft.tokenId}</span>
+            <span style={{ background: "rgba(139,92,246,0.2)", color: "var(--accent)", padding: "2px 8px", borderRadius: 10, fontSize: "0.7rem", fontWeight: 700 }}>MINTED</span>
+          </div>
+          <a href={`${data.explorerBase}/tx/${data.nft.txHash}`} target="_blank" rel="noopener" style={{ fontSize: "0.75rem", color: "var(--accent)", wordBreak: "break-all", textDecoration: "none" }}>
+            Tx: {data.nft.txHash.slice(0, 18)}... ↗
+          </a>
+        </div>
+      )}
+
+      {data.articleAnchors?.length > 0 && (
+        <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(139,92,246,0.08)" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>📝 {data.articleAnchors.length} article(s) anchored</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ArticleContent() {
   const { t } = useLanguage();
   const { id } = useParams();
@@ -203,6 +265,9 @@ function ArticleContent() {
               </div>
             </div>
           )}
+
+          {/* On-Chain Data */}
+          <OnChainData paperId={id} />
         </aside>
       </div>
 

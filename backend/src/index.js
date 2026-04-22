@@ -249,6 +249,72 @@ app.get("/api/pipeline/status", (req, res) => {
   });
 });
 
+// ============ INDEXER (Ponder GraphQL Proxy) ============
+
+const PONDER_URL = process.env.PONDER_URL || "http://localhost:42069";
+
+async function queryPonder(query) {
+  const res = await fetch(`${PONDER_URL}/graphql`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+  return res.json();
+}
+
+// Get on-chain data for a specific paper
+app.get("/api/papers/:id/onchain", async (req, res) => {
+  try {
+    const paperId = parseInt(req.params.id);
+    const [anchorRes, nftRes, articleRes] = await Promise.all([
+      queryPonder(`{ paperAnchorEventss { items { paperId storageRoot curationHash metadataHash author txHash blockNumber timestamp } } }`),
+      queryPonder(`{ researchNFTEventss { items { tokenId paperId researcher txHash blockNumber } } }`),
+      queryPonder(`{ articleAnchorEventss { items { paperId articleHash txHash blockNumber } } }`),
+    ]);
+
+    const anchors = (anchorRes?.data?.paperAnchorEventss?.items || []).filter(e => e.paperId === paperId);
+    const nfts = (nftRes?.data?.researchNFTEventss?.items || []).filter(e => e.paperId === paperId);
+    const articles = (articleRes?.data?.articleAnchorEventss?.items || []).filter(e => e.paperId === paperId);
+
+    res.json({
+      paperId,
+      anchor: anchors[0] || null,
+      nft: nfts[0] || null,
+      articleAnchors: articles,
+      explorerBase: "https://chainscan-galileo.0g.ai",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Activity feed
+app.get("/api/activity", async (req, res) => {
+  try {
+    const [anchorRes, nftRes] = await Promise.all([
+      queryPonder(`{ paperAnchorEventss { items { paperId author txHash timestamp } totalCount } }`),
+      queryPonder(`{ researchNFTEventss { items { tokenId paperId researcher txHash timestamp } totalCount } }`),
+    ]);
+
+    const anchors = (anchorRes?.data?.paperAnchorEventss?.items || []).map(e => ({ ...e, type: "anchor" }));
+    const nfts = (nftRes?.data?.researchNFTEventss?.items || []).map(e => ({ ...e, type: "nft" }));
+
+    const activity = [...anchors, ...nfts]
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 20);
+
+    res.json({
+      activity,
+      stats: {
+        anchors: anchorRes?.data?.paperAnchorEventss?.totalCount || 0,
+        nfts: nftRes?.data?.researchNFTEventss?.totalCount || 0,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health
 app.get("/api/health", (req, res) => {
   const paperCount = db.prepare("SELECT COUNT(*) as c FROM papers").get().c;
