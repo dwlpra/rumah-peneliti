@@ -10,8 +10,9 @@ module.exports = {
       chainId: 16602,
     },
     zeroMainnet: {
-      url: process.env.ZERO_MAINNET_RPC || "https://evm-rpc.0g.ai",
+      url: process.env.ZERO_MAINNET_RPC || "https://evmrpc.0g.ai",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 16661,
     },
   },
 };
