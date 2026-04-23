@@ -108,7 +108,8 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
           JSON.stringify(article.key_takeaways),
           article.body,
           JSON.stringify(article.tags),
-          article.mock ? 1 : 0
+          article.mock ? 1 : 0,
+          article.ai_score ? JSON.stringify(article.ai_score) : null
         );
         console.log("[Pipeline] Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
 
@@ -333,6 +334,71 @@ app.get("/api/health", (req, res) => {
 });
 
 const { db } = require("./db");
+// ============ AI CHAT ============
+app.post("/api/papers/:id/chat", async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: "Message is required" });
+
+    const paper = stmts.getPaper.get(req.params.id);
+    if (!paper) return res.status(404).json({ error: "Paper not found" });
+
+    const article = parseArticle(stmts.getArticle.get(req.params.id));
+
+    const API_KEY = process.env.LLM_API_KEY || "";
+    const API_BASE = "https://api.z.ai/api/paas/v4";
+
+    // Build context from paper + article
+    const context = [
+      paper.title ? `Paper Title: ${paper.title}` : "",
+      paper.authors ? `Authors: ${paper.authors}` : "",
+      paper.abstract ? `Abstract: ${paper.abstract}` : "",
+      article?.summary ? `AI Summary: ${article.summary}` : "",
+      article?.key_takeaways?.length ? `Key Takeaways: ${article.key_takeaways.join("; ")}` : "",
+      article?.body ? `Article: ${article.body.slice(0, 3000)}` : "",
+    ].filter(Boolean).join("\n");
+
+    const systemPrompt = `You are an AI Research Assistant for RumahPeneliti, a decentralized academic journal platform. You help readers understand research papers. Answer questions based on the paper context below. Be concise, accurate, and helpful. If the answer isn't in the context, say so. Reply in the same language the user asks in.
+
+Paper Context:
+${context}`;
+
+    // Try GLM API
+    if (API_KEY) {
+      try {
+        const glRes = await fetch(`${API_BASE}/chat/completions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },
+          body: JSON.stringify({
+            model: "glm-5.1",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: message },
+            ],
+            temperature: 0.5,
+            max_tokens: 1000,
+          }),
+        });
+        if (glRes.ok) {
+          const data = await glRes.json();
+          const reply = data.choices?.[0]?.message?.content;
+          if (reply) return res.json({ reply, source: "ai" });
+        }
+      } catch (e) {
+        console.warn("[AI Chat] GLM failed:", e.message);
+      }
+    }
+
+    // Fallback
+    res.json({
+      reply: `Based on the paper "${paper.title}", I can help you understand the research. However, the AI service is currently unavailable. Please try again later or check the curated article for detailed insights.`,
+      source: "fallback",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`RumahPeneliti API running on port ${PORT}`);

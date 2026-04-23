@@ -19,7 +19,7 @@ const services = [
     desc: "Data availability proof with blob commitment verification",
     details: ["Endpoint: da-testnet.0g.ai", "Blob commitment with KZG proofs", "Guarantees permanent data availability"] },
   { name: "0G Compute", icon: "⚙️", status: "ACTIVE", color: "#10b981",
-    desc: "AI-powered paper curation with verifiable processing",
+    desc: "Autonomous AI Research Agent: quality scoring, summarization, chat, and verifiable analysis",
     details: ["Priority: 0G Compute → GLM API → Mock", "Outputs: summary, key takeaways, tags", "Quality assessment with curation hash"] },
   { name: "0G Chain", icon: "🔗", status: "ACTIVE", color: "#f59e0b",
     desc: "Immutable blockchain anchoring on Galileo Testnet",
@@ -30,7 +30,7 @@ const pipeline = [
   { step: 1, icon: "📤", title: "0G Storage Upload", tech: "0G Storage SDK", desc: "Paper file uploaded to decentralized storage. Merkle root hash generated as integrity proof." },
   { step: 2, icon: "📡", title: "DA Proof Publish", tech: "0G DA Layer", desc: "Data availability proof published with blob commitment. Ensures data persists forever." },
   { step: 3, icon: "⚓", title: "On-Chain Anchor", tech: "PaperAnchor.sol", desc: "Paper metadata hash anchored to 0G blockchain via smart contract. Immutable timestamp proof." },
-  { step: 4, icon: "🤖", title: "AI Curation", tech: "0G Compute", desc: "AI generates curated summary, key takeaways, and quality tags. Results hashed on-chain." },
+  { step: 4, icon: "🤖", title: "AI Research Agent", tech: "0G Compute", desc: "AI agent analyzes quality, generates summary, scores research dimensions, and provides conversational Q&A." },
   { step: 5, icon: "📝", title: "Article Anchor", tech: "PaperAnchor.sol", desc: "AI curation hash anchored on-chain. Enables verification of AI output integrity." },
   { step: 6, icon: "🏅", title: "NFT Minting", tech: "ResearchNFT.sol", desc: "Gasless ERC-721 NFT minted as certificate of publication. Backend sponsors all gas fees." },
 ];

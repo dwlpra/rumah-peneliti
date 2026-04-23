@@ -61,7 +61,9 @@ async function curateWith0GCompute(title, abstract, textContent) {
 
     console.log("[0G Compute] Found", services.length, "services");
 
-    const prompt = `You are an expert science journalist. Transform the following academic paper into an engaging, accessible article in ENGLISH.
+    const prompt = `You are an expert AI Research Agent performing deep analysis on an academic paper. Your role:
+1. Transform the paper into an engaging article
+2. Assess research quality across 4 dimensions (0-100 each)
 
 PAPER TITLE: ${title}
 PAPER CONTENT:
@@ -73,7 +75,17 @@ You MUST respond in EXACTLY this JSON format (no markdown code block):
   "summary": "a compelling 2-3 sentence summary",
   "key_takeaways": ["point1", "point2", "point3", "point4"],
   "body": "full article 5-8 paragraphs, accessible language",
-  "tags": ["tag1", "tag2", "tag3"]
+  "tags": ["tag1", "tag2", "tag3"],
+  "ai_score": {
+    "novelty": 75,
+    "clarity": 80,
+    "methodology": 70,
+    "impact": 85,
+    "reasoning_novelty": "brief reason",
+    "reasoning_clarity": "brief reason",
+    "reasoning_methodology": "brief reason",
+    "reasoning_impact": "brief reason"
+  }
 }`;
 
     const messages = [{ role: "user", content: prompt }];

@@ -69,6 +69,141 @@ function OnChainData({ paperId }) {
   );
 }
 
+function AIScoreWidget({ score }) {
+  if (!score) return null;
+  const dims = [
+    { key: "novelty", label: "Novelty", color: "#3b82f6", icon: "💡" },
+    { key: "clarity", label: "Clarity", color: "#10b981", icon: "📖" },
+    { key: "methodology", label: "Methodology", color: "#f59e0b", icon: "🔬" },
+    { key: "impact", label: "Impact", color: "#8b5cf6", icon: "🌍" },
+  ];
+  const overall = Math.round(dims.reduce((sum, d) => sum + (score[d.key] || 0), 0) / dims.length);
+
+  return (
+    <div style={{ background: "var(--bg-card-solid)", padding: "1.5rem", borderRadius: 12, marginTop: "1.5rem", border: "1px solid rgba(139,92,246,0.08)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", color: "var(--accent-cyan)" }}>🧠 AI Research Score</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+          <span style={{ fontSize: "1.8rem", fontWeight: 800, color: overall >= 80 ? "#22c55e" : overall >= 60 ? "#f59e0b" : "#ef4444" }}>{overall}</span>
+          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>/100</span>
+        </div>
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {dims.map(d => {
+          const val = score[d.key] || 0;
+          return (
+            <div key={d.key}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{d.icon} {d.label}</span>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: d.color }}>{val}</span>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                <div style={{ height: "100%", borderRadius: 3, width: `${val}%`, background: d.color, transition: "width 1s ease" }} />
+              </div>
+              {score[`reasoning_${d.key}`] && (
+                <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 3, fontStyle: "italic" }}>{score[`reasoning_${d.key}`]}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+        Powered by AI Research Agent on 0G Compute Network
+      </div>
+    </div>
+  );
+}
+
+function AIChatWidget({ paperId, article, paper }) {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  const sendChat = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", text: userMsg }]);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/papers/${paperId}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg }),
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: "ai", text: data.reply || "Sorry, I couldn't process that." }]);
+    } catch {
+      setMessages(prev => [...prev, { role: "ai", text: "AI service unavailable. Please try again." }]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ marginTop: "1.5rem" }}>
+      {/* Toggle */}
+      <button onClick={() => setOpen(!open)} style={{
+        width: "100%", padding: "12px 16px", background: "rgba(139,92,246,0.08)",
+        border: open ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(139,92,246,0.1)",
+        borderRadius: 12, color: "var(--accent)", cursor: "pointer", fontSize: "0.9rem",
+        fontWeight: 600, display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit",
+        transition: "all 0.2s",
+      }}>
+        🤖 Ask AI about this paper {open ? "▲" : "▼"}
+      </button>
+
+      {open && (
+        <div style={{ background: "var(--bg-card-solid)", border: "1px solid rgba(139,92,246,0.1)", borderTop: "none", borderRadius: "0 0 12 12", padding: "1rem", maxHeight: 400, display: "flex", flexDirection: "column" }}>
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", marginBottom: 10, maxHeight: 250 }}>
+            {messages.length === 0 && (
+              <div style={{ textAlign: "center", padding: "1rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>🤖</div>
+                Ask me anything about "{article?.curated_title || paper?.title}"
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} style={{
+                marginBottom: 8, padding: "8px 12px", borderRadius: 10,
+                background: m.role === "user" ? "rgba(139,92,246,0.1)" : "rgba(0,240,255,0.06)",
+                marginLeft: m.role === "user" ? 40 : 0,
+                marginRight: m.role === "user" ? 0 : 40,
+              }}>
+                <div style={{ fontSize: "0.7rem", color: m.role === "user" ? "var(--accent)" : "var(--accent-cyan)", fontWeight: 600, marginBottom: 2 }}>
+                  {m.role === "user" ? "👤 You" : "🤖 AI"}
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.6 }}>{m.text}</div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", padding: "8px 12px" }}>🤖 Thinking...</div>
+            )}
+          </div>
+          {/* Input */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && sendChat()}
+              placeholder="Ask about this paper..."
+              style={{
+                flex: 1, padding: "10px 14px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 8, color: "var(--text-primary)", fontSize: "0.85rem", outline: "none", fontFamily: "inherit",
+              }}
+            />
+            <button onClick={sendChat} disabled={loading || !input.trim()} style={{
+              padding: "10px 16px", background: "linear-gradient(135deg, var(--accent), #6D28D9)",
+              border: "none", borderRadius: 8, color: "#fff", cursor: loading ? "not-allowed" : "pointer",
+              fontWeight: 600, fontSize: "0.85rem", fontFamily: "inherit",
+            }}>Send</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ArticleContent() {
   const { t } = useLanguage();
   const { id } = useParams();
@@ -202,6 +337,12 @@ function ArticleContent() {
               ))}
             </div>
           )}
+
+          {/* AI Research Score */}
+          <AIScoreWidget score={article.ai_score} />
+
+          {/* AI Chat */}
+          <AIChatWidget paperId={id} article={article} paper={paper} />
 
           {/* Body or Paywall */}
           {unlocked ? (
