@@ -153,6 +153,12 @@ async function runMultiAgentPipeline(paperId, title, abstract, textContent) {
   if (scorerResult.status === "rejected") console.warn("[Multi-Agent] Scorer failed:", scorerResult.reason?.message);
   if (taggerResult.status === "rejected") console.warn("[Multi-Agent] Tagger failed:", taggerResult.reason?.message);
 
+  // If all agents failed, return null to trigger fallback chain
+  if (agentsUsed.length === 0) {
+    console.warn("[Multi-Agent] All 3 agents failed — triggering fallback");
+    return null;
+  }
+
   // Merge results
   return {
     curated_title: summary?.curated_title || title,

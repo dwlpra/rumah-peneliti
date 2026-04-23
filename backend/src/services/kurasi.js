@@ -14,17 +14,24 @@ async function curate(paperId, title, abstract, textContent) {
   // 1. Try Multi-Agent Pipeline (3 parallel agents via GLM API)
   try {
     const result = await runMultiAgentPipeline(paperId, title, abstract, textContent);
-    if (result && !result.mock) return result;
+    if (result) {
+      console.log("[Kurasi] Multi-Agent pipeline succeeded — agents:", result.meta?.agents_used?.join(", "));
+      return result;
+    }
   } catch (e) {
     console.warn("[Kurasi] Multi-Agent pipeline failed:", e.message);
   }
 
   // 2. Try 0G Compute Network (single agent fallback)
-  const ogResult = await curateWith0GCompute(title, abstract, textContent);
-  if (ogResult) return ogResult;
+  try {
+    const ogResult = await curateWith0GCompute(title, abstract, textContent);
+    if (ogResult) return ogResult;
+  } catch (e) {
+    console.warn("[Kurasi] 0G Compute failed:", e.message);
+  }
 
   // 3. Final fallback to mock
-  console.log("[Kurasi] All AI agents unavailable, using mock");
+  console.log("[Kurasi] All AI agents unavailable, using mock result");
   return generateMockResult(title, abstract || "");
 }
 
