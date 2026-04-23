@@ -109,7 +109,9 @@ app.post("/api/papers", upload.single("file"), async (req, res) => {
           article.body,
           JSON.stringify(article.tags),
           article.mock ? 1 : 0,
-          article.ai_score ? JSON.stringify(article.ai_score) : null
+          article.ai_score ? JSON.stringify(article.ai_score) : null,
+          article.classification ? JSON.stringify(article.classification) : null,
+          article.agent_meta ? JSON.stringify(article.agent_meta) : null
         );
         console.log("[Pipeline] Article generated for paper:", paperId, article.mock ? "(mock)" : "(AI)");
 

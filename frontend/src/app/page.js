@@ -333,7 +333,7 @@ function HomeContent() {
           <PipelineStep step={1} icon="📤" title="0G Storage Upload" desc="Paper uploaded to decentralized storage network with Merkle root hash" color="#3b82f6" delay={0} />
           <PipelineStep step={2} icon="📡" title="DA Proof" desc="Data availability proof published with blob commitment on 0G DA layer" color="#8b5cf6" delay={0.1} />
           <PipelineStep step={3} icon="⚓" title="On-Chain Anchor" desc="Paper hash anchored to 0G blockchain via PaperAnchor smart contract" color="#f59e0b" delay={0.2} />
-          <PipelineStep step={4} icon="🤖" title="AI Research Agent" desc="0G Compute powers autonomous AI analysis: quality scoring, summarization, and verification" color="#10b981" delay={0.3} />
+          <PipelineStep step={4} icon="🤖" title="Multi-Agent AI Pipeline" desc="3 parallel AI agents: Summarizer, Scorer, and Tagger analyze the paper simultaneously" color="#10b981" delay={0.3} />
           <PipelineStep step={5} icon="📝" title="Article Anchor" desc="AI curation hash anchored on-chain for verification" color="#06b6d4" delay={0.4} />
           <PipelineStep step={6} icon="🎭" title="NFT Minting" desc="Gasless ERC-721 NFT minted as proof of publication (backend-sponsored)" color="#6366f1" delay={0.5} />
         </div>
@@ -363,7 +363,7 @@ function HomeContent() {
           <ProblemCard problem="No Transparency" solution="On-Chain Verification" desc="Every paper hash anchored on 0G blockchain. Peer review process is transparent and auditable." icon="🔍" delay={0.15} />
           <ProblemCard problem="Centralized Control" solution="Decentralized Storage" desc="Papers stored on 0G Storage network — immutable, censorship-resistant, permanently available." icon="🗄️" delay={0.3} />
           <ProblemCard problem="No Author Incentive" solution="NFT Ownership" desc="Each curated paper minted as ERC-721 NFT. Authors own and monetize their research forever." icon="🎭" delay={0.45} />
-          <ProblemCard problem="Slow Peer Review" solution="AI Research Agent" desc="Autonomous AI agent provides instant quality assessment, summarization, and research scoring — verifiable on-chain." icon="🤖" delay={0.6} />
+          <ProblemCard problem="Slow Peer Review" solution="Multi-Agent AI Pipeline" desc="3 specialized AI agents run in parallel: Summarizer, Scorer, and Tagger — providing instant, verifiable research assessment." icon="🤖" delay={0.6} />
           <ProblemCard problem="Data Loss Risk" solution="DA Proofs" desc="0G DA Layer guarantees data availability with cryptographic proofs — research never disappears." icon="📡" delay={0.75} />
         </div>
       </section>

@@ -108,7 +108,10 @@ function AIScoreWidget({ score }) {
         })}
       </div>
       <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
-        Powered by AI Research Agent on 0G Compute Network
+        Powered by Multi-Agent AI Pipeline on 0G Compute Network
+        {score.agents_used && (
+          <span style={{ marginLeft: 8 }}>| Agents: {score.agents_used.join(", ")}</span>
+        )}
       </div>
     </div>
   );

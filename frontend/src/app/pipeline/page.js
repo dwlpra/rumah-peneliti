@@ -26,7 +26,7 @@ const STEPS = [
   { id: 1, title: "0G Storage Upload", desc: "Upload paper to decentralized storage", icon: FiUploadCloud, color: "#3b82f6" },
   { id: 2, title: "Data Availability Proof", desc: "Publish DA proof on 0G network", icon: FiDatabase, color: "#8b5cf6" },
   { id: 3, title: "On-Chain Anchor", desc: "Anchor paper hash to 0G blockchain", icon: FiLink, color: "#f59e0b" },
-  { id: 4, title: "AI Research Agent", desc: "Autonomous AI analyzes, scores, and curates", icon: FiCpu, color: "#10b981" },
+  { id: 4, title: "Multi-Agent AI Pipeline", desc: "3 parallel AI agents: Summarizer + Scorer + Tagger", icon: FiCpu, color: "#10b981" },
   { id: 5, title: "NFT Minting", desc: "Mint research NFT as proof of publication", icon: FiAward, color: "#6366f1" },
 ];
 

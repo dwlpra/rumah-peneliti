@@ -58,6 +58,14 @@ try {
   db.exec("ALTER TABLE articles ADD COLUMN ai_score TEXT DEFAULT NULL");
 } catch (e) {}
 
+// Migration: add classification + agent_meta columns
+try {
+  db.exec("ALTER TABLE articles ADD COLUMN classification TEXT DEFAULT NULL");
+} catch (e) {}
+try {
+  db.exec("ALTER TABLE articles ADD COLUMN agent_meta TEXT DEFAULT NULL");
+} catch (e) {}
+
 // Prepared statements
 const stmts = {
   insertPaper: db.prepare(
@@ -68,7 +76,7 @@ const stmts = {
   deletePaper: db.prepare("DELETE FROM papers WHERE id = ?"),
 
   insertArticle: db.prepare(
-    "INSERT OR REPLACE INTO articles (paper_id, curated_title, summary, key_takeaways, body, tags, is_mock, ai_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT OR REPLACE INTO articles (paper_id, curated_title, summary, key_takeaways, body, tags, is_mock, ai_score, classification, agent_meta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ),
   getArticle: db.prepare("SELECT * FROM articles WHERE paper_id = ?"),
   getArticleById: db.prepare("SELECT * FROM articles WHERE id = ?"),
@@ -92,14 +100,18 @@ const stmts = {
 // Helper: parse JSON fields
 function parseArticle(row) {
   if (!row) return null;
-  let aiScore = null;
+  let aiScore = null, classification = null, agentMeta = null;
   try { aiScore = row.ai_score ? JSON.parse(row.ai_score) : null; } catch(e) {}
+  try { classification = row.classification ? JSON.parse(row.classification) : null; } catch(e) {}
+  try { agentMeta = row.agent_meta ? JSON.parse(row.agent_meta) : null; } catch(e) {}
   return {
     ...row,
     key_takeaways: JSON.parse(row.key_takeaways || "[]"),
     tags: JSON.parse(row.tags || "[]"),
     is_mock: !!row.is_mock,
     ai_score: aiScore,
+    classification,
+    agent_meta: agentMeta,
   };
 }
 
