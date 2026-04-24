@@ -1,4 +1,5 @@
 "use client";
+import { getApiUrl } from "@/lib/api-url";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +7,7 @@ import { WalletProvider } from "@/lib/wallet";
 import { useLanguage } from "@/LanguageContext";
 import { Nav, Footer, GlassCard, StaggerContainer, StaggerItem, ScrollReveal, ParticleGrid, AnimatedCounter, TokenIcon } from "@/components/Web3UI";
 
-const EXPLORER = "https://chainscan-galileo.0g.ai";
+const EXPLORER = "https://chainscan.0g.ai";
 
 /* ─── Feature Card ─── */
 function FeatureCard({ icon, title, desc, delay }) {
@@ -77,9 +78,9 @@ function PipelineStep({ step, icon, title, desc, color, delay }) {
       whileHover={{ y: -8, scale: 1.02 }}
       style={{
         position: "relative",
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--bg-card-solid)",
         backdropFilter: "blur(12px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "var(--border)",
         borderRadius: 16,
         padding: "2rem",
         cursor: "default",
@@ -89,8 +90,8 @@ function PipelineStep({ step, icon, title, desc, color, delay }) {
         {step}
       </div>
       <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>{icon}</div>
-      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem", color: "#fff" }}>{title}</h3>
-      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.88rem", lineHeight: 1.7 }}>{desc}</p>
+      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem", color: "var(--text-primary)" }}>{title}</h3>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", lineHeight: 1.7 }}>{desc}</p>
       <motion.div
         initial={{ width: 0 }}
         whileInView={{ width: "100%" }}
@@ -112,7 +113,7 @@ function TechCard({ icon, name, label, desc, color, delay }) {
       transition={{ duration: 0.5, delay }}
       whileHover={{ y: -5 }}
       style={{
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--bg-card-solid)",
         backdropFilter: "blur(12px)",
         border: `1px solid ${color}22`,
         borderRadius: 16,
@@ -121,12 +122,12 @@ function TechCard({ icon, name, label, desc, color, delay }) {
       }}
     >
       <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>{icon}</div>
-      <h4 style={{ color: "#fff", fontWeight: 700, fontSize: "1rem", marginBottom: 4 }}>{name}</h4>
+      <h4 style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: "1rem", marginBottom: 4 }}>{name}</h4>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 8 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }} />
         <span style={{ color: "#10b981", fontSize: "0.75rem", fontWeight: 600 }}>{label}</span>
       </div>
-      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", lineHeight: 1.6 }}>{desc}</p>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", lineHeight: 1.6 }}>{desc}</p>
     </motion.div>
   );
 }
@@ -141,9 +142,9 @@ function ProblemCard({ problem, solution, desc, icon, delay }) {
       transition={{ duration: 0.6, delay }}
       whileHover={{ y: -10 }}
       style={{
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--bg-card-solid)",
         backdropFilter: "blur(12px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "var(--border)",
         borderRadius: 16,
         padding: "2rem",
       }}
@@ -151,7 +152,7 @@ function ProblemCard({ problem, solution, desc, icon, delay }) {
       <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>{icon}</div>
       <div style={{ color: "#ef4444", fontWeight: 600, fontSize: "0.9rem", marginBottom: 8 }}>❌ {problem}</div>
       <div style={{ color: "#10b981", fontWeight: 600, fontSize: "0.9rem", marginBottom: 12 }}>✅ {solution}</div>
-      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.88rem", lineHeight: 1.7 }}>{desc}</p>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", lineHeight: 1.7 }}>{desc}</p>
     </motion.div>
   );
 }
@@ -165,7 +166,7 @@ function ContractBadge({ name, address, color }) {
       viewport={{ once: true }}
       style={{
         display: "flex", alignItems: "center", gap: 12,
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--bg-card-solid)",
         border: `1px solid ${color}33`,
         borderRadius: 12,
         padding: "1rem 1.2rem",
@@ -173,7 +174,7 @@ function ContractBadge({ name, address, color }) {
     >
       <div style={{ width: 10, height: 10, borderRadius: "50%", background: color, animation: "pulse 2s infinite" }} />
       <div style={{ flex: 1 }}>
-        <div style={{ color: "#fff", fontWeight: 600, fontSize: "0.85rem" }}>{name}</div>
+        <div style={{ color: "var(--text-primary)", fontWeight: 600, fontSize: "0.85rem" }}>{name}</div>
         <a href={`${EXPLORER}/address/${address}`} target="_blank" style={{ color: color, fontSize: "0.75rem", textDecoration: "none", fontFamily: "monospace" }}>
           {address.slice(0, 10)}...{address.slice(-8)} ↗
         </a>
@@ -188,7 +189,7 @@ function OnChainActivity() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/activity`)
+    fetch(`${getApiUrl()}/api/activity`)
       .then(r => r.json())
       .then(d => { setActivity(d.activity || []); setLoading(false); })
       .catch(() => setLoading(false));
@@ -201,7 +202,7 @@ function OnChainActivity() {
     <div style={{ display: "grid", gap: "0.75rem", maxWidth: 800, margin: "0 auto" }}>
       {activity.slice(0, 8).map((item, i) => (
         <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-          style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "0.75rem 1rem" }}>
+          style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--bg-card-solid)", border: "var(--border)", borderRadius: 10, padding: "0.75rem 1rem" }}>
           <span style={{ fontSize: "1.2rem" }}>{item.type === "anchor" ? "📌" : "🏅"}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
@@ -234,16 +235,16 @@ function HomeContent() {
     import("@/lib/api").then(({ fetchArticles }) => {
       fetchArticles().then(setArticles).catch(() => {});
     });
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/pipeline/status`)
+    fetch(`${getApiUrl()}/api/pipeline/status`)
       .then(r => r.json())
       .then(setPipelineStatus)
       .catch(() => {});
     // Fetch real stats from indexer
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/activity`)
+    fetch(`${getApiUrl()}/api/activity`)
       .then(r => r.json())
       .then(d => setStats(s => ({ ...s, anchors: d.stats?.anchors || 0, nfts: d.stats?.nfts || 0 })))
       .catch(() => {});
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/health`)
+    fetch(`${getApiUrl()}/api/health`)
       .then(r => r.json())
       .then(d => setStats(s => ({ ...s, papers: d.papers || 0, articles: d.articles || 0 })))
       .catch(() => {});
@@ -314,7 +315,7 @@ function HomeContent() {
           <TechCard icon="🗄️" name="0G Storage" label="ACTIVE" desc="Decentralized permanent storage with cryptographic Merkle proof" color="#3b82f6" delay={0} />
           <TechCard icon="📡" name="0G DA Layer" label="ACTIVE" desc="Data availability proof with blob commitment verification" color="#8b5cf6" delay={0.1} />
           <TechCard icon="⚙️" name="0G Compute" label="ACTIVE" desc="Verifiable AI processing with TEE attestation for curation" color="#10b981" delay={0.2} />
-          <TechCard icon="🔗" name="0G Chain" label="ACTIVE" desc="Immutable blockchain anchoring on Galileo Testnet (ID: 16602)" color="#f59e0b" delay={0.3} />
+          <TechCard icon="🔗" name="0G Chain" label="ACTIVE" desc="Immutable blockchain anchoring on Mainnet (ID: 16661)" color="#f59e0b" delay={0.3} />
         </div>
       </section>
 
@@ -329,7 +330,7 @@ function HomeContent() {
           </p>
         </ScrollReveal>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
           <PipelineStep step={1} icon="📤" title="0G Storage Upload" desc="Paper uploaded to decentralized storage network with Merkle root hash" color="#3b82f6" delay={0} />
           <PipelineStep step={2} icon="📡" title="DA Proof" desc="Data availability proof published with blob commitment on 0G DA layer" color="#8b5cf6" delay={0.1} />
           <PipelineStep step={3} icon="⚓" title="On-Chain Anchor" desc="Paper hash anchored to 0G blockchain via PaperAnchor smart contract" color="#f59e0b" delay={0.2} />
@@ -416,14 +417,14 @@ function HomeContent() {
             Smart <span className="neon-text">Contracts</span>
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
-            Deployed on 0G Galileo Testnet (Chain ID: 16602)
+            Deployed on 0G Mainnet (Chain ID: 16661)
           </p>
         </ScrollReveal>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
           <ContractBadge name="📄 JournalPayment" address="0xF5E23E98a6a93Db2c814a033929F68D5B74445E2" color="#3b82f6" />
-          <ContractBadge name="⚓ PaperAnchor" address="0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE" color="#f59e0b" />
-          <ContractBadge name="🎭 ResearchNFT (ERC-721)" address="0x5495b92aca76B4414C698f60CdaAD85B364011a1" color="#8b5cf6" />
+          <ContractBadge name="⚓ PaperAnchor" address="0x410837Dd2476d7E70210063D11030D0842653f69" color="#f59e0b" />
+          <ContractBadge name="🎭 ResearchNFT (ERC-721)" address="0x78C414367A91917fe5DC8123119467c9910a4B6d" color="#8b5cf6" />
         </div>
       </section>
 
@@ -437,7 +438,7 @@ function HomeContent() {
           <h2 style={{ fontSize: "1.8rem", fontWeight: 800, marginBottom: "0.5rem" }}>
             Blockchain <span className="neon-text">Activity</span>
           </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Indexed by Ponder — real-time from 0G Galileo Testnet</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Indexed by Ponder — real-time from 0G Mainnet</p>
         </ScrollReveal>
         <OnChainActivity />
       </section>
@@ -467,12 +468,12 @@ function HomeContent() {
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/pipeline">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neon-btn pulse-glow" style={{ padding: "14px 32px", fontSize: "1rem" }}>
-                🧪 Start Pipeline
+                🧪 {t("cta_pipeline")}
               </motion.button>
             </Link>
             <Link href="/upload">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ padding: "14px 32px", background: "transparent", color: "#fff", border: "1px solid rgba(0,240,255,0.3)", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: "1rem", fontFamily: "inherit" }}>
-                📤 Upload Paper
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ padding: "14px 32px", background: "transparent", color: "var(--text-primary)", border: "1px solid rgba(0,240,255,0.3)", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: "1rem", fontFamily: "inherit" }}>
+                📤 {t("cta_upload")}
               </motion.button>
             </Link>
           </div>

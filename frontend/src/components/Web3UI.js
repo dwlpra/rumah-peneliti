@@ -19,7 +19,7 @@ function FlagIcon({ code, size = 20 }) {
 
 /* ─── Navbar (Glassmorphism Floating) ─── */
 export function Nav() {
-  const { address, connect, disconnect } = useWallet();
+  const { address, connect, disconnect, balance } = useWallet();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
   const [open, setOpen] = useState(false);
@@ -48,11 +48,26 @@ export function Nav() {
     { href: "/", label: t("nav_home"), icon: <FiHome /> },
     { href: "/browse", label: t("nav_browse"), icon: <FiSearch /> },
     { href: "/upload", label: t("nav_upload"), icon: <FiUpload /> },
-    { href: "/nfts", label: "NFTs", icon: <span>🏅</span> },
-    { href: "/verify", label: "Verify", icon: <span>🔍</span> },
-    { href: "/tech", label: "Tech", icon: <span>⛓️</span> },
     { href: "/pipeline", label: "Pipeline", icon: <FiCpu /> },
   ];
+
+  const moreLinks = [
+    { href: "/nfts", label: "🏅 NFTs" },
+    { href: "/verify", label: "🔍 Verify" },
+    { href: "/tech", label: "⛓️ Tech" },
+    { href: "/analytics", label: "📊 Analytics" },
+    { href: "/leaderboard", label: "🏆 Ranks" },
+    { href: "/profile", label: "👤 Profile" },
+  ];
+
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
 
   return (
@@ -95,6 +110,38 @@ export function Nav() {
                 {l.icon} {l.label}
               </Link>
             ))}
+            {/* More dropdown */}
+            <div ref={moreRef} style={{ position: "relative" }}>
+              <button onClick={() => setMoreOpen(!moreOpen)} style={{
+                color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.88rem",
+                fontWeight: 500, padding: "8px 16px", borderRadius: 10,
+                display: "flex", alignItems: "center", gap: 6,
+                transition: "all 0.2s", border: "1px solid transparent",
+                minHeight: 44, background: "transparent", cursor: "pointer", fontFamily: "inherit",
+              }}>
+                More ▾
+              </button>
+              {moreOpen && (
+                <div style={{
+                  position: "absolute", top: "100%", right: 0, marginTop: 6,
+                  background: "var(--nav-bg)", backdropFilter: "blur(20px)",
+                  border: "1px solid var(--border-hover)", borderRadius: 10,
+                  padding: 4, minWidth: 140, zIndex: 200,
+                  boxShadow: `0 8px 32px var(--shadow)`,
+                }}>
+                  {moreLinks.map((l) => (
+                    <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)} style={{
+                      display: "flex", alignItems: "center", gap: 8, width: "100%",
+                      padding: "10px 14px", borderRadius: 8,
+                      color: "var(--text-primary)", textDecoration: "none",
+                      fontSize: "0.85rem", fontWeight: 400, transition: "all 0.2s",
+                    }} onMouseEnter={(e) => e.currentTarget.style.background = "var(--glass-bg)"}
+                       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >{l.label}</Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -152,7 +199,7 @@ export function Nav() {
                 fontWeight: 600, fontSize: "0.82rem", fontFamily: "monospace",
                 minHeight: 44, minWidth: 44, display: "flex", alignItems: "center", justifyContent: "center",
               } : { fontSize: "0.85rem" }}
-            >{address ? `${address.slice(0, 4)}...${address.slice(-4)}` : `⟠ ${t("connect_wallet")}`}</motion.button>
+            >{address ? `${address.slice(0, 4)}...${address.slice(-4)}${balance ? ` | ${balance} 0G` : ''}` : `⟠ ${t("connect_wallet")}`}</motion.button>
           </>)}
 
           {/* Mobile: only hamburger */}
@@ -189,6 +236,16 @@ export function Nav() {
               }}>
                 <span style={{ fontSize: "1.1rem" }}>{l.icon}</span> {l.label}
               </Link>
+            ))}
+            {/* More links */}
+            <div style={{ borderTop: "1px solid var(--border)", margin: "4px 12px" }} />
+            <div style={{ padding: "4px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>More</div>
+            {moreLinks.map((l) => (
+              <Link key={l.href} href={l.href} onClick={() => setOpen(false)} style={{
+                color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.9rem",
+                fontWeight: 400, padding: "10px 16px", borderRadius: 10,
+                display: "flex", alignItems: "center", gap: 10, minHeight: 44,
+              }}>{l.label}</Link>
             ))}
             {/* Divider */}
             <div style={{ borderTop: "1px solid var(--border)", margin: "4px 12px" }} />
@@ -427,7 +484,7 @@ export function Skeleton({ w = "100%", h = 20, r = 6, mb = 8, style = {} }) {
 
 export function SkeletonCard({ lines = 3 }) {
   return (
-    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "1.2rem" }}>
+    <div style={{ background: "var(--bg-card-solid)", border: "1px solid var(--border)", borderRadius: 14, padding: "1.2rem" }}>
       <Skeleton w="60%" h={18} mb={12} />
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton key={i} w={i === lines - 1 ? "40%" : "100%"} h={12} mb={6} />

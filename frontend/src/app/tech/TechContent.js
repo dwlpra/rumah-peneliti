@@ -1,14 +1,15 @@
 "use client";
+import { getApiUrl } from "@/lib/api-url";
 import { motion } from "framer-motion";
 import { Nav, Footer, GlassCard, ScrollReveal } from "@/components/Web3UI";
 
-const EXPLORER = "https://chainscan-galileo.0g.ai";
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const EXPLORER = "https://chainscan.0g.ai";
+const API = () => getApiUrl();
 
 const contracts = [
   { name: "JournalPayment", icon: "💰", desc: "Micropayment contract for paper purchases. Readers pay directly to authors.", address: "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2", color: "#3b82f6" },
-  { name: "PaperAnchor", icon: "⚓", desc: "Anchors paper hashes on-chain. Immutable proof of existence and timestamp.", address: "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE", color: "#f59e0b" },
-  { name: "ResearchNFT (ERC-721)", icon: "🏅", desc: "Gasless NFT minting for verified research papers. Backend-sponsored.", address: "0x5495b92aca76B4414C698f60CdaAD85B364011a1", color: "#8b5cf6" },
+  { name: "PaperAnchor", icon: "⚓", desc: "Anchors paper hashes on-chain. Immutable proof of existence and timestamp.", address: "0x410837Dd2476d7E70210063D11030D0842653f69", color: "#f59e0b" },
+  { name: "ResearchNFT (ERC-721)", icon: "🏅", desc: "Gasless NFT minting for verified research papers. Backend-sponsored.", address: "0x78C414367A91917fe5DC8123119467c9910a4B6d", color: "#8b5cf6" },
 ];
 
 const services = [
@@ -22,8 +23,8 @@ const services = [
     desc: "Multi-Agent AI pipeline with 4 specialized research agents",
     details: ["Agent 1: Summarizer — article generation", "Agent 2: Scorer — quality assessment (4 dimensions)", "Agent 3: Tagger — classification & domain tagging", "Agent 4: Reviewer — conversational Q&A (on-demand)", "Priority: Multi-Agent → 0G Compute → GLM API → Mock"] },
   { name: "0G Chain", icon: "🔗", status: "ACTIVE", color: "#f59e0b",
-    desc: "Immutable blockchain anchoring on Galileo Testnet",
-    details: ["Chain ID: 16602", "RPC: evmrpc-testnet.0g.ai", "3 deployed smart contracts", "Explorer: chainscan-galileo.0g.ai"] },
+    desc: "Immutable blockchain anchoring on Mainnet",
+    details: ["Chain ID: 16661", "RPC: evmrpc.0g.ai", "3 deployed smart contracts", "Explorer: chainscan.0g.ai"] },
 ];
 
 const pipeline = [
@@ -38,7 +39,7 @@ const pipeline = [
 function TechCard({ s, i }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-      style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${s.color}22`, borderRadius: 14, padding: "1.5rem", position: "relative", overflow: "hidden" }}>
+      style={{ background: "var(--bg-card-solid)", border: `1px solid ${s.color}22`, borderRadius: 14, padding: "1.5rem", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: `${s.color}10`, filter: "blur(25px)" }} />
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
         <span style={{ fontSize: "1.5rem" }}>{s.icon}</span>
@@ -96,7 +97,7 @@ export default function TechPage() {
               <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 style={{
                   display: "grid", gridTemplateColumns: "60px 1fr auto", gap: "1rem", alignItems: "center",
-                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--bg-card-solid)", border: "1px solid var(--border)",
                   borderRadius: 10, padding: "1rem 1.2rem",
                 }}>
                 <div style={{ textAlign: "center" }}>
@@ -123,7 +124,7 @@ export default function TechPage() {
           <div style={{ display: "grid", gap: "0.75rem" }}>
             {contracts.map((c, i) => (
               <motion.div key={i} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.02)", border: `1px solid ${c.color}22`, borderRadius: 12, padding: "1rem 1.2rem" }}>
+                style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--bg-card-solid)", border: `1px solid ${c.color}22`, borderRadius: 12, padding: "1rem 1.2rem" }}>
                 <div style={{ fontSize: "1.5rem" }}>{c.icon}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>{c.name}</div>

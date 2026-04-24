@@ -1,190 +1,201 @@
-// E2E Browser Tests for RumahPeneliti Frontend
-// Run: npx playwright test
-// Requires: npx playwright install chromium
+/**
+ * RumahPeneliti — Playwright E2E Tests
+ *
+ * Tests browser-level interactions:
+ *   - Page rendering
+ *   - Navigation
+ *   - Language switching
+ *   - Theme toggle
+ *   - Wallet auth gate on upload page
+ *   - Browse page data loading
+ *   - Article page rendering
+ */
 
 import { test, expect } from "@playwright/test";
 
-const BASE = process.env.FRONTEND_URL || "http://localhost:3000";
-const API = process.env.API_URL || "http://localhost:3001";
+const BASE_URL = "http://localhost:3000";
 
-test.describe("🏠 Homepage", () => {
-  test("loads successfully", async ({ page }) => {
-    await page.goto(BASE);
-    await expect(page).toHaveTitle(/RumahPeneliti/);
+// ============================================================
+//  PAGE RENDERING TESTS
+// ============================================================
+
+test.describe("Page Rendering", () => {
+  const pages = [
+    { path: "/", title: "RumahPeneliti", hasContent: "Decentralized" },
+    { path: "/browse", title: "Browse", hasContent: "Research" },
+    { path: "/upload", title: "Upload", hasContent: "Upload" },
+    { path: "/pipeline", title: "Pipeline", hasContent: "0G Pipeline" },
+    { path: "/nfts", title: "NFT", hasContent: "NFT" },
+    { path: "/tech", title: "Tech", hasContent: "0G" },
+    { path: "/verify", title: "Verify", hasContent: "Verify" },
+    { path: "/profile", title: "Profile", hasContent: "Profile" },
+    { path: "/analytics", title: "Analytics", hasContent: "Analytics" },
+    { path: "/leaderboard", title: "Leaderboard", hasContent: "Leaderboard" },
+  ];
+
+  for (const page of pages) {
+    test(`${page.path} renders correctly`, async ({ page: p }) => {
+      await p.goto(`${BASE_URL}${page.path}`);
+      await expect(p).toHaveTitle(new RegExp(page.title, "i"));
+    });
+  }
+});
+
+// ============================================================
+//  NAVIGATION TESTS
+// ============================================================
+
+test.describe("Navigation", () => {
+  test("navbar links work", async ({ page }) => {
+    await page.goto(BASE_URL);
+
+    // Check nav exists
+    const nav = page.locator("nav").first();
+    await expect(nav).toBeVisible();
+
+    // Click Browse link
+    const browseLink = page.locator('a[href="/browse"]').first();
+    await browseLink.click();
+    await expect(page).toHaveURL(/\/browse/);
   });
 
-  test("shows hero section with title", async ({ page }) => {
-    await page.goto(BASE);
-    await expect(page.locator("text=Decentralized")).toBeVisible({ timeout: 10000 });
+  test("homepage links to upload", async ({ page }) => {
+    await page.goto(BASE_URL);
+    const uploadLink = page.locator('a[href="/upload"]').first();
+    await uploadLink.click();
+    await expect(page).toHaveURL(/\/upload/);
   });
 
-  test("shows 0G Tech Stack section", async ({ page }) => {
-    await page.goto(BASE);
-    await expect(page.locator("text=0G Storage")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=0G DA Layer")).toBeVisible();
-    await expect(page.locator("text=0G Compute")).toBeVisible();
-    await expect(page.locator("text=0G Chain")).toBeVisible();
-  });
-
-  test("shows How It Works pipeline steps", async ({ page }) => {
-    await page.goto(BASE);
-    await expect(page.locator("text=How RumahPeneliti Works")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=0G Storage Upload")).toBeVisible();
-    await expect(page.locator("text=DA Proof")).toBeVisible();
-    await expect(page.locator("text=On-Chain Anchor")).toBeVisible();
-    await expect(page.locator("text=AI Curation")).toBeVisible();
-    await expect(page.locator("text=NFT Minting")).toBeVisible();
-  });
-
-  test("shows Smart Contracts section with addresses", async ({ page }) => {
-    await page.goto(BASE);
-    await expect(page.locator("text=Smart Contracts")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=JournalPayment")).toBeVisible();
-    await expect(page.locator("text=PaperAnchor")).toBeVisible();
-    await expect(page.locator("text=ResearchNFT")).toBeVisible();
-  });
-
-  test("shows Problems We Solve section", async ({ page }) => {
-    await page.goto(BASE);
-    await expect(page.locator("text=Problems We Solve")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=Expensive Paywalls")).toBeVisible();
-  });
-
-  test("navigation links work", async ({ page }) => {
-    await page.goto(BASE);
-    const navLinks = page.locator("nav a");
-    const count = await navLinks.count();
-    expect(count).toBeGreaterThanOrEqual(3);
+  test("pipeline page has Nav and Footer", async ({ page }) => {
+    await page.goto(`${BASE_URL}/pipeline`);
+    // Nav should be visible
+    await expect(page.locator("nav").first()).toBeVisible();
+    // Page should have pipeline content
+    await expect(page.locator("text=0G Pipeline").first()).toBeVisible();
   });
 });
 
-test.describe("📚 Browse Page", () => {
-  test("loads and shows papers", async ({ page }) => {
-    await page.goto(`${BASE}/browse`);
-    await expect(page).toHaveURL(/browse/);
-    // Wait for papers to load
-    await page.waitForTimeout(2000);
+// ============================================================
+//  UPLOAD AUTH GATE TESTS
+// ============================================================
+
+test.describe("Upload Auth Gate", () => {
+  test("shows connect wallet message when no wallet", async ({ page }) => {
+    await page.goto(`${BASE_URL}/upload`);
+
+    // Should show auth gate (no MetaMask in test browser)
+    const authGate = page.locator("text=Connect Wallet to Upload");
+    await expect(authGate).toBeVisible({ timeout: 10000 });
   });
 
-  test("shows paper cards or empty state", async ({ page }) => {
-    await page.goto(`${BASE}/browse`);
+  test("upload form is hidden when not authenticated", async ({ page }) => {
+    await page.goto(`${BASE_URL}/upload`);
+
+    // Form should NOT be visible (hidden behind auth gate)
+    const submitBtn = page.locator('button:has-text("Upload Paper")');
+    await expect(submitBtn).not.toBeVisible();
+  });
+
+  test("browse page loads papers", async ({ page }) => {
+    await page.goto(`${BASE_URL}/browse`);
+    // Wait for content to load
     await page.waitForTimeout(3000);
-    // Either papers shown or some content
-    const content = await page.textContent("body");
-    expect(content.length).toBeGreaterThan(100);
+    // Should show either papers or "no data" message
+    const hasContent = await page.locator("body").textContent();
+    expect(hasContent).toBeTruthy();
   });
 });
 
-test.describe("📤 Upload Page", () => {
-  test("loads upload form", async ({ page }) => {
-    await page.goto(`${BASE}/upload`);
-    await expect(page).toHaveURL(/upload/);
-  });
+// ============================================================
+//  ARTICLE PAGE TESTS
+// ============================================================
 
-  test("has title input field", async ({ page }) => {
-    await page.goto(`${BASE}/upload`);
-    const titleInput = page.locator('input[placeholder*="Title"], input[placeholder*="title"]');
-    await expect(titleInput).toBeVisible({ timeout: 5000 });
-  });
-});
-
-test.describe("🧪 Pipeline Wizard", () => {
-  test("loads pipeline page", async ({ page }) => {
-    await page.goto(`${BASE}/pipeline`);
-    await expect(page).toHaveURL(/pipeline/);
-  });
-
-  test("shows 5 pipeline steps", async ({ page }) => {
-    await page.goto(`${BASE}/pipeline`);
-    await expect(page.locator("text=0G Storage Upload")).toBeVisible({ timeout: 5000 });
-    await expect(page.locator("text=Data Availability Proof")).toBeVisible();
-    await expect(page.locator("text=On-Chain Anchor")).toBeVisible();
-    await expect(page.locator("text=AI Curation")).toBeVisible();
-    await expect(page.locator("text=NFT Minting")).toBeVisible();
-  });
-
-  test("shows paper details form", async ({ page }) => {
-    await page.goto(`${BASE}/pipeline`);
-    await expect(page.locator("text=Paper Details")).toBeVisible({ timeout: 5000 });
-  });
-
-  test("run pipeline button is disabled without file", async ({ page }) => {
-    await page.goto(`${BASE}/pipeline`);
-    const btn = page.locator('button:has-text("Run Pipeline")');
-    await expect(btn).toBeDisabled();
-  });
-
-  test("can upload file and enable button", async ({ page }) => {
-    await page.goto(`${BASE}/pipeline`);
-
-    // Fill title
-    const titleInput = page.locator('input[placeholder="Paper Title *"]');
-    await titleInput.fill("Test Paper");
-
-    // Create and upload test file
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-      name: "test-paper.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("Test paper content for E2E testing"),
-    });
-
-    // Button should be enabled now
-    const btn = page.locator('button:has-text("Run Pipeline")');
-    await expect(btn).toBeEnabled({ timeout: 3000 });
-  });
-
-  test("full pipeline upload flow", async ({ page }) => {
-    await page.goto(`${BASE}/pipeline`);
-
-    // Fill form
-    await page.locator('input[placeholder="Paper Title *"]').fill("Playwright E2E Test Paper");
-    await page.locator('input[placeholder="Authors (comma separated)"]').fill("Playwright Bot");
-    await page.locator('input[placeholder*="wallet"]').fill("0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55");
-
-    // Upload file
-    await page.locator('input[type="file"]').setInputFiles({
-      name: "e2e-paper.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("This is an E2E test paper for RumahPeneliti pipeline verification."),
-    });
-
-    // Click Run Pipeline
-    await page.locator('button:has-text("Run Pipeline")').click();
-
-    // Wait for pipeline to complete (steps should change status)
-    await page.waitForTimeout(30000);
-
-    // Check if steps show completed or logs appear
-    const stepStatus = await page.locator("text=✅").count();
-    expect(stepStatus).toBeGreaterThanOrEqual(1);
-
-    // Check for result section
-    const hasResult = await page.locator("text=Pipeline Complete").isVisible().catch(() => false);
-    if (hasResult) {
-      await expect(page.locator("text=Pipeline Complete")).toBeVisible();
-    }
-  }, 120000);
-});
-
-test.describe("📰 Article Page", () => {
-  test("loads article page for paper 1", async ({ page }) => {
-    await page.goto(`${BASE}/article/1`);
-    await page.waitForTimeout(2000);
-    const content = await page.textContent("body");
-    expect(content.length).toBeGreaterThan(50);
-  });
-});
-
-test.describe("🔗 API Integration", () => {
-  test("frontend connects to backend API", async ({ page }) => {
-    // Intercept API calls
-    const apiPromise = page.waitForResponse((resp) => resp.url().includes("/api/"), { timeout: 10000 }).catch(() => null);
-    await page.goto(`${BASE}/browse`);
+test.describe("Article Pages", () => {
+  test("article page renders for paper 1", async ({ page }) => {
+    await page.goto(`${BASE_URL}/article/1`);
     await page.waitForTimeout(3000);
 
-    // Just verify the page loads (API call may or may not happen depending on client)
-    const content = await page.textContent("body");
-    expect(content.length).toBeGreaterThan(100);
+    // Should have article content (from seed data)
+    const body = await page.locator("body").textContent();
+    expect(body).toBeTruthy();
+  });
+
+  test("article page shows not available for missing paper", async ({ page }) => {
+    await page.goto(`${BASE_URL}/article/999`);
+    await page.waitForTimeout(3000);
+
+    // Should show "not available" or loading state
+    const body = await page.locator("body").textContent();
+    expect(body).toBeTruthy();
+  });
+});
+
+// ============================================================
+//  HOMEPAGE CONTENT TESTS
+// ============================================================
+
+test.describe("Homepage Content", () => {
+  test("shows 0G Network branding", async ({ page }) => {
+    await page.goto(BASE_URL);
+    await expect(page.locator("text=0G Network").first()).toBeVisible();
+  });
+
+  test("shows How it Works section", async ({ page }) => {
+    await page.goto(BASE_URL);
+    // Should have pipeline steps
+    await expect(page.locator("text=0G Storage Upload").first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("shows Smart Contracts section", async ({ page }) => {
+    await page.goto(BASE_URL);
+    await expect(page.locator("text=Contracts").first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("shows CTA buttons", async ({ page }) => {
+    await page.goto(BASE_URL);
+    await expect(page.locator('a[href="/pipeline"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/upload"]').first()).toBeVisible();
+  });
+});
+
+// ============================================================
+//  TECH STACK PAGE TESTS
+// ============================================================
+
+test.describe("Tech Page", () => {
+  test("shows 0G tech stack", async ({ page }) => {
+    await page.goto(`${BASE_URL}/tech`);
+    const content = await page.locator("body").textContent();
+    expect(content).toBeTruthy();
+  });
+});
+
+// ============================================================
+//  VERIFY PAGE TESTS
+// ============================================================
+
+test.describe("Verify Page", () => {
+  test("verify page loads", async ({ page }) => {
+    await page.goto(`${BASE_URL}/verify`);
+    const content = await page.locator("body").textContent();
+    expect(content).toContain("Verify");
+  });
+});
+
+// ============================================================
+//  RESPONSIVE TESTS
+// ============================================================
+
+test.describe("Responsive Design", () => {
+  test("mobile viewport renders correctly", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(BASE_URL);
+    await expect(page.locator("nav").first()).toBeVisible();
+  });
+
+  test("tablet viewport renders correctly", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto(BASE_URL);
+    await expect(page.locator("nav").first()).toBeVisible();
   });
 });

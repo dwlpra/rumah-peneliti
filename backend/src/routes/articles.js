@@ -1,20 +1,14 @@
-const express = require("express");
+/**
+ * Article Routes
+ */
 
-module.exports = function () {
-  const router = express.Router();
+const { Router } = require("express");
+const { asyncHandler } = require("../middleware/error-handler");
+const { listArticles, getArticle } = require("../controllers/article-controller");
 
-  // List all articles
-  router.get("/", (req, res) => {
-    const articles = Array.from(req.app.locals.articles.values());
-    res.json(articles);
-  });
+const router = Router();
 
-  // Get article by paper ID
-  router.get("/:paperId", (req, res) => {
-    const article = req.app.locals.articles.get(req.params.paperId);
-    if (!article) return res.status(404).json({ error: "Article not found yet" });
-    res.json(article);
-  });
+router.get("/", asyncHandler(listArticles));
+router.get("/:id", asyncHandler(getArticle));
 
-  return router;
-};
+module.exports = router;

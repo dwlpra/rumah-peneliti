@@ -4,11 +4,72 @@
  * Agent 4 (Reviewer) runs on-demand when users chat
  */
 
+const { curateWith0GCompute } = require("./og-compute");
+
 const API_KEY = process.env.LLM_API_KEY || "";
 const API_BASE = "https://api.z.ai/api/paas/v4";
 const MODEL = "glm-5.1";
 
 async function callLLM(systemPrompt, userPrompt, temperature = 0.7, maxTokens = 4000) {
+  // Try 0G Compute first
+  try {
+    const broker = await require("./og-compute").getBroker();
+    await require("./og-compute").ensureLedger(3);
+    const services = await broker.inference.listService();
+    if (services && services.length > 0) {
+      const messages = [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }];
+
+      // Try providers
+      const seen = new Set();
+      const providers = [
+        services.find(s => s.provider === "0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3"), // GLM-5-FP8
+        services.find(s => s.provider === "0x1B3AAeB2c9B9Ae1D3e7f8A9C0D1B2E3F4A5B6C7D"), // DeepSeek
+        ...services,
+      ].filter(Boolean).filter(p => {
+        if (seen.has(p.provider)) return false;
+        seen.add(p.provider);
+        return true;
+      });
+
+      for (const service of providers) {
+        try {
+          await broker.inference.acknowledgeProviderSigner(service.provider).catch(() => {});
+          const metadata = await broker.inference.getServiceMetadata(service.provider);
+          const headers = await broker.inference.getRequestHeaders(service.provider, JSON.stringify(messages));
+
+          const response = await fetch(`${metadata.endpoint}/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...headers },
+            body: JSON.stringify({ model: metadata.model, messages, temperature, max_tokens: maxTokens }),
+          });
+
+          if (!response.ok) continue;
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content;
+          if (!content) continue;
+
+          console.log(`[0G Compute] Agent got response from ${metadata.model} (${service.provider.slice(0,10)}...)`);
+
+          try { await broker.inference.processResponse(service.provider, content, data.id); } catch (_) {}
+
+          let cleaned = content.trim();
+          if (cleaned.startsWith("```")) {
+            cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+          }
+          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) continue;
+          return JSON.parse(jsonMatch[0]);
+        } catch (e) {
+          console.warn(`[0G Compute] Provider ${service.provider.slice(0,10)} failed: ${e.message}`);
+          continue;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[0G Compute] Failed, trying GLM API:", e.message);
+  }
+
+  // Fallback to GLM API
   if (!API_KEY) throw new Error("No API key");
 
   const res = await fetch(`${API_BASE}/chat/completions`, {

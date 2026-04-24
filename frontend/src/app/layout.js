@@ -1,6 +1,7 @@
 import './globals.css';
 import { LanguageProvider } from '@/LanguageContext';
 import { ThemeProvider } from '@/ThemeContext';
+import { WalletProvider } from '@/lib/wallet';
 
 export default function RootLayout({ children }) {
   return (
@@ -17,7 +18,9 @@ export default function RootLayout({ children }) {
       <body>
         <ThemeProvider>
           <LanguageProvider>
-            {children}
+            <WalletProvider>
+              {children}
+            </WalletProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

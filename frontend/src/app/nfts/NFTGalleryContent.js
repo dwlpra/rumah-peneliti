@@ -4,9 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Nav, Footer, GlassCard, ScrollReveal } from "@/components/Web3UI";
 
-const EXPLORER = "https://chainscan-galileo.0g.ai";
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const NFT_CONTRACT = "0x5495b92aca76B4414C698f60CdaAD85B364011a1";
+const EXPLORER = "https://chainscan.0g.ai";
+import { getApiUrl } from "@/lib/api-url";
+const API = () => getApiUrl();
+const NFT_CONTRACT = "0x78C414367A91917fe5DC8123119467c9910a4B6d";
 
 const COLORS = [
   ["#8b5cf6", "#6366f1"],
@@ -25,7 +26,7 @@ function NFTCard({ nft, paper, index }) {
     <motion.div
       initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}
       whileHover={{ y: -8, scale: 1.02 }}
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, overflow: "hidden" }}
+      style={{ background: "var(--bg-card-solid)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}
     >
       <div style={{ height: 200, background: `linear-gradient(135deg, ${c1}33, ${c2}22)`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
         <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: `${c1}15`, filter: "blur(20px)" }} />
@@ -56,14 +57,14 @@ export default function NFTGalleryContent() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/api/activity`).then(r => r.json()),
-      fetch(`${API}/api/nfts/stats`).then(r => r.json()),
+      fetch(`${API()}/api/activity`).then(r => r.json()),
+      fetch(`${API()}/api/nfts/stats`).then(r => r.json()),
     ]).then(([activityData, nftStats]) => {
       const nftItems = (activityData?.activity || []).filter(a => a.type === "nft");
       setNfts(nftItems);
       setTotalSupply(nftStats?.totalSupply || nftItems.length);
       const paperIds = [...new Set(nftItems.map(n => n.paperId))];
-      Promise.all(paperIds.map(id => fetch(`${API}/api/articles/${id}`).then(r => r.json()).then(a => ({ id, ...a })).catch(() => null)))
+      Promise.all(paperIds.map(id => fetch(`${API()}/api/articles/${id}`).then(r => r.json()).then(a => ({ id, ...a })).catch(() => null)))
         .then(results => {
           const m = {};
           results.filter(Boolean).forEach(p => { m[p.id] = p; });
@@ -116,7 +117,7 @@ export default function NFTGalleryContent() {
           <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", marginBottom: "1.5rem", lineHeight: 1.7 }}>Publish your research and receive a unique NFT — proof of your contribution, forever on-chain.</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/pipeline"><button className="neon-btn pulse-glow" style={{ padding: "12px 28px", fontSize: "0.95rem", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontFamily: "inherit" }}>🧪 Try Pipeline</button></Link>
-            <Link href="/upload"><button style={{ padding: "12px 28px", background: "transparent", color: "#fff", border: "1px solid rgba(0,240,255,0.2)", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: "0.95rem", fontFamily: "inherit" }}>📤 Upload Paper</button></Link>
+            <Link href="/upload"><button style={{ padding: "12px 28px", background: "transparent", color: "var(--text-primary)", border: "1px solid rgba(0,240,255,0.2)", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: "0.95rem", fontFamily: "inherit" }}>📤 Upload Paper</button></Link>
           </div>
         </ScrollReveal>
       </section>

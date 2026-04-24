@@ -1,12 +1,13 @@
 "use client";
+import { getApiUrl } from "@/lib/api-url";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Nav, Footer, GlassCard, ScrollReveal } from "@/components/Web3UI";
 import { useWallet } from "@/lib/wallet";
 
-const EXPLORER = "https://chainscan-galileo.0g.ai";
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const EXPLORER = "https://chainscan.0g.ai";
+const API = () => getApiUrl();
 
 function StatBox({ label, value, icon, color }) {
   return (
@@ -27,7 +28,7 @@ function ActivityRow({ item, index }) {
       initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}
       style={{
         display: "flex", alignItems: "center", gap: 12,
-        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--bg-card-solid)", border: "1px solid var(--border)",
         borderRadius: 10, padding: "0.75rem 1rem",
       }}
     >
@@ -60,7 +61,7 @@ export default function ProfileContent() {
   useEffect(() => {
     if (!address) return;
     setLoading(true);
-    fetch(`${API}/api/profile/${address}`)
+    fetch(`${API()}/api/profile/${address}`)
       .then(r => r.json())
       .then(d => { setProfile(d); setLoading(false); })
       .catch(() => setLoading(false));
@@ -130,7 +131,7 @@ export default function ProfileContent() {
               {profile.authoredPapers.map((paper, i) => (
                 <Link key={paper.id || i} href={`/article/${paper.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                   <div style={{
-                    background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                    background: "var(--bg-card-solid)", border: "1px solid var(--border)",
                     borderRadius: 10, padding: "1rem 1.2rem", transition: "all 0.2s",
                   }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

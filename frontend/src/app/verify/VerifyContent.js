@@ -1,10 +1,11 @@
 "use client";
+import { getApiUrl } from "@/lib/api-url";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Nav, Footer, GlassCard, ScrollReveal } from "@/components/Web3UI";
 
-const EXPLORER = "https://chainscan-galileo.0g.ai";
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const EXPLORER = "https://chainscan.0g.ai";
+const API = () => getApiUrl();
 
 function ProofBadge({ label, value, color }) {
   if (!value || value === "0x" + "0".repeat(64)) return null;
@@ -28,7 +29,7 @@ export default function VerifyContent() {
     setError("");
     setResult(null);
     try {
-      const res = await fetch(`${API}/api/verify/${hash.trim()}`);
+      const res = await fetch(`${API()}/api/verify/${hash.trim()}`);
       const data = await res.json();
       setResult(data);
     } catch (e) {
@@ -154,7 +155,7 @@ export default function VerifyContent() {
                   <ProofBadge label="Author" value={result.data.author || result.data.researcher} color="var(--text-secondary)" />
 
                   {result.data.blockNumber && (
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 16, flexWrap: "wrap" }}>
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)", display: "flex", gap: 16, flexWrap: "wrap" }}>
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                         Block #{result.data.blockNumber}
                       </span>

@@ -1,4 +1,5 @@
 "use client";
+import { getApiUrl } from "@/lib/api-url";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -13,7 +14,7 @@ function OnChainData({ paperId }) {
 
   useEffect(() => {
     if (!paperId) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/papers/${paperId}/onchain`)
+    fetch(`${getApiUrl()}/api/papers/${paperId}/onchain`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
@@ -25,7 +26,11 @@ function OnChainData({ paperId }) {
     </div>
   );
 
-  if (!data?.anchor && !data?.nft) return null;
+  if (!data?.anchor && !data?.nft) return (
+    <div style={{ background: "var(--bg-card-solid)", borderRadius: 12, border: "1px solid rgba(139,92,246,0.08)", padding: "1.5rem", marginTop: "1rem" }}>
+      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center" }}>📭 This paper has not been processed through the pipeline yet.</div>
+    </div>
+  );
 
   return (
     <div style={{ background: "var(--bg-card-solid)", borderRadius: 12, border: "1px solid rgba(139,92,246,0.08)", padding: "1.5rem", marginTop: "1rem" }}>
@@ -97,7 +102,7 @@ function AIScoreWidget({ score }) {
                 <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{d.icon} {d.label}</span>
                 <span style={{ fontSize: "0.82rem", fontWeight: 700, color: d.color }}>{val}</span>
               </div>
-              <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              <div style={{ height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
                 <div style={{ height: "100%", borderRadius: 3, width: `${val}%`, background: d.color, transition: "width 1s ease" }} />
               </div>
               {score[`reasoning_${d.key}`] && (
@@ -107,7 +112,7 @@ function AIScoreWidget({ score }) {
           );
         })}
       </div>
-      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border)", fontSize: "0.72rem", color: "var(--text-muted)" }}>
         Powered by Multi-Agent AI Pipeline on 0G Compute Network
         {score.agents_used && (
           <span style={{ marginLeft: 8 }}>| Agents: {score.agents_used.join(", ")}</span>
@@ -122,7 +127,7 @@ function AIChatWidget({ paperId, article, paper }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const API = getApiUrl();
 
   const sendChat = async () => {
     if (!input.trim() || loading) return;
@@ -131,7 +136,7 @@ function AIChatWidget({ paperId, article, paper }) {
     setMessages(prev => [...prev, { role: "user", text: userMsg }]);
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/papers/${paperId}/chat`, {
+      const res = await fetch(`${API()}/api/papers/${paperId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg }),
@@ -191,7 +196,7 @@ function AIChatWidget({ paperId, article, paper }) {
               onKeyDown={e => e.key === "Enter" && sendChat()}
               placeholder="Ask about this paper..."
               style={{
-                flex: 1, padding: "10px 14px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)",
+                flex: 1, padding: "10px 14px", background: "var(--bg-secondary)", border: "1px solid var(--border)",
                 borderRadius: 8, color: "var(--text-primary)", fontSize: "0.85rem", outline: "none", fontFamily: "inherit",
               }}
             />
@@ -238,7 +243,7 @@ function ArticleContent() {
     setPaying(true);
     try {
       const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2";
-      const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16602");
+      const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16661");
 
       // Switch to 0G testnet if needed
       const currentChain = await window.ethereum.request({ method: "eth_chainId" });
@@ -254,10 +259,10 @@ function ArticleContent() {
               method: "wallet_addEthereumChain",
               params: [{
                 chainId: `0x${chainId.toString(16)}`,
-                chainName: "0G Galileo Testnet",
+                chainName: "0G Mainnet",
                 nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
-                rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || "https://evmrpc-testnet.0g.ai"],
-                blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
+                rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || "https://evmrpc.0g.ai"],
+                blockExplorerUrls: ["https://chainscan.0g.ai"],
               }],
             });
           } else throw switchError;
@@ -299,6 +304,7 @@ function ArticleContent() {
   );
 
   const priceEth = paper ? (Number(paper.price_wei) / 1e18).toFixed(4) : "0.001";
+  const isFree = paper && Number(paper.price_wei) === 0;
   const bodyParagraphs = (article.body || "").split("\n\n").filter(Boolean);
 
   return (
@@ -348,11 +354,31 @@ function ArticleContent() {
           <AIChatWidget paperId={id} article={article} paper={paper} />
 
           {/* Body or Paywall */}
-          {unlocked ? (
+          {(unlocked || isFree) ? (
             <div style={{ marginTop: "2rem" }}>
               {bodyParagraphs.length > 0 ? bodyParagraphs.map((para, i) => (
                 <p key={i} style={{ marginBottom: "1.2rem", color: "var(--text-primary)", lineHeight: 1.9, fontSize: "1.02rem" }}>{para}</p>
               )) : <p style={{ color: "var(--text-muted)" }}>Full article not available yet.</p>}
+              {/* Donation Button */}
+              {isFree && (
+                <div style={{ marginTop: "2rem", padding: "1.5rem", borderRadius: 12, background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(139,92,246,0.06))", border: "1px solid rgba(34,197,94,0.12)", textAlign: "center" }}>
+                  <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>☕</div>
+                  <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "0.3rem" }}>Support this research</p>
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1rem" }}>This paper is free. Buy the author a coffee!</p>
+                  <button onClick={async () => {
+                    if (!address) { alert("Connect your wallet first"); return; }
+                    try {
+                      const tipAmount = "0x" + BigInt("10000000000000000").toString(16); // 0.01 OG
+                      const authorAddr = paper?.author_wallet || paper?.authors;
+                      if (!authorAddr || authorAddr.length < 10) { alert("Author wallet not available"); return; }
+                      await window.ethereum.request({ method: "eth_sendTransaction", params: [{ from: address, to: authorAddr, value: tipAmount }] });
+                      alert("🎉 Thanks for supporting this research!");
+                    } catch (e) { if (e.code !== 4001) alert("Tip failed: " + e.message); }
+                  }} style={{ padding: "12px 28px", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(34,197,94,0.25)" }}>
+                    {address ? "☕ Tip 0.01 OG" : "🦊 Connect Wallet to Tip"}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ marginTop: "2rem", position: "relative", borderRadius: 12, overflow: "hidden" }}>
@@ -394,10 +420,10 @@ function ArticleContent() {
             )}
             <div style={{ marginBottom: "1rem" }}>
               <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginBottom: 4 }}>{t("article_price")}</div>
-              <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--accent)" }}>{priceEth} 0G</p>
+              <p style={{ fontSize: "1.2rem", fontWeight: 700, color: isFree ? "#22c55e" : "var(--accent)" }}>{isFree ? "🆓 Free" : `${priceEth} 0G`}</p>
             </div>
-            <div style={{ padding: "0.75rem", borderRadius: 8, background: unlocked ? "rgba(34,197,94,0.1)" : "rgba(139,92,246,0.08)", textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: unlocked ? "#22c55e" : "#94A3B8" }}>
-              {unlocked ? "✅ Unlocked" : "🔒 Locked"}
+            <div style={{ padding: "0.75rem", borderRadius: 8, background: (unlocked || isFree) ? "rgba(34,197,94,0.1)" : "rgba(139,92,246,0.08)", textAlign: "center", fontSize: "0.85rem", fontWeight: 600, color: (unlocked || isFree) ? "#22c55e" : "#94A3B8" }}>
+              {(unlocked || isFree) ? "✅ Free Access" : "🔒 Locked"}
             </div>
           </div>
 

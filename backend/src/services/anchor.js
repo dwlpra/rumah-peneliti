@@ -1,14 +1,36 @@
-const { ethers } = require("ethers");
-
 /**
- * PaperAnchor on-chain service
- * Anchors paper hashes to PaperAnchor smart contract on 0G testnet
+ * ============================================================
+ *  PaperAnchor — On-Chain Paper Verification
+ * ============================================================
+ *
+ *  Smart contract PaperAnchor menyimpan hash paper di blockchain 0G.
+ *  Ini membuat record immutable yang bisa diverifikasi siapa saja.
+ *
+ *  Alur:
+ *    1. Saat paper di-upload, hash-nya di-anchor ke blockchain
+ *    2. Setelah AI curation selesai, hash artikel juga di-anchor
+ *    3. Siapa saja bisa verifikasi: "apakah paper ini asli?"
+ *
+ *  Analogi sederhana:
+ *    Anchor = "Notaris" — mencatat hash paper sebagai bukti
+ *    bahwa paper ini benar-benar ada dan tidak diubah sejak di-upload.
+ *
+ *  3 jenis hash yang disimpan:
+ *    - storageRoot: Hash file di 0G Storage (bukti file tersimpan)
+ *    - curationHash: Hash artikel AI (bukti kurasi asli)
+ *    - metadataHash: Hash metadata (judul, penulis, abstrak)
+ *
+ * ============================================================
  */
 
-const RPC_URL = process.env.RPC_URL || "https://evmrpc-testnet.0g.ai";
+const { ethers } = require("ethers");
+
+// Konfigurasi koneksi blockchain
+const RPC_URL = process.env.RPC_URL || "https://evmrpc.0g.ai";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const PAPER_ANCHOR_ADDRESS = process.env.PAPER_ANCHOR_ADDRESS || "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE";
 
+// ABI (interface) smart contract — fungsi-fungsi yang bisa dipanggil
 const ABI = [
   "function anchorPaper(bytes32 storageRoot, bytes32 curationHash, bytes32 metadataHash) external returns (uint256)",
   "function setArticle(uint256 paperId, bytes32 articleHash) external",
@@ -17,11 +39,22 @@ const ABI = [
   "event PaperAnchored(uint256 indexed id, bytes32 indexed storageRoot, bytes32 curationHash, bytes32 metadataHash, address author, uint256 timestamp)",
 ];
 
+/**
+ * Konversi string ke bytes32 (hash 32 byte)
+ * Dipakai untuk mengubah teks menjadi format yang bisa disimpan di blockchain.
+ *
+ * @param {string} str - Teks yang mau di-hash
+ * @returns {string} - Hash bytes32 (format 0x...)
+ */
 function toBytes32(str) {
-  if (!str) return ethers.ZeroHash;
+  if (!str) return ethers.ZeroHash;  // String kosong = hash nol
   return ethers.keccak256(ethers.toUtf8Bytes(str));
 }
 
+/**
+ * Buat koneksi ke smart contract
+ * @returns {ethers.Contract} - Instance contract yang siap dipanggil
+ */
 async function getContract() {
   if (!PRIVATE_KEY) throw new Error("PRIVATE_KEY not configured");
   const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -30,27 +63,36 @@ async function getContract() {
 }
 
 /**
- * Anchor a paper to the blockchain
- * @param {string} storageRootHex - 0G Storage root hash (0x...)
- * @param {string} title - Paper title
- * @param {string} authors - Paper authors
- * @param {string} abstract - Paper abstract
+ * Anchor paper ke blockchain
+ *
+ * Menyimpan 3 hash ke smart contract:
+ *   - storageRoot: Hash file di 0G Storage
+ *   - curationHash: Hash artikel AI (kosong dulu, diisi nanti)
+ *   - metadataHash: Hash metadata (judul, penulis, abstrak)
+ *
+ * @param {string} storageRootHex - 0G Storage root hash (format 0x...)
+ * @param {string} title - Judul paper
+ * @param {string} authors - Nama penulis
+ * @param {string} abstract - Abstrak paper
  * @returns {Promise<{paperId: number, txHash: string}>}
+ *   - paperId: ID on-chain paper (auto-increment dari contract)
+ *   - txHash: Hash transaksi blockchain
  */
 async function anchorPaper(storageRootHex, title, authors, abstract) {
   const contract = await getContract();
 
   const storageRoot = storageRootHex || ethers.ZeroHash;
   const metadataHash = toBytes32(JSON.stringify({ title, authors, abstract }));
-  const curationHash = ethers.ZeroHash; // Will be set after AI curation
+  const curationHash = ethers.ZeroHash; // Diisi nanti setelah AI curation
 
   console.log("[Anchor] Anchoring paper:", title);
   console.log("[Anchor] Storage root:", storageRoot);
 
+  // Kirim transaksi ke smart contract
   const tx = await contract.anchorPaper(storageRoot, curationHash, metadataHash);
   const receipt = await tx.wait();
 
-  // Parse PaperAnchored event to get paperId
+  // Baca event PaperAnchored dari receipt untuk mendapatkan paperId
   let paperId = null;
   for (const log of receipt.logs) {
     try {
@@ -67,7 +109,14 @@ async function anchorPaper(storageRootHex, title, authors, abstract) {
 }
 
 /**
- * Set article curation hash on-chain
+ * Anchor artikel AI ke blockchain
+ *
+ * Setelah AI selesai mengurasi paper, hash dari artikel AI
+ * disimpan di blockchain sebagai bukti bahwa kurasi asli.
+ *
+ * @param {number} paperId - ID on-chain paper
+ * @param {string} articleContent - Isi artikel hasil AI curation
+ * @returns {Promise<{txHash: string}>}
  */
 async function anchorArticle(paperId, articleContent) {
   const contract = await getContract();
@@ -81,7 +130,14 @@ async function anchorArticle(paperId, articleContent) {
 }
 
 /**
- * Verify paper integrity on-chain
+ * Verifikasi integritas paper on-chain
+ *
+ * Cek apakah storageRoot yang diberikan cocok dengan yang tersimpan
+ * di blockchain. Ini memastikan paper tidak diubah setelah di-upload.
+ *
+ * @param {number} paperId - ID on-chain paper
+ * @param {string} storageRoot - Hash storage yang mau diverifikasi
+ * @returns {Promise<boolean>} - true jika cocok (paper asli)
  */
 async function verifyPaperOnChain(paperId, storageRoot) {
   const contract = await getContract();

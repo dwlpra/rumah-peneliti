@@ -1,8 +1,10 @@
 "use client";
+import { getApiUrl } from "@/lib/api-url";
 
 import "../globals.css";
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Nav, Footer } from "@/app/page";
 import {
   FiUploadCloud,
   FiDatabase,
@@ -19,8 +21,8 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const EXPLORER = "https://chainscan-galileo.0g.ai";
+const API = () => getApiUrl();
+const EXPLORER = "https://chainscan.0g.ai";
 
 const STEPS = [
   { id: 1, title: "0G Storage Upload", desc: "Upload paper to decentralized storage", icon: FiUploadCloud, color: "#3b82f6" },
@@ -58,11 +60,11 @@ function GuidedTour({ step, onNext, onPrev, onClose, total }) {
               <span style={{ fontSize: "1.3rem" }}>{TOUR_STEPS[step]?.icon}</span>
               <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{TOUR_STEPS[step]?.title}</span>
             </div>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer", padding: 4 }}>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 4 }}>
               <FiX size={16} />
             </button>
           </div>
-          <p style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: 14 }}>{TOUR_STEPS[step]?.desc}</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: 14 }}>{TOUR_STEPS[step]?.desc}</p>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: 6 }}>
               {Array.from({ length: total }).map((_, i) => (
@@ -75,8 +77,8 @@ function GuidedTour({ step, onNext, onPrev, onClose, total }) {
             <div style={{ display: "flex", gap: 8 }}>
               {step > 0 && (
                 <button onClick={onPrev} style={{
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 8, padding: "6px 14px", color: "#94A3B8", cursor: "pointer", fontSize: "0.8rem",
+                  background: "var(--bg-card-solid)", border: "1px solid var(--border)",
+                  borderRadius: 8, padding: "6px 14px", color: "var(--text-muted)", cursor: "pointer", fontSize: "0.8rem",
                   display: "flex", alignItems: "center", gap: 4,
                 }}><FiArrowLeft size={12} /> Back</button>
               )}
@@ -149,7 +151,7 @@ export default function PipelinePage() {
     addLog(1, "Uploading paper to 0G Storage...");
 
     try {
-      const res = await fetch(`${API}/api/papers`, { method: "POST", body: formData });
+      const res = await fetch(`${API()}/api/papers`, { method: "POST", body: formData });
       const data = await res.json();
 
       if (!data.success) {
@@ -222,6 +224,7 @@ export default function PipelinePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
+      <Nav />
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
@@ -351,6 +354,7 @@ export default function PipelinePage() {
           </motion.div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

@@ -31,7 +31,7 @@ async function getBroker() {
   return brokerInitPromise;
 }
 
-async function ensureLedger(minBalance = 0.1) {
+async function ensureLedger(minBalance = 3) {
   const broker = await getBroker();
   try {
     const account = await broker.ledger.getLedger();
@@ -42,7 +42,7 @@ async function ensureLedger(minBalance = 0.1) {
       await broker.ledger.depositFund(minBalance);
     }
   } catch (e) {
-    if (e.message?.includes("does not exist")) {
+    if (e.message?.includes("does not exist") || e.message?.includes("not found")) {
       console.log("[0G Compute] Creating new ledger with", minBalance, "0G");
       await broker.ledger.addLedger(minBalance);
     } else throw e;
@@ -52,7 +52,7 @@ async function ensureLedger(minBalance = 0.1) {
 async function curateWith0GCompute(title, abstract, textContent) {
   try {
     const broker = await getBroker();
-    await ensureLedger(0.1);
+    await ensureLedger(3);
 
     const services = await broker.inference.listService();
     if (!services || services.length === 0) {
