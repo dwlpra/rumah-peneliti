@@ -1,221 +1,508 @@
-"use client";
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { WalletProvider, useWallet } from "@/lib/wallet";
-import { useLanguage } from "@/LanguageContext";
-import { uploadPaper } from "@/lib/api";
-import { loginWithWallet, getStoredToken, logout as authLogout, getStoredAddress, checkAuth } from "@/lib/auth";
-import { Nav, Footer } from "@/app/page";
+"use client"
 
-const inputStyle = {
-  padding: "12px 16px", background: "var(--bg-card-solid)", border: "1px solid rgba(139,92,246,0.1)",
-  borderRadius: 8, color: "var(--text-primary)", fontSize: "0.95rem", width: "100%",
-  outline: "none", transition: "border-color 0.2s", fontFamily: "inherit",
-};
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import {
+  Lock,
+  PenLine,
+  UploadCloud,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Wallet,
+  Gift,
+  Diamond,
+  X,
+} from "lucide-react"
+import { Navbar } from "@/components/layout/navbar"
+import { Footer } from "@/components/layout/footer"
+import { AddressDisplay } from "@/components/shared/address-display"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { useWallet, WalletProvider } from "@/contexts/wallet"
+import { useLanguage } from "@/contexts/language"
+import { loginWithWallet, getStoredToken, getStoredAddress } from "@/lib/auth"
+import { getApiUrl } from "@/lib/api-url"
 
-const labelStyle = { display: "block", marginBottom: 6, color: "var(--text-secondary)", fontSize: "0.85rem", fontWeight: 500 };
+/* ──────────────────────── Auth Gate: No Wallet ──────────────────────── */
 
-function UploadForm() {
-  const { t } = useLanguage();
-  const { address, connect } = useWallet();
-  const router = useRouter();
-  const fileRef = useRef(null);
-  const [title, setTitle] = useState("");
-  const [authors, setAuthors] = useState("");
-  const [abstract, setAbstract] = useState("");
-  const [priceWei, setPriceWei] = useState("0");
-  const [isFree, setIsFree] = useState(true);
-  const [file, setFile] = useState(null);
-  const [dragOver, setDragOver] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState(null);
+function ConnectGate() {
+  const { connect } = useWallet()
+  const { t } = useLanguage()
 
-  // Auth state
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState(null);
+  return (
+    <Card className="mx-auto max-w-md">
+      <CardHeader className="items-center text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+          <Lock className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <CardTitle className="mt-4 text-xl">
+          Connect Wallet to Upload
+        </CardTitle>
+        <CardDescription>
+          You need to connect your wallet and verify ownership before uploading research papers.
+        </CardDescription>
+      </CardHeader>
+      <CardFooter className="justify-center pb-6">
+        <Button onClick={connect} className="gap-2">
+          <Wallet className="h-4 w-4" />
+          Connect Wallet
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
 
-  // Cek apakah sudah auth saat page load
-  useEffect(() => {
-    const token = getStoredToken();
-    const storedAddr = getStoredAddress();
-    if (token && storedAddr && address && storedAddr.toLowerCase() === address.toLowerCase()) {
-      setIsAuthed(true);
-    } else {
-      setIsAuthed(false);
-    }
-  }, [address]);
+/* ──────────────────────── Auth Gate: Not Verified ──────────────────────── */
 
-  // Login: connect wallet → sign message → get token
-  const handleAuth = async () => {
-    setAuthError(null);
+function VerifyGate({ address, onVerified }) {
+  const { t } = useLanguage()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleVerify = async () => {
+    setError(null)
+    setLoading(true)
     try {
-      // Step 1: Connect wallet kalau belum
-      let walletAddr = address;
-      if (!walletAddr) {
-        await connect();
-        return; // Will re-trigger useEffect on next render
-      }
-
-      setAuthLoading(true);
-
-      // Step 2: Sign message & verify with backend
-      const result = await loginWithWallet(walletAddr);
-      setIsAuthed(true);
-      setAuthLoading(false);
+      await loginWithWallet(address)
+      onVerified()
     } catch (err) {
-      setAuthError(err.message || "Authentication failed");
-      setAuthLoading(false);
+      setError(err.message || "Authentication failed")
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) setFile(f); };
+  return (
+    <Card className="mx-auto max-w-md">
+      <CardHeader className="items-center text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950">
+          <PenLine className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+        </div>
+        <CardTitle className="mt-4 text-xl">
+          Verify Your Wallet
+        </CardTitle>
+        <CardDescription>
+          Sign a message to prove you own this address.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-3">
+        <Badge variant="secondary" className="font-mono text-xs">
+          <AddressDisplay address={address} />
+        </Badge>
+        {error && (
+          <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="justify-center pb-6">
+        <Button onClick={handleVerify} disabled={loading} className="gap-2">
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <PenLine className="h-4 w-4" />
+          )}
+          {loading ? "Waiting for signature..." : "Sign to Verify"}
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
+/* ──────────────────────── Upload Form ──────────────────────── */
+
+function UploadForm({ address }) {
+  const { t } = useLanguage()
+  const router = useRouter()
+  const fileRef = useRef(null)
+
+  // Form state
+  const [title, setTitle] = useState("")
+  const [authors, setAuthors] = useState("")
+  const [abstract, setAbstract] = useState("")
+  const [file, setFile] = useState(null)
+  const [isFree, setIsFree] = useState(true)
+  const [priceWei, setPriceWei] = useState("10000000000000000")
+  const [dragOver, setDragOver] = useState(false)
+
+  // Submission state
+  const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [result, setResult] = useState(null)
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    const f = e.dataTransfer.files[0]
+    if (f) setFile(f)
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setDragOver(false)
+  }
+
+  const handleFileSelect = (e) => {
+    const f = e.target.files[0]
+    if (f) setFile(f)
+  }
+
+  const removeFile = () => {
+    setFile(null)
+    if (fileRef.current) fileRef.current.value = ""
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!title) return;
-    setLoading(true); setResult(null); setProgress(0);
-    const interval = setInterval(() => setProgress((p) => Math.min(p + Math.random() * 15, 90)), 500);
-    const fd = new FormData();
-    // Attach auth token ke FormData
-    const token = getStoredToken();
-    fd.append("author_wallet", address || "");
-    if (file) fd.append("file", file);
+    e.preventDefault()
+    if (!title.trim()) return
+
+    setLoading(true)
+    setResult(null)
+    setProgress(0)
+
+    const interval = setInterval(() => {
+      setProgress((p) => Math.min(p + Math.random() * 15, 90))
+    }, 500)
+
+    const fd = new FormData()
+    const token = getStoredToken()
+    fd.append("title", title)
+    fd.append("authors", authors)
+    fd.append("abstract", abstract)
+    fd.append("author_wallet", address || "")
+    fd.append("price_wei", isFree ? "0" : priceWei)
+    if (file) fd.append("file", file)
+
     try {
-      // Kirim dengan auth header
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const res = await fetch(`${baseUrl}/api/papers`, {
+      const res = await fetch(`${getApiUrl()}/api/papers`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
-      });
-      const data = await res.json();
-      clearInterval(interval); setProgress(100); setResult(data);
-      if (data.success) setTimeout(() => router.push("/browse"), 2000);
-      if (data.error) throw new Error(data.error);
-    } catch (err) { clearInterval(interval); setResult({ error: err.message }); }
-    setLoading(false);
-  };
+      })
+      const data = await res.json()
+      clearInterval(interval)
+      setProgress(100)
+      setResult(data)
+
+      if (data.success) {
+        setTimeout(() => router.push("/browse"), 2000)
+      }
+      if (data.error) throw new Error(data.error)
+    } catch (err) {
+      clearInterval(interval)
+      setResult({ error: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Success state
+  if (result?.success) {
+    return (
+      <Card className="mx-auto max-w-md">
+        <CardHeader className="items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
+            <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <CardTitle className="mt-4 text-xl">
+            Paper Uploaded Successfully
+          </CardTitle>
+          <CardDescription>
+            {result.paper?.title || title}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Redirecting to browse page...
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
-    <div style={{ minHeight: "100vh" }}>
-      <Nav />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Title */}
+      <div className="space-y-2">
+        <Label htmlFor="title">
+          {t("label_title")} <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="title"
+          placeholder={t("label_title")}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          disabled={loading}
+        />
+      </div>
 
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "2.5rem 2rem 4rem" }}>
-        <h1 className="animate-fade-in" style={{ fontSize: "2rem", fontWeight: 800, marginBottom: "0.5rem" }}>
-          {t("upload_title")}
-        </h1>
-        <p className="animate-fade-in" style={{ color: "var(--text-secondary)", marginBottom: "2rem", fontSize: "0.95rem" }}>
-          {t("upload_subtitle")}
-        </p>
+      {/* Authors */}
+      <div className="space-y-2">
+        <Label htmlFor="authors">{t("label_authors")}</Label>
+        <Input
+          id="authors"
+          placeholder={t("label_authors")}
+          value={authors}
+          onChange={(e) => setAuthors(e.target.value)}
+          disabled={loading}
+        />
+      </div>
 
-        {/* ═══ Auth Gate ═══ */}
-        {!address && (
-          <div className="animate-fade-in" style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)", padding: "2rem", borderRadius: 12, marginBottom: "1.5rem", textAlign: "center" }}>
-            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔐</div>
-            <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Connect Wallet to Upload</h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>You need to connect your wallet and verify ownership before uploading papers.</p>
-            <button onClick={connect} style={{ padding: "12px 28px", background: "linear-gradient(135deg, var(--accent), #6D28D9)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" }}>
-              ⟠ Connect Wallet
-            </button>
-          </div>
-        )}
+      {/* Abstract */}
+      <div className="space-y-2">
+        <Label htmlFor="abstract">{t("label_abstract")}</Label>
+        <Textarea
+          id="abstract"
+          placeholder={t("label_abstract")}
+          value={abstract}
+          onChange={(e) => setAbstract(e.target.value)}
+          rows={5}
+          disabled={loading}
+        />
+      </div>
 
-        {address && !isAuthed && (
-          <div className="animate-fade-in" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", padding: "1.5rem", borderRadius: 12, marginBottom: "1.5rem", textAlign: "center" }}>
-            <div style={{ fontSize: "2rem", marginBottom: "0.8rem" }}>✍️</div>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Verify Your Wallet</h3>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "1rem" }}>Sign a message to prove you own <code style={{ background: "rgba(139,92,246,0.1)", padding: "2px 6px", borderRadius: 4, fontFamily: "monospace", fontSize: "0.8rem" }}>{address.slice(0, 6)}...{address.slice(-4)}</code></p>
-            {authError && <p style={{ color: "#f87171", fontSize: "0.85rem", marginBottom: "0.8rem" }}>❌ {authError}</p>}
-            <button onClick={handleAuth} disabled={authLoading} style={{ padding: "12px 28px", background: authLoading ? "var(--text-dim)" : "linear-gradient(135deg, var(--accent), #6D28D9)", color: "#fff", border: "none", borderRadius: 8, cursor: authLoading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "0.95rem" }}>
-              {authLoading ? "⏳ Waiting for signature..." : "✍️ Sign to Verify"}
-            </button>
-          </div>
-        )}
-
-        {address && isAuthed && !address && (
-          <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", padding: "1rem 1.2rem", borderRadius: 8, marginBottom: "1.5rem", color: "#FBBF24", fontSize: "0.9rem" }}>
-            ⚠️ Connect your wallet first to receive payments
-          </div>
-        )}
-
-        {/* ═══ Upload Form (only show if authed) ═══ */}
-        {address && isAuthed && (
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-          <div className="animate-fade-in animate-fade-in-delay-1">
-            <label style={labelStyle}>{t("label_title")} *</label>
-            <input type="text" placeholder={t("label_title")} value={title} onChange={(e) => setTitle(e.target.value)} required style={inputStyle} onFocus={(e) => e.target.style.borderColor = "rgba(139,92,246,0.3)"} onBlur={(e) => e.target.style.borderColor = "rgba(139,92,246,0.1)"} />
-          </div>
-          <div className="animate-fade-in animate-fade-in-delay-1">
-            <label style={labelStyle}>{t("label_authors")}</label>
-            <input type="text" placeholder={t("label_authors")} value={authors} onChange={(e) => setAuthors(e.target.value)} style={inputStyle} onFocus={(e) => e.target.style.borderColor = "rgba(139,92,246,0.3)"} onBlur={(e) => e.target.style.borderColor = "rgba(139,92,246,0.1)"} />
-          </div>
-          <div className="animate-fade-in animate-fade-in-delay-2">
-            <label style={labelStyle}>{t("label_abstract")}</label>
-            <textarea placeholder={t("label_abstract")} value={abstract} onChange={(e) => setAbstract(e.target.value)} rows={5} style={{ ...inputStyle, resize: "vertical" }} onFocus={(e) => e.target.style.borderColor = "rgba(139,92,246,0.3)"} onBlur={(e) => e.target.style.borderColor = "rgba(139,92,246,0.1)"} />
-          </div>
-          <div className="animate-fade-in animate-fade-in-delay-2">
-            <label style={labelStyle}>{t("label_file")}</label>
-            <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop} onClick={() => fileRef.current?.click()} style={{ padding: "2rem", background: dragOver ? "rgba(139,92,246,0.08)" : "var(--bg-card-solid)", border: dragOver ? "2px dashed var(--accent)" : "2px dashed rgba(139,92,246,0.15)", borderRadius: 8, textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{file ? "📎" : "📁"}</div>
-              {file ? <p style={{ color: "var(--text-primary)", fontSize: "0.9rem" }}>{file.name} <span style={{ color: "var(--text-muted)" }}>({(file.size / 1024).toFixed(1)} KB)</span></p> : <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Drag & drop or <span style={{ color: "var(--accent)" }}>browse</span></p>}
-              <input ref={fileRef} type="file" accept=".pdf,.txt,.doc,.docx" onChange={(e) => setFile(e.target.files[0])} style={{ display: "none" }} />
+      {/* File Upload */}
+      <div className="space-y-2">
+        <Label>{t("label_file")}</Label>
+        {file ? (
+          <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3">
+            <FileText className="h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{file.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {(file.size / 1024).toFixed(1)} KB
+              </p>
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={removeFile}
+              disabled={loading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="animate-fade-in animate-fade-in-delay-3">
-            <label style={labelStyle}>{t("label_price")}</label>
-            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
-              <button type="button" onClick={() => { setIsFree(true); setPriceWei("0"); }} style={{
-                flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${isFree ? "var(--accent)" : "rgba(139,92,246,0.1)"}`,
-                background: isFree ? "rgba(139,92,246,0.12)" : "var(--bg-card-solid)", color: isFree ? "var(--accent)" : "var(--text-secondary)",
-                cursor: "pointer", fontWeight: 600, fontSize: "0.9rem",
-              }}>🆓 Free Access</button>
-              <button type="button" onClick={() => { setIsFree(false); setPriceWei("10000000000000000"); }} style={{
-                flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${!isFree ? "var(--accent)" : "rgba(139,92,246,0.1)"}`,
-                background: !isFree ? "rgba(139,92,246,0.12)" : "var(--bg-card-solid)", color: !isFree ? "var(--accent)" : "var(--text-secondary)",
-                cursor: "pointer", fontWeight: 600, fontSize: "0.9rem",
-              }}>💎 Set Price</button>
+        ) : (
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileRef.current?.click()}
+            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${
+              dragOver
+                ? "border-primary bg-primary/5"
+                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+            }`}
+          >
+            <UploadCloud className="h-10 w-10 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">
+                Drag &amp; drop or{" "}
+                <span className="text-primary underline underline-offset-4">
+                  click to browse
+                </span>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                PDF, TXT, DOC, DOCX
+              </p>
             </div>
-            {!isFree && (
-              <div>
-                <input type="text" value={priceWei} onChange={(e) => setPriceWei(e.target.value)} style={inputStyle} onFocus={(e) => e.target.style.borderColor = "rgba(139,92,246,0.3)"} onBlur={(e) => e.target.style.borderColor = "rgba(139,92,246,0.1)"} />
-                <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: 4 }}>≈ {(Number(priceWei) / 1e18).toFixed(4)} 0G per access</p>
-              </div>
-            )}
-            {isFree && (
-              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: 4 }}>📖 Free to read. Readers can still donate to support your research.</p>
-            )}
-          </div>
-          {loading && (
-            <div style={{ background: "var(--bg-card-solid)", borderRadius: 8, overflow: "hidden", height: 6 }}>
-              <div style={{ width: `${progress}%`, height: "100%", background: "linear-gradient(90deg, var(--accent), var(--accent-cyan))", borderRadius: 8, transition: "width 0.3s" }} />
-            </div>
-          )}
-          <button type="submit" disabled={loading} className="animate-fade-in animate-fade-in-delay-3" style={{
-            padding: "14px", background: loading ? "var(--text-dim)" : "linear-gradient(135deg, var(--accent), #6D28D9)",
-            color: "#fff", border: "none", borderRadius: 8, cursor: loading ? "not-allowed" : "pointer",
-            fontWeight: 700, fontSize: "1rem", transition: "all 0.2s",
-            boxShadow: loading ? "none" : "0 4px 20px rgba(139,92,246,0.25)",
-          }}>
-            {loading ? `⏳ ${t("uploading")}` : `📤 ${t("btn_submit")}`}
-          </button>
-        </form>
-        )}
-
-        {result && (
-          <div className="animate-fade-in" style={{ marginTop: "1.5rem", padding: "1.2rem", borderRadius: 8, background: result.error ? "rgba(248,113,113,0.08)" : "rgba(34,197,94,0.08)", border: result.error ? "1px solid rgba(248,113,113,0.15)" : "1px solid rgba(34,197,94,0.15)", color: result.error ? "#f87171" : "#22c55e", fontSize: "0.95rem" }}>
-            {result.error ? `❌ ${result.error}` : `✅ Paper uploaded successfully! AI is processing...`}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.txt,.doc,.docx"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
           </div>
         )}
       </div>
 
-      <Footer />
-    </div>
-  );
+      {/* Price */}
+      <div className="space-y-2">
+        <Label>{t("label_price")}</Label>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant={isFree ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              setIsFree(true)
+              setPriceWei("0")
+            }}
+            disabled={loading}
+          >
+            <Gift className="h-3.5 w-3.5" />
+            Free Access
+          </Button>
+          <Button
+            type="button"
+            variant={!isFree ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              setIsFree(false)
+              if (priceWei === "0") setPriceWei("10000000000000000")
+            }}
+            disabled={loading}
+          >
+            <Diamond className="h-3.5 w-3.5" />
+            Set Price
+          </Button>
+        </div>
+        {!isFree && (
+          <div className="space-y-1.5">
+            <Input
+              type="text"
+              value={priceWei}
+              onChange={(e) => setPriceWei(e.target.value)}
+              placeholder="Price in wei"
+              disabled={loading}
+              className="font-mono"
+            />
+            <p className="text-xs text-muted-foreground">
+              {"\u2248"} {(Number(priceWei) / 1e18).toFixed(4)} 0G per access
+            </p>
+          </div>
+        )}
+        {isFree && (
+          <p className="text-xs text-muted-foreground">
+            Free to read. Readers can still donate to support your research.
+          </p>
+        )}
+      </div>
+
+      {/* Progress */}
+      {loading && (
+        <div className="space-y-2">
+          <Progress value={progress} className="h-2" />
+          <p className="text-center text-xs text-muted-foreground">
+            Uploading... {Math.round(progress)}%
+          </p>
+        </div>
+      )}
+
+      {/* Error */}
+      {result?.error && (
+        <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{result.error}</span>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Submit */}
+      <Button
+        type="submit"
+        className="w-full"
+        size="lg"
+        disabled={loading || !title.trim()}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Uploading...
+          </>
+        ) : (
+          <>
+            <UploadCloud className="mr-2 h-4 w-4" />
+            Upload Paper
+          </>
+        )}
+      </Button>
+    </form>
+  )
 }
 
+/* ──────────────────────── Page Content ──────────────────────── */
+
+function UploadContent() {
+  const { t } = useLanguage()
+  const { address, connect } = useWallet()
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  // Check stored auth on mount and when address changes
+  useEffect(() => {
+    const token = getStoredToken()
+    const storedAddr = getStoredAddress()
+    if (
+      token &&
+      storedAddr &&
+      address &&
+      storedAddr.toLowerCase() === address.toLowerCase()
+    ) {
+      setIsAuthed(true)
+    } else {
+      setIsAuthed(false)
+    }
+  }, [address])
+
+  return (
+    <>
+      <Navbar />
+      <div className="flex-1">
+        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+          {/* Page Heading */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {t("upload_title")}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {t("upload_subtitle")}
+            </p>
+          </div>
+
+          {/* Auth Gate: No wallet */}
+          {!address && <ConnectGate />}
+
+          {/* Auth Gate: Wallet connected but not verified */}
+          {address && !isAuthed && (
+            <VerifyGate
+              address={address}
+              onVerified={() => setIsAuthed(true)}
+            />
+          )}
+
+          {/* Upload Form */}
+          {address && isAuthed && <UploadForm address={address} />}
+        </div>
+      </div>
+      <Footer />
+    </>
+  )
+}
+
+/* ──────────────────────── Page Export ──────────────────────── */
+
 export default function UploadPage() {
-  return <WalletProvider><UploadForm /></WalletProvider>;
+  return (
+    <WalletProvider>
+      <UploadContent />
+    </WalletProvider>
+  )
 }
