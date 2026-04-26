@@ -1,17 +1,20 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback } from "react"
+import { createContext, useContext, useState, useCallback, useEffect } from "react"
 import translations from "@/i18n"
 
 const LanguageContext = createContext()
 
 export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("rp-lang") || "en"
+  const [lang, setLangState] = useState("en")
+
+  // Sync with localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem("rp-lang") || "en"
+    if (stored !== "en") {
+      setLangState(stored)
     }
-    return "en"
-  })
+  }, [])
 
   const setLang = useCallback((newLang) => {
     setLangState(newLang)

@@ -5,14 +5,18 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("rp-theme") || "light"
-    }
-    return "light"
-  })
+  const [theme, setTheme] = useState("light")
+  const [mounted, setMounted] = useState(false)
+
+  // Sync with localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem("rp-theme") || "light"
+    setTheme(stored)
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
+    if (!mounted) return
     const root = document.documentElement
     if (theme === "dark") {
       root.classList.add("dark")
@@ -20,7 +24,7 @@ export function ThemeProvider({ children }) {
       root.classList.remove("dark")
     }
     localStorage.setItem("rp-theme", theme)
-  }, [theme])
+  }, [theme, mounted])
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"))
@@ -28,8 +32,9 @@ export function ThemeProvider({ children }) {
 
   const isDark = theme === "dark"
 
+  // Prevent flash by not rendering until mounted
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, isDark }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, isDark, mounted }}>
       {children}
     </ThemeContext.Provider>
   )
