@@ -181,23 +181,49 @@ function UploadForm({ address }) {
     setResult(null)
     setProgress(0)
 
-    const interval = setInterval(() => {
-      setProgress((p) => Math.min(p + Math.random() * 15, 90))
-    }, 500)
-
-    const fd = new FormData()
-    const token = getStoredToken()
-    fd.append("title", title)
-    fd.append("authors", authors)
-    fd.append("abstract", abstract)
-    fd.append("author_wallet", address || "")
-    fd.append("price_wei", isFree ? "0" : priceWei)
-    if (file) fd.append("file", file)
-
     try {
+      // ── Step 1: Sign upload message (Smart Contract Gate) ──
+      // User harus sign pesan yang berisi detail paper
+      // Kalau user reject/tidak sign → upload batal, AI tidak jalan
+      setProgress(10)
+      const uploadMessage = `RumahPeneliti Paper Submission\n\nTitle: ${title}\nAuthors: ${authors || "N/A"}\nTimestamp: ${new Date().toISOString()}\n\nI approve the submission of this paper for AI curation and on-chain registration.`
+
+      let uploadSignature
+      try {
+        uploadSignature = await window.ethereum.request({
+          method: "personal_sign",
+          params: [uploadMessage, address],
+        })
+      } catch (signError) {
+        // User rejected the signature → batal
+        setLoading(false)
+        setResult({ error: "Upload cancelled. You must sign the submission to proceed." })
+        return
+      }
+
+      setProgress(30)
+
+      // ── Step 2: Upload paper dengan signature ──
+      const interval = setInterval(() => {
+        setProgress((p) => Math.min(p + Math.random() * 10, 90))
+      }, 500)
+
+      const fd = new FormData()
+      const token = getStoredToken()
+      fd.append("title", title)
+      fd.append("authors", authors)
+      fd.append("abstract", abstract)
+      fd.append("author_wallet", address || "")
+      fd.append("price_wei", isFree ? "0" : priceWei)
+      fd.append("upload_message", uploadMessage)
+      if (file) fd.append("file", file)
+
       const res = await fetch(`${getApiUrl()}/api/papers`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-upload-signature": uploadSignature,
+        },
         body: fd,
       })
       const data = await res.json()
@@ -210,7 +236,6 @@ function UploadForm({ address }) {
       }
       if (data.error) throw new Error(data.error)
     } catch (err) {
-      clearInterval(interval)
       setResult({ error: err.message })
     } finally {
       setLoading(false)
@@ -401,7 +426,11 @@ function UploadForm({ address }) {
         <div className="space-y-2">
           <Progress value={progress} className="h-2" />
           <p className="text-center text-xs text-muted-foreground">
-            Uploading... {Math.round(progress)}%
+            {loading && progress <= 10
+              ? "Waiting for wallet signature..."
+              : loading
+                ? "Uploading & processing... " + Math.round(progress) + "%"
+                : "Uploading... " + Math.round(progress) + "%"}
           </p>
         </div>
       )}
@@ -426,15 +455,19 @@ function UploadForm({ address }) {
         {loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Uploading...
+            {progress <= 10 ? "Waiting for Signature..." : "Uploading & Processing..."}
           </>
         ) : (
           <>
             <UploadCloud className="mr-2 h-4 w-4" />
-            Upload Paper
+            Sign & Upload Paper
           </>
         )}
       </Button>
+      <p className="text-center text-xs text-muted-foreground mt-2">
+        🔐 MetaMask will ask you to sign a message approving the submission.
+        AI curation will only run after your signature is verified.
+      </p>
     </form>
   )
 }

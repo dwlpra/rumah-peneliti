@@ -125,11 +125,71 @@ function requireAuth(req, res, next) {
   next();
 }
 
+/**
+ * Express middleware: requireUploadSignature
+ *
+ * Verifikasi bahwa user menyetujui (approve) upload paper
+ * dengan men-sign pesan yang berisi detail paper.
+ *
+ * Ini memastikan AI Agent hanya berjalan SETELAH smart contract
+ * (signature verification) berhasil — sinergi smart contract & AI.
+ *
+ * Flow:
+ *   1. Frontend minta user sign: "I approve submission of [title]"
+ *   2. Frontend kirim signature + message di request body
+ *   3. Backend verifikasi signature cocok dengan wallet address
+ *   4. Kalau valid → lanjut upload + AI pipeline
+ *   5. Kalau tidak valid → reject, AI tidak jalan
+ *
+ * Header: x-upload-signature
+ * Body field: upload_message
+ */
+function requireUploadSignature(req, res, next) {
+  const signature = req.headers["x-upload-signature"];
+  const uploadMessage = req.body.upload_message;
+
+  if (!signature || !uploadMessage) {
+    return res.status(401).json({
+      error: "Upload signature required",
+      hint: "You must sign the upload message with your wallet before submitting",
+    });
+  }
+
+  // Recover address dari signature + message
+  try {
+    const recovered = ethers.verifyMessage(uploadMessage, signature);
+
+    // Bandingkan dengan address dari JWT token (sudah di-set oleh requireAuth)
+    if (recovered.toLowerCase() !== req.user.address.toLowerCase()) {
+      return res.status(401).json({
+        error: "Signature does not match authenticated wallet",
+        hint: "The upload signature must be from the same wallet you logged in with",
+      });
+    }
+
+    // Signature valid — inject ke request
+    req.uploadSignature = {
+      address: recovered,
+      signature,
+      message: uploadMessage,
+    };
+
+    console.log("[Upload] ✅ Signature verified for:", recovered);
+    next();
+  } catch (err) {
+    return res.status(401).json({
+      error: "Invalid upload signature",
+      hint: "Could not verify the upload signature",
+    });
+  }
+}
+
 module.exports = {
   generateNonce,
   verifySignature,
   createToken,
   verifyToken,
   requireAuth,
+  requireUploadSignature,
   nonceStore,
 };

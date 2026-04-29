@@ -19,7 +19,6 @@
 
 const { Router } = require("express");
 const { asyncHandler } = require("../middleware/error-handler");
-const { requireAuth } = require("../middleware/auth");
 const {
   uploadPaper,
   listPapers,
@@ -31,12 +30,14 @@ const {
   getActivity,
   chatAboutPaper,
 } = require("../controllers/paper-controller");
+const { requireAuth, requireUploadSignature } = require("../middleware/auth");
 
 module.exports = (upload) => {
   const router = Router();
 
   // ═══ Protected Routes (perlu wallet auth) ═══
-  router.post("/", upload.single("file"), requireAuth, asyncHandler(uploadPaper));
+  // Upload butuh auth + upload signature (smart contract gate)
+  router.post("/", upload.single("file"), requireAuth, requireUploadSignature, asyncHandler(uploadPaper));
   router.delete("/:id", requireAuth, asyncHandler(deletePaper));
   router.post("/:id/purchase", requireAuth, asyncHandler(purchasePaper));
   router.post("/:id/chat", requireAuth, asyncHandler(chatAboutPaper));
