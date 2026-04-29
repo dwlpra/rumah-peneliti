@@ -20,12 +20,12 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const STEPS = [
-  { id: "upload", title: "Upload", desc: "Paper uploaded to server", icon: Upload, color: "#3b82f6" },
-  { id: "ai", title: "AI Curation", desc: "Multi-agent AI pipeline processing", icon: Brain, color: "#8b5cf6" },
-  { id: "storage", title: "0G Storage", desc: "Upload to decentralized storage", icon: Database, color: "#06b6d4" },
-  { id: "da", title: "DA Proof", desc: "Data availability proof", icon: ShieldCheck, color: "#10b981" },
-  { id: "anchor", title: "On-chain Anchor", desc: "Anchor paper hash on blockchain", icon: Link2, color: "#f59e0b" },
-  { id: "nft", title: "NFT Minting", desc: "Mint research NFT (ERC-721)", icon: Award, color: "#ec4899" },
+  { id: "upload", title: "Upload", desc: "Paper uploaded to server", icon: Upload, color: "text-blue-500" },
+  { id: "ai", title: "AI Curation", desc: "Multi-agent AI pipeline processing", icon: Brain, color: "text-violet-500" },
+  { id: "storage", title: "0G Storage", desc: "Upload to decentralized storage", icon: Database, color: "text-cyan-500" },
+  { id: "da", title: "DA Proof", desc: "Data availability proof", icon: ShieldCheck, color: "text-emerald-500" },
+  { id: "anchor", title: "On-chain Anchor", desc: "Anchor paper hash on blockchain", icon: Link2, color: "text-amber-500" },
+  { id: "nft", title: "NFT Minting", desc: "Mint research NFT (ERC-721)", icon: Award, color: "text-pink-500" },
 ]
 
 function StatusIcon({ status }) {
@@ -85,7 +85,7 @@ export function PipelineSteps({ stepState, currentStep }) {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                   {i + 1}
                 </span>
-                <Icon className="h-5 w-5" style={{ color: step.color }} />
+                <Icon className={cn("h-5 w-5", step.color)} />
               </div>
 
               {/* Title + desc */}

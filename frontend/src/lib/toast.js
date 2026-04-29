@@ -1,7 +1,22 @@
 "use client";
 import { useState, useCallback, useContext, createContext } from "react";
+import { cn } from "@/lib/utils";
 
 const ToastContext = createContext(null);
+
+const typeStyles = {
+  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  error: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
+  info: "border-primary/30 bg-primary/10 text-primary",
+  warning: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+};
+
+const typeIcons = {
+  success: "✅",
+  error: "❌",
+  info: "ℹ️",
+  warning: "⚠️",
+};
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
@@ -21,43 +36,26 @@ export function ToastProvider({ children }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const colors = {
-    success: { bg: "rgba(34,197,94,0.15)", border: "rgba(34,197,94,0.3)", text: "#22c55e", icon: "✅" },
-    error: { bg: "rgba(239,68,68,0.15)", border: "rgba(239,68,68,0.3)", text: "#ef4444", icon: "❌" },
-    info: { bg: "rgba(0,240,255,0.1)", border: "rgba(0,240,255,0.2)", text: "#00f0ff", icon: "ℹ️" },
-    warning: { bg: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.3)", text: "#f59e0b", icon: "⚠️" },
-  };
-
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      {/* Toast container */}
-      <div style={{
-        position: "fixed", bottom: 20, right: 20, zIndex: 9999,
-        display: "flex", flexDirection: "column-reverse", gap: 8, maxWidth: 400,
-      }}>
-        {toasts.map(toast => {
-          const c = colors[toast.type] || colors.info;
-          return (
-            <div key={toast.id} onClick={() => removeToast(toast.id)}
-              style={{
-                background: c.bg, border: `1px solid ${c.border}`, borderRadius: 10,
-                padding: "10px 16px", color: c.text, fontSize: "0.85rem", cursor: "pointer",
-                backdropFilter: "blur(12px)", animation: "slideInRight 0.3s ease-out",
-                display: "flex", alignItems: "center", gap: 8,
-              }}>
-              <span>{c.icon}</span>
-              <span style={{ color: "var(--text-primary, #fff)" }}>{toast.message}</span>
-            </div>
-          );
-        })}
+      <div className="fixed bottom-5 right-5 z-[9999] flex flex-col-reverse gap-2 max-w-[400px]">
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            onClick={() => removeToast(toast.id)}
+            className={cn(
+              "flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm cursor-pointer",
+              "backdrop-blur-sm animate-in slide-in-from-right-5 fade-in duration-300",
+              "hover:opacity-80 transition-opacity",
+              typeStyles[toast.type] || typeStyles.info
+            )}
+          >
+            <span>{typeIcons[toast.type] || typeIcons.info}</span>
+            <span className="text-foreground">{toast.message}</span>
+          </div>
+        ))}
       </div>
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
     </ToastContext.Provider>
   );
 }

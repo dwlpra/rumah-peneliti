@@ -17,12 +17,12 @@ import { getStoredToken } from "@/lib/auth"
 const API = () => getApiUrl()
 
 const STEPS = [
-  { id: "upload", title: "Upload", desc: "Paper uploaded to server", color: "#3b82f6" },
-  { id: "ai", title: "AI Curation", desc: "Multi-agent AI pipeline processing", color: "#8b5cf6" },
-  { id: "storage", title: "0G Storage", desc: "Upload to decentralized storage", color: "#06b6d4" },
-  { id: "da", title: "DA Proof", desc: "Data availability proof", color: "#10b981" },
-  { id: "anchor", title: "On-chain Anchor", desc: "Anchor paper hash on blockchain", color: "#f59e0b" },
-  { id: "nft", title: "NFT Minting", desc: "Mint research NFT (ERC-721)", color: "#ec4899" },
+  { id: "upload", title: "Upload", desc: "Paper uploaded to server" },
+  { id: "ai", title: "AI Curation", desc: "Multi-agent AI pipeline processing" },
+  { id: "storage", title: "0G Storage", desc: "Upload to decentralized storage" },
+  { id: "da", title: "DA Proof", desc: "Data availability proof" },
+  { id: "anchor", title: "On-chain Anchor", desc: "Anchor paper hash on blockchain" },
+  { id: "nft", title: "NFT Minting", desc: "Mint research NFT (ERC-721)" },
 ]
 
 function PipelineContent() {
