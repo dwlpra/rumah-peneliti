@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language"
 import { fetchArticles } from "@/lib/api"
+import { ScrollReveal } from "@/components/shared/scroll-reveal"
 
 export function LatestPapers() {
   const { t } = useLanguage()
@@ -73,6 +74,7 @@ export function LatestPapers() {
             </CardContent>
           </Card>
         ) : (
+          <ScrollReveal stagger>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {articles.map(article => {
               const isFree = !article.price_wei || Number(article.price_wei) === 0
@@ -113,6 +115,7 @@ export function LatestPapers() {
               )
             })}
           </div>
+          </ScrollReveal>
         )}
 
         {/* Mobile View All */}

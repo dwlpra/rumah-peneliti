@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CONTRACTS, EXPLORER_URL } from "@/lib/constants"
+import { PageTransition } from "@/components/shared/page-transition"
 
 const PIPELINE_STEPS = [
   {
@@ -115,6 +116,7 @@ const DEPLOYED_CONTRACTS = [
 
 export default function TechPage() {
   return (
+    <PageTransition>
     <div className="flex min-h-screen flex-col">
       <Navbar />
 
@@ -260,5 +262,6 @@ export default function TechPage() {
 
       <Footer />
     </div>
+    </PageTransition>
   )
 }

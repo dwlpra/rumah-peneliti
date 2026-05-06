@@ -224,48 +224,38 @@ export function WalletModal({ open, onOpenChange }) {
 
 function WalletIcon({ icon, color }) {
   const bg = color || "bg-muted"
-  switch (icon) {
-    case "metamask":
-      return (
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
-          <svg width="24" height="24" viewBox="0 0 35 33" fill="none">
-            <path d="M32.96 1l-13.14 9.72 2.45-5.73L32.96 1z" fill="#E17726" stroke="#E17726" strokeWidth=".25"/>
-            <path d="M2.66 1l13.02 9.81L13.35 4.99 2.66 1z" fill="#E27625" stroke="#E27625" strokeWidth=".25"/>
-            <path d="M28.23 23.53l-3.5 5.34 7.49 2.06 2.14-7.28-6.13-.12zM.72 23.65l2.13 7.28 7.47-2.06-3.48-5.34-6.12.12z" fill="#E27625" stroke="#E27625" strokeWidth=".25"/>
-            <path d="M9.94 14.42l-2.07 3.13 7.39.34-.26-7.93-5.06 4.46zM25.68 14.42l-5.14-4.54-.17 8.01 7.38-.34-2.07-3.13z" fill="#E27625" stroke="#E27625" strokeWidth=".25"/>
-            <path d="M10.32 28.87l4.49-2.16-3.86-3.01-.63 5.17zM20.81 26.71l4.42 2.16-.57-5.17-3.85 3.01z" fill="#E27625" stroke="#E27625" strokeWidth=".25"/>
-          </svg>
-        </div>
-      )
-    case "backpack":
-      return (
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 10a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10z"/>
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-            <path d="M8 21v-5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/>
-            <path d="M20 10h-1a2 2 0 0 0-2 2v1"/>
-            <path d="M4 10h1a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </div>
-      )
-    case "coinbase":
-      return (
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="2" width="20" height="20" rx="4"/>
-            <path d="M16 10h-2a2 2 0 0 0-4 0v4a2 2 0 0 0 4 0h2"/>
-          </svg>
-        </div>
-      )
-    default:
-      return (
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2.5"/>
-            <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>
-          </svg>
-        </div>
-      )
+  // Wallets with proper logo files in /wallets/
+  if (icon === "metamask" || icon === "backpack") {
+    return (
+      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/wallets/${icon}.svg`}
+          alt={icon}
+          width={icon === "metamask" ? 26 : 24}
+          height={icon === "metamask" ? 26 : 24}
+        />
+      </div>
+    )
   }
+  // Coinbase — blue circle with "C" letter
+  if (icon === "coinbase") {
+    return (
+      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
+        <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="8" fill="#0052FF"/>
+          <path d="M20 8C13.373 8 8 13.373 8 20s5.373 12 12 12c6.26 0 11.427-4.62 12.246-10.667h-6.82C24.805 23.307 22.629 25 20 25c-2.761 0-5-2.239-5-5s2.239-5 5-5c2.629 0 4.805 1.693 5.426 3.667h6.82C31.427 12.62 26.26 8 20 8z" fill="white"/>
+        </svg>
+      </div>
+    )
+  }
+  // Generic wallet fallback
+  return (
+    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2.5"/>
+        <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>
+      </svg>
+    </div>
+  )
 }

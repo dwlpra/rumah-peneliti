@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { getApiUrl } from "@/lib/api-url"
+import { PageTransition } from "@/components/shared/page-transition"
 
 function InfoCard() {
   return (
@@ -197,6 +198,7 @@ function VerifyContent() {
   }
 
   return (
+    <PageTransition>
     <>
       <Navbar />
 
@@ -269,6 +271,7 @@ function VerifyContent() {
 
       <Footer />
     </>
+    </PageTransition>
   )
 }
 

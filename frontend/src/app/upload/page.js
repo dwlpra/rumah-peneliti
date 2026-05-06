@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import {
   Lock,
   PenLine,
@@ -36,14 +35,15 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useWallet } from "@/contexts/wallet"
 import { useLanguage } from "@/contexts/language"
-import { loginWithWallet, getStoredToken, getStoredAddress } from "@/lib/auth"
+import { getStoredToken } from "@/lib/auth"
 import { getApiUrl } from "@/lib/api-url"
+import { PageTransition } from "@/components/shared/page-transition"
+import { WalletModal } from "@/components/shared/wallet-modal"
 
 /* ──────────────────────── Auth Gate: No Wallet ──────────────────────── */
 
 function ConnectGate() {
-  const { connect } = useWallet()
-  const { t } = useLanguage()
+  const [walletModalOpen, setWalletModalOpen] = useState(false)
 
   return (
     <Card className="mx-auto max-w-md">
@@ -59,68 +59,11 @@ function ConnectGate() {
         </CardDescription>
       </CardHeader>
       <CardFooter className="justify-center pb-6">
-        <Button onClick={connect} className="gap-2">
+        <Button onClick={() => setWalletModalOpen(true)} className="gap-2">
           <Wallet className="h-4 w-4" />
           Connect Wallet
         </Button>
-      </CardFooter>
-    </Card>
-  )
-}
-
-/* ──────────────────────── Auth Gate: Not Verified ──────────────────────── */
-
-function VerifyGate({ address, onVerified }) {
-  const { t } = useLanguage()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const handleVerify = async () => {
-    setError(null)
-    setLoading(true)
-    try {
-      await loginWithWallet(address)
-      onVerified()
-    } catch (err) {
-      setError(err.message || "Authentication failed")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Card className="mx-auto max-w-md">
-      <CardHeader className="items-center text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950">
-          <PenLine className="h-7 w-7 text-amber-600 dark:text-amber-400" />
-        </div>
-        <CardTitle className="mt-4 text-xl">
-          Verify Your Wallet
-        </CardTitle>
-        <CardDescription>
-          Sign a message to prove you own this address.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center gap-3">
-        <Badge variant="secondary" className="font-mono text-xs">
-          <AddressDisplay address={address} />
-        </Badge>
-        {error && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="justify-center pb-6">
-        <Button onClick={handleVerify} disabled={loading} className="gap-2">
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <PenLine className="h-4 w-4" />
-          )}
-          {loading ? "Waiting for signature..." : "Sign to Verify"}
-        </Button>
+        <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
       </CardFooter>
     </Card>
   )
@@ -472,30 +415,61 @@ function UploadForm({ address }) {
   )
 }
 
+/* ──────────────────────── Auth Gate: Not Verified ──────────────────────── */
+
+function NotVerifiedGate({ address }) {
+  const { connect } = useWallet()
+  const [loading, setLoading] = useState(false)
+
+  const handleReconnect = async () => {
+    setLoading(true)
+    try {
+      await connect()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Card className="mx-auto max-w-md">
+      <CardHeader className="items-center text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950">
+          <PenLine className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+        </div>
+        <CardTitle className="mt-4 text-xl">
+          Verify Your Wallet
+        </CardTitle>
+        <CardDescription>
+          Sign a message to prove you own this address. This is required for uploading papers.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-3">
+        <Badge variant="secondary" className="font-mono text-xs">
+          <AddressDisplay address={address} />
+        </Badge>
+      </CardContent>
+      <CardFooter className="justify-center pb-6">
+        <Button onClick={handleReconnect} disabled={loading} className="gap-2">
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <PenLine className="h-4 w-4" />
+          )}
+          {loading ? "Waiting for signature..." : "Sign to Verify"}
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
 /* ──────────────────────── Page Content ──────────────────────── */
 
 function UploadContent() {
   const { t } = useLanguage()
-  const { address, connect } = useWallet()
-  const [isAuthed, setIsAuthed] = useState(false)
-
-  // Check stored auth on mount and when address changes
-  useEffect(() => {
-    const token = getStoredToken()
-    const storedAddr = getStoredAddress()
-    if (
-      token &&
-      storedAddr &&
-      address &&
-      storedAddr.toLowerCase() === address.toLowerCase()
-    ) {
-      setIsAuthed(true)
-    } else {
-      setIsAuthed(false)
-    }
-  }, [address])
+  const { address, isAuthed } = useWallet()
 
   return (
+    <PageTransition>
     <>
       <Navbar />
       <div className="flex-1">
@@ -515,10 +489,7 @@ function UploadContent() {
 
           {/* Auth Gate: Wallet connected but not verified */}
           {address && !isAuthed && (
-            <VerifyGate
-              address={address}
-              onVerified={() => setIsAuthed(true)}
-            />
+            <NotVerifiedGate address={address} />
           )}
 
           {/* Upload Form */}
@@ -527,6 +498,7 @@ function UploadContent() {
       </div>
       <Footer />
     </>
+    </PageTransition>
   )
 }
 

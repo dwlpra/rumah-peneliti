@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { fetchPapers, fetchArticles } from "@/lib/api"
 import { useLanguage } from "@/contexts/language"
 import Link from "next/link"
+import { PageTransition } from "@/components/shared/page-transition"
 
 /* ─── Skeleton Card ─── */
 function SkeletonCard() {
@@ -141,6 +142,7 @@ function BrowseContent() {
   })
 
   return (
+    <PageTransition>
     <div className="flex min-h-screen flex-col">
       <Navbar />
 
@@ -246,6 +248,7 @@ function BrowseContent() {
 
       <Footer />
     </div>
+    </PageTransition>
   )
 }
 

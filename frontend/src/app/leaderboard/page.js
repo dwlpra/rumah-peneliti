@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { getApiUrl } from "@/lib/api-url"
+import { PageTransition } from "@/components/shared/page-transition"
 
 function MedalBadge({ rank }) {
   if (rank === 0)
@@ -268,8 +269,10 @@ function LeaderboardContent() {
 
 export default function LeaderboardPage() {
   return (
+    <PageTransition>
     <div className="flex min-h-screen flex-col">
       <LeaderboardContent />
     </div>
+    </PageTransition>
   )
 }

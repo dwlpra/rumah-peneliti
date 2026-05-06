@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ExplorerLink } from "@/components/shared/explorer-link"
 import { getApiUrl } from "@/lib/api-url"
+import { ScrollReveal } from "@/components/shared/scroll-reveal"
 
 function ActivityRow({ item }) {
   const isNft = item.type === "nft"
@@ -66,6 +67,7 @@ export function OnChainActivity() {
   return (
     <section className="bg-background pb-12 md:pb-16">
       <div className="container mx-auto max-w-screen-xl px-4 pt-12 md:pt-16">
+        <ScrollReveal>
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Recent On-chain Activity</CardTitle>
@@ -96,6 +98,7 @@ export function OnChainActivity() {
             )}
           </CardContent>
         </Card>
+        </ScrollReveal>
       </div>
     </section>
   )

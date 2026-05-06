@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { CONTRACTS } from "@/lib/constants"
 import { getApiUrl } from "@/lib/api-url"
+import { PageTransition } from "@/components/shared/page-transition"
 
 const GRADIENTS = [
   "from-blue-500/20 to-indigo-500/20",
@@ -120,6 +121,7 @@ function NFTContent() {
   }, [])
 
   return (
+    <PageTransition>
     <>
       <Navbar />
 
@@ -231,6 +233,7 @@ function NFTContent() {
 
       <Footer />
     </>
+    </PageTransition>
   )
 }
 

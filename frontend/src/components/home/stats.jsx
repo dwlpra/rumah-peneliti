@@ -5,6 +5,7 @@ import { FileText, BookOpen, Link2, Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLanguage } from "@/contexts/language"
+import { ScrollReveal } from "@/components/shared/scroll-reveal"
 import { getApiUrl } from "@/lib/api-url"
 
 const STAT_ICONS = [FileText, BookOpen, Link2, Award]
@@ -57,6 +58,7 @@ export function Stats() {
 
   return (
     <section className="border-b bg-background">
+      <ScrollReveal stagger>
       <div className="container mx-auto grid max-w-screen-xl grid-cols-2 gap-4 px-4 py-12 md:grid-cols-4 md:py-16">
         {items.map((item, i) => (
           <StatCard
@@ -68,6 +70,7 @@ export function Stats() {
           />
         ))}
       </div>
+      </ScrollReveal>
     </section>
   )
 }

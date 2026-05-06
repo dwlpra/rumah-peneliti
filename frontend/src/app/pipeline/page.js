@@ -13,6 +13,7 @@ import { useWallet } from "@/contexts/wallet"
 import { useLanguage } from "@/contexts/language"
 import { getApiUrl } from "@/lib/api-url"
 import { getStoredToken } from "@/lib/auth"
+import { PageTransition } from "@/components/shared/page-transition"
 
 const API = () => getApiUrl()
 
@@ -240,6 +241,7 @@ function PipelineContent() {
   }
 
   return (
+    <PageTransition>
     <>
       <Navbar />
 
@@ -294,6 +296,7 @@ function PipelineContent() {
 
       <Footer />
     </>
+    </PageTransition>
   )
 }
 

@@ -1,5 +1,8 @@
+"use client"
+
 import { Upload, Brain, Link2, Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { ScrollReveal } from "@/components/shared/scroll-reveal"
 
 const STEPS = [
   {
@@ -43,6 +46,7 @@ export function HowItWorks() {
         </div>
 
         {/* Steps Grid */}
+        <ScrollReveal stagger>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map(step => {
             const Icon = step.icon
@@ -73,6 +77,7 @@ export function HowItWorks() {
             )
           })}
         </div>
+        </ScrollReveal>
       </div>
     </section>
   )

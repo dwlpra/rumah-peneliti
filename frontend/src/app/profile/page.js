@@ -22,6 +22,8 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { useWallet } from "@/contexts/wallet"
 import { getApiUrl } from "@/lib/api-url"
+import { WalletModal } from "@/components/shared/wallet-modal"
+import { PageTransition } from "@/components/shared/page-transition"
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
@@ -82,6 +84,7 @@ function ProfileContent() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [walletModalOpen, setWalletModalOpen] = useState(false)
 
   useEffect(() => {
     if (!address) return
@@ -111,10 +114,11 @@ function ProfileContent() {
               <p className="text-sm text-muted-foreground mb-6">
                 Connect your wallet to view your profile and on-chain activity.
               </p>
-              <Button onClick={connect} className="gap-2">
+              <Button onClick={() => setWalletModalOpen(true)} className="gap-2">
                 <Wallet className="h-4 w-4" />
                 Connect Wallet
               </Button>
+              <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
             </CardContent>
           </Card>
         </div>
@@ -238,8 +242,10 @@ function ProfileContent() {
 
 export default function ProfilePage() {
   return (
+    <PageTransition>
     <div className="flex min-h-screen flex-col">
       <ProfileContent />
     </div>
+    </PageTransition>
   )
 }

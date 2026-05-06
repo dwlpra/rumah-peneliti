@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { getApiUrl } from "@/lib/api-url"
+import { PageTransition } from "@/components/shared/page-transition"
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
@@ -66,6 +67,7 @@ function AnalyticsContent() {
   const maxChart = Math.max(...(chart?.map((c) => c.papers) || [1]), 1)
 
   return (
+    <PageTransition>
     <>
       <Navbar />
 
@@ -359,6 +361,7 @@ function AnalyticsContent() {
 
       <Footer />
     </>
+    </PageTransition>
   )
 }
 

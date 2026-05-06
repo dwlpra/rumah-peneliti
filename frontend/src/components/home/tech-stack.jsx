@@ -1,5 +1,8 @@
+"use client"
+
 import { Database, ShieldCheck, Cpu, FileCode } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { ScrollReveal } from "@/components/shared/scroll-reveal"
 
 const TECH_STACK = [
   {
@@ -46,6 +49,7 @@ export function TechStack() {
         </div>
 
         {/* Cards Grid */}
+        <ScrollReveal stagger>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {TECH_STACK.map(item => {
             const Icon = item.icon
@@ -79,6 +83,7 @@ export function TechStack() {
             )
           })}
         </div>
+        </ScrollReveal>
       </div>
     </section>
   )

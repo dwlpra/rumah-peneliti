@@ -28,6 +28,7 @@ import { useWallet } from "@/contexts/wallet"
 import { useLanguage } from "@/contexts/language"
 import { fetchArticle, fetchPaper, checkAccess, purchasePaper } from "@/lib/api"
 import { CONTRACTS } from "@/lib/constants"
+import { PageTransition } from "@/components/shared/page-transition"
 
 function ArticleContent() {
   const { t } = useLanguage()
@@ -361,5 +362,5 @@ function ArticleContent() {
 }
 
 export default function ArticlePage() {
-  return <ArticleContent />
+  return <PageTransition><ArticleContent /></PageTransition>
 }

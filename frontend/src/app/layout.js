@@ -3,6 +3,8 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/contexts/theme"
 import { LanguageProvider } from "@/contexts/language"
 import { WalletProvider } from "@/contexts/wallet"
+import { ToastProvider } from "@/lib/toast"
+import { TopLoadingBar } from "@/components/shared/top-loading-bar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,13 +31,16 @@ export default function RootLayout({ children }) {
       </head>
       <body className={inter.className}>
         <ThemeProvider>
-          <LanguageProvider>
-            <WalletProvider>
-              <main className="min-h-screen flex flex-col">
-                {children}
-              </main>
-            </WalletProvider>
-          </LanguageProvider>
+          <ToastProvider>
+            <TopLoadingBar />
+            <LanguageProvider>
+              <WalletProvider>
+                <main className="min-h-screen flex flex-col">
+                  {children}
+                </main>
+              </WalletProvider>
+            </LanguageProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

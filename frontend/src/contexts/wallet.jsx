@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
 import { ethers } from "ethers"
+import { loginWithWallet, logout as authLogout, getStoredToken, getStoredAddress } from "@/lib/auth"
+import { useToast } from "@/lib/toast"
 
 const WalletContext = createContext(null)
 
@@ -19,13 +21,30 @@ const ZERO_G_CHAIN = {
 }
 
 export function WalletProvider({ children }) {
+  const { addToast } = useToast()
   const [address, setAddress] = useState(null)
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
   const [balance, setBalance] = useState(null)
   const [chainId, setChainId] = useState(null)
+  const [isAuthed, setIsAuthed] = useState(false)
   const addressRef = useRef(null)
   const ethereumRef = useRef(null) // track which wallet provider is active
+
+  // Sync auth state: check if stored token matches current address
+  const syncAuthState = useCallback((addr) => {
+    if (!addr) {
+      setIsAuthed(false)
+      return
+    }
+    const token = getStoredToken()
+    const storedAddr = getStoredAddress()
+    setIsAuthed(
+      !!token &&
+      !!storedAddr &&
+      storedAddr.toLowerCase() === addr.toLowerCase()
+    )
+  }, [])
 
   const fetchBalance = useCallback(async (addr) => {
     try {
@@ -58,6 +77,9 @@ export function WalletProvider({ children }) {
   useEffect(() => {
     if (typeof window === "undefined" || !window.ethereum) return
 
+    // If user explicitly disconnected this session, skip auto-reconnect
+    if (sessionStorage.getItem("wallet_disconnected")) return
+
     // Use whichever provider was selected, or default window.ethereum
     const ethereum = ethereumRef.current || window.ethereum
 
@@ -67,6 +89,7 @@ export function WalletProvider({ children }) {
       setAddress(addr)
       if (addr) fetchBalance(addr)
       else setBalance(null)
+      syncAuthState(addr)
     }
 
     const handleChainChanged = (id) => {
@@ -84,6 +107,7 @@ export function WalletProvider({ children }) {
           addressRef.current = accounts[0]
           setAddress(accounts[0])
           fetchBalance(accounts[0])
+          syncAuthState(accounts[0])
         }
       })
       .catch(() => {})
@@ -92,18 +116,22 @@ export function WalletProvider({ children }) {
       ethereum.removeListener("accountsChanged", handleAccountsChanged)
       ethereum.removeListener("chainChanged", handleChainChanged)
     }
-  }, [fetchBalance])
+  }, [fetchBalance, syncAuthState])
 
   const connect = useCallback(async (walletProvider) => {
     const ethereum = walletProvider || window.ethereum
     if (!ethereum) {
-      window.dispatchEvent(new CustomEvent("wallet-toast", { detail: { type: "error", message: "No wallet detected. Please install one." } }))
+      addToast("No wallet detected. Please install one.", "error")
       return
     }
     try {
+      // Clear disconnect flag — user is intentionally connecting
+      sessionStorage.removeItem("wallet_disconnected")
+
       // Store the selected provider so event listeners use the right one
       ethereumRef.current = ethereum
 
+      // Step 1: Request wallet connection (MetaMask popup: select account)
       const prov = new ethers.BrowserProvider(ethereum)
       const accounts = await prov.send("eth_requestAccounts", [])
       const sign = await prov.getSigner()
@@ -118,18 +146,34 @@ export function WalletProvider({ children }) {
       if (currentChain !== CHAIN_ID_HEX) {
         await switchNetwork()
       }
+
+      // Step 2: Sign message for authentication (MetaMask popup: sign message)
+      try {
+        addToast("Please sign the message to verify your identity...", "info")
+        await loginWithWallet(accounts[0])
+        setIsAuthed(true)
+        addToast("Wallet connected & verified!", "success")
+      } catch (authErr) {
+        // Wallet is connected but auth failed/rejected — still usable for read-only
+        setIsAuthed(false)
+        addToast("Connected but not verified. Sign the message for full access.", "warning")
+      }
     } catch (err) {
-      window.dispatchEvent(new CustomEvent("wallet-toast", { detail: { type: "error", message: "Wallet connection failed: " + (err.message || "User rejected") } }))
+      addToast("Wallet connection failed: " + (err.message || "User rejected"), "error")
     }
-  }, [fetchBalance, switchNetwork])
+  }, [fetchBalance, switchNetwork, addToast])
 
   const disconnect = useCallback(() => {
+    sessionStorage.setItem("wallet_disconnected", "1")
+    authLogout()
     setAddress(null)
     setProvider(null)
     setSigner(null)
     setBalance(null)
     setChainId(null)
+    setIsAuthed(false)
     addressRef.current = null
+    ethereumRef.current = null
   }, [])
 
   const isCorrectNetwork = chainId === CHAIN_ID_HEX
@@ -145,6 +189,7 @@ export function WalletProvider({ children }) {
         balance,
         chainId,
         isCorrectNetwork,
+        isAuthed,
         switchNetwork,
       }}
     >

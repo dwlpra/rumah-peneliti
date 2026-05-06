@@ -6,10 +6,11 @@ import { LatestPapers } from "@/components/home/latest-papers"
 import { HowItWorks } from "@/components/home/how-it-works"
 import { TechStack } from "@/components/home/tech-stack"
 import { OnChainActivity } from "@/components/home/on-chain-activity"
+import { PageTransition } from "@/components/shared/page-transition"
 
 export default function HomePage() {
   return (
-    <>
+    <PageTransition>
       <Navbar />
       <Hero />
       <Stats />
@@ -18,6 +19,6 @@ export default function HomePage() {
       <TechStack />
       <OnChainActivity />
       <Footer />
-    </>
+    </PageTransition>
   )
 }
