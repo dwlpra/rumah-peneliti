@@ -2,11 +2,14 @@ node_modules/
 .next/
 data/*.db
 uploads/
-.env
-.env.local
+.env*
+!.env.example
 *.log
 .DS_Store
-.env
 backend/data/
 *.db
 test-results/
+reference/
+CLAUDE.md
+contracts/artifacts/
+contracts/cache/

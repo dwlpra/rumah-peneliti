@@ -243,8 +243,12 @@ function deletePaper(req, res) {
 
 async function getOnChainData(req, res) {
   const paperId = parseInt(req.params.id);
-  const data = await getPaperOnChainData(paperId);
-  res.json({ paperId, ...data });
+  try {
+    const data = await getPaperOnChainData(paperId);
+    res.json({ paperId, ...data });
+  } catch {
+    res.json({ paperId, anchor: null, nft: null, articleAnchors: [], explorerBase: "https://chainscan.0g.ai" });
+  }
 }
 
 // ============================================================
@@ -252,8 +256,13 @@ async function getOnChainData(req, res) {
 // ============================================================
 
 async function getActivity(req, res) {
-  const data = await getActivityFeed(20);
-  res.json(data);
+  try {
+    const data = await getActivityFeed(20);
+    res.json(data);
+  } catch {
+    // Ponder indexer not running — return empty data
+    res.json({ activity: [], stats: { anchors: 0, nfts: 0 } });
+  }
 }
 
 // ============================================================

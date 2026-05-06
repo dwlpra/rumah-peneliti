@@ -22,10 +22,13 @@ export function AddressDisplay({ address, className }) {
   }
 
   return (
-    <button
+    <span
       onClick={handleCopy}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter") handleCopy() }}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-mono text-muted-foreground hover:text-foreground transition-colors",
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-mono text-muted-foreground hover:text-foreground transition-colors cursor-pointer",
         className
       )}
       title={address}
@@ -36,6 +39,6 @@ export function AddressDisplay({ address, className }) {
       ) : (
         <Copy className="h-3 w-3" />
       )}
-    </button>
+    </span>
   )
 }

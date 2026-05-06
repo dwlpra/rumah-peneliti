@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
-import { WalletProvider } from "@/contexts/wallet"
 import { getApiUrl } from "@/lib/api-url"
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -52,12 +51,13 @@ function ChartSkeleton() {
 function AnalyticsContent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetch(`${getApiUrl()}/api/analytics/dashboard`)
       .then((r) => r.json())
       .then((d) => setData(d))
-      .catch(() => {})
+      .catch((e) => setError(e.message || "Failed to load analytics"))
       .finally(() => setLoading(false))
   }, [])
 
@@ -82,6 +82,11 @@ function AnalyticsContent() {
         </section>
 
         <div className="container mx-auto max-w-screen-xl px-4 py-8 space-y-8">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/50 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+              {error}
+            </div>
+          )}
           {/* Stats */}
           {loading ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -359,10 +364,8 @@ function AnalyticsContent() {
 
 export default function AnalyticsPage() {
   return (
-    <WalletProvider>
-      <div className="flex min-h-screen flex-col">
-        <AnalyticsContent />
-      </div>
-    </WalletProvider>
+    <div className="flex min-h-screen flex-col">
+      <AnalyticsContent />
+    </div>
   )
 }

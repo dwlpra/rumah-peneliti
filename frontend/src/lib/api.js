@@ -1,3 +1,5 @@
+import { getApiUrl } from "./api-url";
+
 const API = () => getApiUrl();
 
 export async function fetchPapers() {
@@ -29,6 +31,10 @@ export async function uploadPaper(formData) {
     method: "POST",
     body: formData,
   });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to upload paper");
+  }
   return res.json();
 }
 
@@ -38,6 +44,10 @@ export async function purchasePaper(paperId, buyerWallet, txHash, amount) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ buyer_wallet: buyerWallet, tx_hash: txHash, amount }),
   });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to record purchase");
+  }
   return res.json();
 }
 

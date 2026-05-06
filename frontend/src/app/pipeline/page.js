@@ -9,7 +9,7 @@ import { PipelineSteps } from "@/components/pipeline/pipeline-steps"
 import { PipelineResult } from "@/components/pipeline/pipeline-result"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useWallet, WalletProvider } from "@/contexts/wallet"
+import { useWallet } from "@/contexts/wallet"
 import { useLanguage } from "@/contexts/language"
 import { getApiUrl } from "@/lib/api-url"
 import { getStoredToken } from "@/lib/auth"
@@ -298,9 +298,5 @@ function PipelineContent() {
 }
 
 export default function PipelinePage() {
-  return (
-    <WalletProvider>
-      <PipelineContent />
-    </WalletProvider>
-  )
+  return <PipelineContent />
 }

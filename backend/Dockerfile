@@ -16,10 +16,12 @@ RUN sed -i 's/function selectNodes(nodes, expectedReplica) {/function selectNode
 COPY . .
 
 FROM node:20-alpine AS runner
+RUN addgroup -g 1001 -S appgroup && adduser -S appuser -u 1001 -G appgroup
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
-RUN mkdir -p data uploads
+RUN mkdir -p data uploads && chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 3001
 VOLUME ["/app/data", "/app/uploads"]
 CMD ["node", "src/index.js"]

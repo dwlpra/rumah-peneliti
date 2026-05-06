@@ -15,7 +15,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { fetchPapers, fetchArticles } from "@/lib/api"
 import { useLanguage } from "@/contexts/language"
-import { useWallet, WalletProvider } from "@/contexts/wallet"
 import Link from "next/link"
 
 /* ─── Skeleton Card ─── */
@@ -252,9 +251,5 @@ function BrowseContent() {
 
 /* ─── Page Export ─── */
 export default function BrowsePage() {
-  return (
-    <WalletProvider>
-      <BrowseContent />
-    </WalletProvider>
-  )
+  return <BrowseContent />
 }

@@ -18,10 +18,12 @@ contract PaperAnchor {
         uint256 citationCount;
     }
 
+    address public owner;
     uint256 public nextId;
     mapping(uint256 => PaperRecord) public records;
     mapping(address => uint256[]) public authorPapers;
     mapping(bytes32 => uint256) public rootToId;
+    mapping(uint256 => mapping(address => bool)) public hasCited; // anti-spam citation
 
     event PaperAnchored(
         uint256 indexed id,
@@ -40,8 +42,18 @@ contract PaperAnchor {
 
     event PaperCited(
         uint256 indexed paperId,
+        address indexed citer,
         uint256 citationCount
     );
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
 
     /**
      * @notice Anchor a new paper to the blockchain
@@ -77,6 +89,7 @@ contract PaperAnchor {
 
     /**
      * @notice Update paper with AI curation result
+     * @dev Only the paper author or contract owner (backend) can set the article
      * @param paperId The paper ID
      * @param articleHash Hash of the curated article content
      */
@@ -84,6 +97,10 @@ contract PaperAnchor {
         PaperRecord storage paper = records[paperId];
         require(paper.id != 0, "Paper not found");
         require(articleHash != bytes32(0), "Article hash required");
+        require(
+            msg.sender == paper.author || msg.sender == owner,
+            "Only author or owner"
+        );
 
         paper.curationHash = articleHash;
         paper.hasArticle = true;
@@ -93,12 +110,16 @@ contract PaperAnchor {
 
     /**
      * @notice Record a citation for a paper
+     * @dev Each address can only cite a paper once to prevent spam
      * @param paperId The paper being cited
      */
     function citePaper(uint256 paperId) external {
         require(records[paperId].id != 0, "Paper not found");
+        require(!hasCited[paperId][msg.sender], "Already cited");
+
+        hasCited[paperId][msg.sender] = true;
         records[paperId].citationCount++;
-        emit PaperCited(paperId, records[paperId].citationCount);
+        emit PaperCited(paperId, msg.sender, records[paperId].citationCount);
     }
 
     /**

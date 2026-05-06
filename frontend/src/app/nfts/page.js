@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { WalletProvider } from "@/contexts/wallet"
 import { CONTRACTS } from "@/lib/constants"
 import { getApiUrl } from "@/lib/api-url"
 
@@ -85,6 +84,7 @@ function NFTContent() {
   const [papers, setPapers] = useState({})
   const [totalSupply, setTotalSupply] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -115,7 +115,7 @@ function NFTContent() {
         })
         setPapers(m)
       })
-      .catch(() => {})
+      .catch((e) => setError(e.message || "Failed to load NFTs"))
       .finally(() => setLoading(false))
   }, [])
 
@@ -185,6 +185,11 @@ function NFTContent() {
 
         {/* Grid */}
         <section className="container mx-auto max-w-screen-xl px-4 pb-12">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-6">
+              {error}
+            </div>
+          )}
           {loading ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -231,10 +236,8 @@ function NFTContent() {
 
 export default function NFTsPage() {
   return (
-    <WalletProvider>
-      <div className="flex min-h-screen flex-col">
-        <NFTContent />
-      </div>
-    </WalletProvider>
+    <div className="flex min-h-screen flex-col">
+      <NFTContent />
+    </div>
   )
 }

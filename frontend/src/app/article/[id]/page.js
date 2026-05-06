@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useWallet, WalletProvider } from "@/contexts/wallet"
+import { useWallet } from "@/contexts/wallet"
 import { useLanguage } from "@/contexts/language"
 import { fetchArticle, fetchPaper, checkAccess, purchasePaper } from "@/lib/api"
 import { CONTRACTS } from "@/lib/constants"
@@ -32,7 +32,8 @@ import { CONTRACTS } from "@/lib/constants"
 function ArticleContent() {
   const { t } = useLanguage()
   const { id } = useParams()
-  const { address, connect } = useWallet()
+  const { address, provider, connect, isCorrectNetwork, switchNetwork } = useWallet()
+  const [toast, setToast] = useState(null)
 
   const [article, setArticle] = useState(null)
   const [paper, setPaper] = useState(null)
@@ -67,7 +68,7 @@ function ArticleContent() {
   // Unlock handler — send payment via smart contract
   const handleUnlock = async () => {
     if (!window.ethereum) {
-      alert("Please install MetaMask first!")
+      setToast({ type: "error", message: "Please install MetaMask first!" })
       return
     }
     if (!address) {
@@ -79,65 +80,38 @@ function ArticleContent() {
     try {
       const contractAddress =
         process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || CONTRACTS.journalPayment
-      const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16602")
 
-      // Switch to 0G testnet if needed
-      const currentChain = await window.ethereum.request({
-        method: "eth_chainId",
-      })
-      if (parseInt(currentChain, 16) !== chainId) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: `0x${chainId.toString(16)}` }],
-          })
-        } catch (switchError) {
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: `0x${chainId.toString(16)}`,
-                  chainName: "0G Galileo Testnet",
-                  nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
-                  rpcUrls: [
-                    process.env.NEXT_PUBLIC_RPC_URL ||
-                      "https://evmrpc-testnet.0g.ai",
-                  ],
-                  blockExplorerUrls: [
-                    "https://chainscan-galileo.0g.ai",
-                  ],
-                },
-              ],
-            })
-          } else {
-            throw switchError
-          }
-        }
+      // Switch network if needed (using wallet context)
+      if (!isCorrectNetwork) {
+        await switchNetwork()
       }
 
-      // Call purchasePaper(uint256) on the contract
+      // Use ethers Contract with proper ABI instead of hardcoded selector
+      const { ethers } = await import("ethers")
+      const browserProvider = new ethers.BrowserProvider(window.ethereum)
+      const contract = new ethers.Contract(
+        contractAddress,
+        ["function purchasePaper(uint256) payable"],
+        browserProvider.getSigner()
+      )
+
       const priceWei = paper?.price_wei || "1000000000000000"
-      const paperIdParam = BigInt(id).toString(16).padStart(64, "0")
-      const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: address,
-            to: contractAddress,
-            data: `0x6047a3d7${paperIdParam}`,
-            value: `0x${BigInt(priceWei).toString(16)}`,
-          },
-        ],
+      const tx = await contract.purchasePaper(BigInt(id), {
+        value: BigInt(priceWei),
       })
 
+      // Wait for transaction receipt before marking as unlocked
+      setToast({ type: "info", message: "Transaction submitted, waiting for confirmation..." })
+      await tx.wait()
+
       // Record purchase in backend
-      await purchasePaper(id, address, txHash, priceWei)
+      await purchasePaper(id, address, tx.hash, priceWei)
       setUnlocked(true)
+      setToast({ type: "success", message: "Payment confirmed! Article unlocked." })
     } catch (e) {
       console.error("Payment error:", e)
       if (e.code !== 4001) {
-        alert("Payment failed: " + (e.message || "Unknown error"))
+        setToast({ type: "error", message: "Payment failed: " + (e.message || "Unknown error") })
       }
     }
     setPaying(false)
@@ -305,19 +279,19 @@ function ArticleContent() {
                       <Button
                         onClick={async () => {
                           if (!address) {
-                            alert("Connect your wallet first")
+                            setToast({ type: "error", message: "Connect your wallet first" })
                             return
                           }
                           try {
                             const tipAmount =
                               "0x" + BigInt("10000000000000000").toString(16)
-                            const authorAddr =
-                              paper?.author_wallet || paper?.authors
+                            const authorAddr = paper?.author_wallet
                             if (
                               !authorAddr ||
-                              authorAddr.length < 10
+                              !authorAddr.startsWith("0x") ||
+                              authorAddr.length !== 42
                             ) {
-                              alert("Author wallet not available")
+                              setToast({ type: "error", message: "Author wallet not available" })
                               return
                             }
                             await window.ethereum.request({
@@ -330,10 +304,10 @@ function ArticleContent() {
                                 },
                               ],
                             })
-                            alert("Thanks for supporting this research!")
+                            setToast({ type: "success", message: "Thanks for supporting this research!" })
                           } catch (e) {
                             if (e.code !== 4001) {
-                              alert("Tip failed: " + e.message)
+                              setToast({ type: "error", message: "Tip failed: " + e.message })
                             }
                           }
                         }}
@@ -370,6 +344,18 @@ function ArticleContent() {
       </div>
 
       <Footer />
+
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium max-w-sm ${
+          toast.type === "error" ? "bg-red-600 text-white" :
+          toast.type === "success" ? "bg-emerald-600 text-white" :
+          "bg-blue-600 text-white"
+        }`}>
+          {toast.message}
+          <button onClick={() => setToast(null)} className="ml-3 opacity-70 hover:opacity-100">&times;</button>
+        </div>
+      )}
     </>
   )
 }

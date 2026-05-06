@@ -34,7 +34,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useWallet, WalletProvider } from "@/contexts/wallet"
+import { useWallet } from "@/contexts/wallet"
 import { useLanguage } from "@/contexts/language"
 import { loginWithWallet, getStoredToken, getStoredAddress } from "@/lib/auth"
 import { getApiUrl } from "@/lib/api-url"
@@ -533,9 +533,5 @@ function UploadContent() {
 /* ──────────────────────── Page Export ──────────────────────── */
 
 export default function UploadPage() {
-  return (
-    <WalletProvider>
-      <UploadContent />
-    </WalletProvider>
-  )
+  return <UploadContent />
 }

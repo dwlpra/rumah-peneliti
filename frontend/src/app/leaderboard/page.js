@@ -27,7 +27,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { WalletProvider } from "@/contexts/wallet"
 import { getApiUrl } from "@/lib/api-url"
 
 function MedalBadge({ rank }) {
@@ -269,10 +268,8 @@ function LeaderboardContent() {
 
 export default function LeaderboardPage() {
   return (
-    <WalletProvider>
-      <div className="flex min-h-screen flex-col">
-        <LeaderboardContent />
-      </div>
-    </WalletProvider>
+    <div className="flex min-h-screen flex-col">
+      <LeaderboardContent />
+    </div>
   )
 }

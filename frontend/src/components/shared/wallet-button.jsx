@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Wallet, LogOut, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,17 +14,22 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useWallet } from "@/contexts/wallet"
 import { AddressDisplay } from "@/components/shared/address-display"
+import { WalletModal } from "@/components/shared/wallet-modal"
 
 export function WalletButton() {
-  const { address, connect, disconnect, balance } = useWallet()
+  const { address, disconnect, balance } = useWallet()
+  const [modalOpen, setModalOpen] = useState(false)
 
   if (!address) {
     return (
-      <Button onClick={connect} size="sm" className="gap-2">
-        <Wallet className="h-4 w-4" />
-        <span className="hidden sm:inline">Connect Wallet</span>
-        <span className="sm:hidden">Connect</span>
-      </Button>
+      <>
+        <Button onClick={() => setModalOpen(true)} size="sm" className="gap-2">
+          <Wallet className="h-4 w-4" />
+          <span className="hidden sm:inline">Connect Wallet</span>
+          <span className="sm:hidden">Connect</span>
+        </Button>
+        <WalletModal open={modalOpen} onOpenChange={setModalOpen} />
+      </>
     )
   }
 

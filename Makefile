@@ -199,7 +199,7 @@ git-push: ## 📤 Add + commit + push (butuh MSG= pesan)
 		exit 1; \
 	fi
 	@echo "$(GREEN)📦 Committing...$(RESET)"
-	git add -A
+	git add backend/src/ frontend/src/ contracts/ scripts/ indexer/ Makefile docker-compose.yml CLAUDE.md README.md
 	git commit -m "$(MSG)"
 	git push origin main
 	@echo "$(GREEN)✅ Pushed!$(RESET)"

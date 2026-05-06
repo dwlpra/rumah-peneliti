@@ -29,6 +29,7 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
+const rateLimit = require("express-rate-limit");
 
 // ── Import Routes ──
 const paperRoutes = require("./routes/papers");
@@ -41,7 +42,7 @@ const verifyRoutes = require("./routes/verify");
 const authRoutes = require("./routes/auth");
 
 // ── Import Middleware ──
-const { errorHandler } = require("./middleware/error-handler");
+const { errorHandler, asyncHandler } = require("./middleware/error-handler");
 
 // ============================================================
 //  EXPRESS APP SETUP
@@ -49,9 +50,47 @@ const { errorHandler } = require("./middleware/error-handler");
 
 const app = express();
 
-// Middleware dasar
-app.use(cors());
+// ── CORS — Lock to allowed origins in production ──
+const isDev = process.env.NODE_ENV !== "production";
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : []),
+];
+
+app.use(cors({
+  origin: isDev ? true : allowedOrigins,
+  credentials: true,
+}));
 app.use(express.json());
+
+// ── Rate Limiting ──
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many auth attempts, please try again later" },
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many upload attempts, please try again later" },
+});
+
+app.use(globalLimiter);
 
 // Static file serving untuk uploads
 const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
@@ -76,20 +115,24 @@ const upload = multer({
 //  ROUTES — Register all route modules
 // ============================================================
 
-app.use("/api/papers", paperRoutes(upload));
+app.use("/api/papers", uploadLimiter, paperRoutes(upload));
 app.use("/api/articles", articleRoutes);
 app.use("/api/nfts", nftRoutes);
-app.use("/api/pipeline", pipelineRoutes);
+app.use("/api/pipeline", uploadLimiter, pipelineRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/verify", verifyRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
 
 // Health check (root level)
 app.get("/api/health", require("./controllers/health-controller"));
 
 // Wallet status
 app.get("/api/wallet/status", require("./controllers/wallet-controller"));
+
+// Activity feed (also available under /api/papers/activity)
+const { getActivity } = require("./controllers/paper-controller");
+app.get("/api/activity", asyncHandler(getActivity));
 
 // ============================================================
 //  ERROR HANDLING — Must be registered AFTER all routes

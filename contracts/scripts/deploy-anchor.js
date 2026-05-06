@@ -15,7 +15,11 @@ async function main() {
   console.log("PaperAnchor deployed to:", address);
 
   // Verify on explorer
-  console.log("Explorer:", `https://chainscan-galileo.0g.ai/address/${address}`);
+  const network = hre.network.name;
+  const explorerUrl = network === "zeroMainnet"
+    ? `https://chainscan.0g.ai/address/${address}`
+    : `https://chainscan-galileo.0g.ai/address/${address}`;
+  console.log("Explorer:", explorerUrl);
 }
 
 main().catch((error) => {
