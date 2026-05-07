@@ -1,24 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import {
   User,
   FileText,
   BookOpen,
   Award,
   Wallet,
-  Link2,
   Inbox,
   Loader2,
 } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
-import { ExplorerLink } from "@/components/shared/explorer-link"
 import { AddressDisplay } from "@/components/shared/address-display"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { useWallet } from "@/contexts/wallet"
 import { getApiUrl } from "@/lib/api-url"
@@ -34,48 +32,6 @@ function StatCard({ icon: Icon, label, value, color }) {
         <span className="text-xs text-muted-foreground mt-1">{label}</span>
       </CardContent>
     </Card>
-  )
-}
-
-function ActivityRow({ item, index }) {
-  const isNft = item.type === "nft"
-  const date = item.timestamp
-    ? new Date(item.timestamp * 1000).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : ""
-
-  return (
-    <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
-        {isNft ? (
-          <Award className="h-4 w-4 text-violet-500" />
-        ) : (
-          <Link2 className="h-4 w-4 text-amber-500" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
-            {isNft
-              ? `NFT #${item.tokenId} Minted`
-              : `Paper #${item.paperId} Anchored`}
-          </span>
-          <Badge
-            variant={isNft ? "secondary" : "outline"}
-            className="text-xs"
-          >
-            {isNft ? "ERC-721" : "ANCHOR"}
-          </Badge>
-        </div>
-        <span className="text-xs text-muted-foreground font-mono">
-          Block #{item.blockNumber} &middot; {date}
-        </span>
-      </div>
-      <ExplorerLink type="tx" value={item.txHash} className="text-xs shrink-0" />
-    </div>
   )
 }
 
@@ -128,9 +84,12 @@ function ProfileContent() {
   }
 
   const stats = profile?.stats || {}
-  const activity = profile?.activity || []
+  const papers = profile?.authoredPapers || []
+  const purchases = profile?.purchases || []
+  const nfts = profile?.nfts || []
 
   return (
+    <PageTransition>
     <>
       <Navbar />
 
@@ -155,6 +114,7 @@ function ProfileContent() {
               {error}
             </div>
           )}
+
           {/* Stats */}
           {loading ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -169,7 +129,7 @@ function ProfileContent() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-3 gap-4">
               <StatCard
                 icon={FileText}
                 label="Papers Uploaded"
@@ -188,55 +148,113 @@ function ProfileContent() {
                 value={stats.nftsEarned || 0}
                 color="text-violet-500"
               />
-              <StatCard
-                icon={Wallet}
-                label="Total Earned"
-                value={`${stats.totalEarned || 0} 0G`}
-                color="text-amber-500"
-              />
             </div>
           )}
 
-          {/* Activity */}
+          {/* My Papers */}
           <div>
-            <h2 className="text-lg font-semibold mb-4">On-Chain Activity</h2>
+            <h2 className="text-lg font-semibold mb-4">My Papers</h2>
             {loading ? (
               <div className="space-y-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 rounded-lg border p-3"
-                  >
-                    <Skeleton className="h-9 w-9 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-1/3" />
-                      <Skeleton className="h-3 w-1/4" />
-                    </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="rounded-lg border p-4">
+                    <Skeleton className="h-5 w-2/3 mb-2" />
+                    <Skeleton className="h-4 w-full" />
                   </div>
                 ))}
               </div>
-            ) : activity.length === 0 ? (
+            ) : papers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="rounded-full bg-muted p-4 mb-4">
                   <Inbox className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  No on-chain activity yet. Upload a paper to get started.
+                <p className="text-sm text-muted-foreground mb-4">
+                  No papers yet. Upload your first research paper.
                 </p>
+                <Link href="/upload">
+                  <Button>Upload Paper</Button>
+                </Link>
               </div>
             ) : (
               <div className="space-y-3">
-                {activity.map((item, i) => (
-                  <ActivityRow key={i} item={item} index={i} />
-                ))}
+                {papers.map((paper) => {
+                  const nft = nfts.find(n => Number(n.paperId) === paper.id || Number(n.paperId) === paper.journal_id)
+                  const isFree = !paper.price_wei || paper.price_wei === "0"
+                  const price0G = isFree ? "Free" : `${(Number(paper.price_wei) / 1e18)} 0G`
+
+                  return (
+                    <Link
+                      key={paper.id}
+                      href={`/article/${paper.slug || paper.id}`}
+                      className="block"
+                    >
+                      <div className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950/30">
+                          <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {paper.curated_title || paper.title}
+                          </p>
+                          {paper.summary && (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {paper.summary}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isFree ? (
+                            <Badge variant="secondary" className="text-xs">Free</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">{price0G}</Badge>
+                          )}
+                          {nft && (
+                            <Badge className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400">
+                              NFT #{nft.tokenId}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </div>
+
+          {/* Purchases */}
+          {purchases.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Papers Purchased</h2>
+              <div className="space-y-3">
+                {purchases.map((purchase, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 rounded-lg border p-4"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/30">
+                      <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {purchase.curated_title || purchase.paper_title || `Paper #${purchase.paper_id}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(Number(purchase.amount) / 1e18).toFixed(4)} 0G
+                        {purchase.purchase_date && ` · ${new Date(purchase.purchase_date).toLocaleDateString()}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <Footer />
     </>
+    </PageTransition>
   )
 }
 

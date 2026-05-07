@@ -8,22 +8,11 @@ import { OnChainData } from "@/components/article/on-chain-data"
 import { useLanguage } from "@/contexts/language"
 import { getApiUrl } from "@/lib/api-url"
 
-const CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16661", 10)
-const NETWORK_NAME = CHAIN_ID === 16661 ? "0G Mainnet" : "0G Testnet"
-
 export function Sidebar({ article, paper, unlocked, isFree, priceEth, address }) {
   const { t } = useLanguage()
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-      {/* Network */}
-      <div className="flex items-center gap-2 px-1">
-        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-        <Badge variant="secondary" className="text-xs font-medium">
-          {NETWORK_NAME}
-        </Badge>
-      </div>
-
       {/* Paper Info */}
       <Card>
         <CardHeader className="pb-3">

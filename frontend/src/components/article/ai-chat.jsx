@@ -6,6 +6,77 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getApiUrl } from "@/lib/api-url"
+import { getStoredToken } from "@/lib/auth"
+
+function renderMarkdown(text) {
+  if (!text) return null
+
+  const lines = text.split("\n")
+  const elements = []
+  let key = 0
+
+  for (const line of lines) {
+    // Numbered list: "1. **Bold:** text"
+    const listMatch = line.match(/^(\d+)\.\s+(.*)$/)
+    if (listMatch) {
+      elements.push(
+        <div key={key++} className="flex gap-1.5 ml-1">
+          <span className="font-semibold shrink-0">{listMatch[1]}.</span>
+          <span>{formatInline(listMatch[2])}</span>
+        </div>
+      )
+      continue
+    }
+
+    // Bullet list: "- text" or "* text"
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/)
+    if (bulletMatch) {
+      elements.push(
+        <div key={key++} className="flex gap-1.5 ml-1">
+          <span className="shrink-0">&bull;</span>
+          <span>{formatInline(bulletMatch[1])}</span>
+        </div>
+      )
+      continue
+    }
+
+    // Empty line = spacing
+    if (!line.trim()) {
+      elements.push(<div key={key++} className="h-1" />)
+      continue
+    }
+
+    // Regular paragraph
+    elements.push(<div key={key++}>{formatInline(line)}</div>)
+  }
+
+  return elements
+}
+
+function formatInline(text) {
+  const parts = []
+  // Split on **bold**, *italic*, `code`
+  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g
+  let lastIndex = 0
+  let match
+  let i = 0
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index))
+    }
+    if (match[2]) {
+      parts.push(<strong key={i++}>{match[2]}</strong>)
+    } else if (match[3]) {
+      parts.push(<em key={i++}>{match[3]}</em>)
+    } else if (match[4]) {
+      parts.push(<code key={i++} className="rounded bg-background/50 px-1 py-0.5 text-xs font-mono">{match[4]}</code>)
+    }
+    lastIndex = regex.lastIndex
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex))
+  return parts
+}
 
 export function AIChat({ paperId, article }) {
   const [messages, setMessages] = useState([])
@@ -21,9 +92,13 @@ export function AIChat({ paperId, article }) {
     setLoading(true)
 
     try {
+      const token = getStoredToken()
+      const headers = { "Content-Type": "application/json" }
+      if (token) headers["Authorization"] = `Bearer ${token}`
+
       const res = await fetch(`${getApiUrl()}/api/papers/${paperId}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ message: userMsg }),
       })
       const data = await res.json()
@@ -85,7 +160,7 @@ export function AIChat({ paperId, article }) {
                         : "bg-muted text-foreground"
                     }`}
                   >
-                    {m.text}
+                    {m.role === "ai" ? renderMarkdown(m.text) : m.text}
                   </div>
                   {m.role === "user" && (
                     <div className="flex-shrink-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center">
