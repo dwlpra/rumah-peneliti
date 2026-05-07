@@ -28,7 +28,7 @@ export function PipelineForm({ onSubmit, loading }) {
   const [file, setFile] = useState(null)
   const [dragOver, setDragOver] = useState(false)
   const [isFree, setIsFree] = useState(true)
-  const [priceWei, setPriceWei] = useState("10000000000000000")
+  const [price0G, setPrice0G] = useState("0.01")
 
   const handleDrop = (e) => {
     e.preventDefault()
@@ -45,7 +45,7 @@ export function PipelineForm({ onSubmit, loading }) {
       authors,
       abstract,
       file,
-      price_wei: isFree ? "0" : priceWei,
+      price_wei: isFree ? "0" : String(BigInt(Math.floor(Number(price0G) * 1e18))),
     })
   }
 
@@ -183,16 +183,20 @@ export function PipelineForm({ onSubmit, loading }) {
             </div>
             {!isFree && (
               <div className="mt-2 space-y-1">
-                <Input
-                  type="text"
-                  value={priceWei}
-                  onChange={(e) => setPriceWei(e.target.value)}
-                  placeholder="Price in wei"
-                  disabled={loading}
-                  className="font-mono text-sm"
-                />
+                <div className="flex items-center gap-2 w-48">
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={price0G}
+                    onChange={(e) => setPrice0G(e.target.value)}
+                    placeholder="0.01"
+                    disabled={loading}
+                  />
+                  <span className="text-sm font-medium whitespace-nowrap">0G</span>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {(Number(priceWei) / 1e18).toFixed(4)} 0G per access
+                  Readers pay this amount per access
                 </p>
               </div>
             )}

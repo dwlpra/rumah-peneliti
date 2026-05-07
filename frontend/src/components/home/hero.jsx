@@ -53,7 +53,7 @@ export function Hero() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2">
-              <Link href="/pipeline">
+              <Link href="/upload">
                 <FlaskConical className="h-4 w-4" />
                 Try Pipeline
               </Link>

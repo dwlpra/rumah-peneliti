@@ -11,5 +11,6 @@ backend/data/
 test-results/
 reference/
 CLAUDE.md
+PLAN-V2.md
 contracts/artifacts/
 contracts/cache/

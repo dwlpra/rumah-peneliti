@@ -15,13 +15,24 @@
 
 const fs = require("fs");
 const { ethers } = require("ethers");
-const { stmts, parseArticle, parseArticles, db } = require("../db");
+const { stmts, parseArticle, parseArticles, db, generateSlug } = require("../db");
 const { generateArticle } = require("../services/kurasi");
 const { uploadTo0G } = require("../services/storage");
 const { anchorPaper, anchorArticle } = require("../services/anchor");
 const { publishDAProof } = require("../services/da-layer");
 const { mintResearchNFT } = require("../services/nft");
+const { registerPaper } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
+
+/**
+ * Resolve paper ID from URL param — supports both numeric ID and slug.
+ * Returns numeric ID or null if not found.
+ */
+function resolvePaperId(param) {
+  if (/^\d+$/.test(param)) return parseInt(param);
+  const paper = stmts.getPaperBySlug.get(param);
+  return paper ? paper.id : null;
+}
 
 // ============================================================
 //  UPLOAD PAPER + FULL PIPELINE
@@ -91,6 +102,15 @@ async function uploadPaper(req, res) {
     }
   }
 
+  // ── Step 3b: Register on JournalPayment (for micropayments) ──
+  let journalResult = null;
+  try {
+    journalResult = await registerPaper(title, storageHash, price_wei || "0");
+    console.log("[Pipeline] ✅ Step 3b — Journal ID:", journalResult.journalPaperId);
+  } catch (e) {
+    console.warn("[Pipeline] ❌ Step 3b — Journal registration failed:", e.message);
+  }
+
   // ── Simpan ke database ──
   const result = stmts.insertPaper.run(
     title,
@@ -102,6 +122,17 @@ async function uploadPaper(req, res) {
     author_wallet || ""
   );
   const paperId = result.lastInsertRowid;
+
+  // Generate slug for this paper
+  stmts.updateSlug.run(generateSlug(title, paperId), paperId);
+
+  // Store journal_id mapping
+  if (journalResult?.journalPaperId) {
+    db.prepare("UPDATE papers SET journal_id = ? WHERE id = ?").run(
+      parseInt(journalResult.journalPaperId),
+      paperId
+    );
+  }
 
   // ── Step 4-6: Background processing ──
   runBackgroundPipeline({
@@ -120,6 +151,7 @@ async function uploadPaper(req, res) {
   res.json({
     success: true,
     paper,
+    slug: paper.slug,
     pipeline: {
       storageUploaded: !!storageHash,
       daProof: daProof?.blobHash || null,
@@ -175,10 +207,13 @@ function listPapers(req, res) {
 // ============================================================
 
 function getPaper(req, res) {
-  const paper = stmts.getPaper.get(req.params.id);
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.status(404).json({ error: "Paper not found" });
+
+  const paper = stmts.getPaper.get(id);
   if (!paper) return res.status(404).json({ error: "Paper not found" });
 
-  const article = parseArticle(stmts.getArticle.get(req.params.id));
+  const article = parseArticle(stmts.getArticle.get(id));
   res.json({ ...paper, article });
 }
 
@@ -195,19 +230,21 @@ function getPaper(req, res) {
  */
 function purchasePaper(req, res) {
   const { buyer_wallet, tx_hash, amount } = req.body;
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.status(404).json({ error: "Paper not found" });
 
-  const paper = stmts.getPaper.get(req.params.id);
+  const paper = stmts.getPaper.get(id);
   if (!paper) return res.status(404).json({ error: "Paper not found" });
   if (!buyer_wallet) return res.status(400).json({ error: "buyer_wallet required" });
 
   // Cek duplikat
-  const existing = stmts.getPurchase.get(req.params.id, buyer_wallet);
+  const existing = stmts.getPurchase.get(id, buyer_wallet);
   if (existing) {
     return res.json({ success: true, message: "Already purchased", existing: true });
   }
 
   stmts.insertPurchase.run(
-    req.params.id,
+    id,
     buyer_wallet,
     tx_hash || "",
     amount || paper.price_wei
@@ -221,7 +258,9 @@ function purchasePaper(req, res) {
 // ============================================================
 
 function checkAccess(req, res) {
-  const purchase = stmts.getPurchase.get(req.params.id, req.params.wallet);
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.json({ hasAccess: false });
+  const purchase = stmts.getPurchase.get(id, req.params.wallet);
   res.json({ hasAccess: !!purchase });
 }
 
@@ -230,11 +269,11 @@ function checkAccess(req, res) {
 // ============================================================
 
 function deletePaper(req, res) {
-  const paper = stmts.getPaper.get(req.params.id);
-  if (!paper) return res.status(404).json({ error: "Not found" });
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.status(404).json({ error: "Not found" });
 
-  stmts.deletePaper.run(req.params.id);
-  res.json({ success: true, deleted: req.params.id });
+  stmts.deletePaper.run(id);
+  res.json({ success: true, deleted: id });
 }
 
 // ============================================================
@@ -242,12 +281,13 @@ function deletePaper(req, res) {
 // ============================================================
 
 async function getOnChainData(req, res) {
-  const paperId = parseInt(req.params.id);
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.status(404).json({ error: "Paper not found" });
   try {
-    const data = await getPaperOnChainData(paperId);
-    res.json({ paperId, ...data });
+    const data = await getPaperOnChainData(id);
+    res.json({ paperId: id, ...data });
   } catch {
-    res.json({ paperId, anchor: null, nft: null, articleAnchors: [], explorerBase: "https://chainscan.0g.ai" });
+    res.json({ paperId: id, anchor: null, nft: null, articleAnchors: [], explorerBase: "https://chainscan.0g.ai" });
   }
 }
 
@@ -279,10 +319,13 @@ async function chatAboutPaper(req, res) {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "Message is required" });
 
-  const paper = stmts.getPaper.get(req.params.id);
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.status(404).json({ error: "Paper not found" });
+
+  const paper = stmts.getPaper.get(id);
   if (!paper) return res.status(404).json({ error: "Paper not found" });
 
-  const article = parseArticle(stmts.getArticle.get(req.params.id));
+  const article = parseArticle(stmts.getArticle.get(id));
 
   // Bangun konteks dari paper + artikel
   const context = buildChatContext(paper, article);

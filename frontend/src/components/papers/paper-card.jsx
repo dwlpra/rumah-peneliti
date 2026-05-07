@@ -19,7 +19,7 @@ export function PaperCard({ paper, index = 0 }) {
   const gradient = STRIP_GRADIENTS[index % STRIP_GRADIENTS.length]
 
   return (
-    <Link href={`/article/${paper.id}`} className="group block">
+    <Link href={`/article/${paper.slug || paper.id}`} className="group block">
       <Card
         className={cn(
           "overflow-hidden transition-all duration-200",

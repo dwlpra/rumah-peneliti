@@ -177,7 +177,7 @@ function LeaderboardContent() {
                       {topPapers.map((p, i) => (
                         <Link
                           key={i}
-                          href={`/article/${p.id}`}
+                          href={`/article/${p.slug || p.id}`}
                           className="flex items-center gap-4 rounded-lg px-4 py-3 hover:bg-muted/50 transition-colors"
                         >
                           <MedalBadge rank={i} />

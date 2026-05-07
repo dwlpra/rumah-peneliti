@@ -77,7 +77,7 @@ export function PipelineResult({ result }) {
         <div className="flex flex-wrap gap-2">
           {paper?.id && (
             <Button asChild>
-              <Link href={`/article/${paper.id}`} className="gap-1.5">
+              <Link href={`/article/${paper.slug || paper.id}`} className="gap-1.5">
                 View Article
                 <ExternalLink className="h-4 w-4" />
               </Link>

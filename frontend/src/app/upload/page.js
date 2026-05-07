@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Lock,
@@ -14,10 +14,15 @@ import {
   Gift,
   Diamond,
   X,
+  Cpu,
+  Eye,
+  RotateCcw,
 } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { AddressDisplay } from "@/components/shared/address-display"
+import { PipelineSteps } from "@/components/pipeline/pipeline-steps"
+import { PipelineResult } from "@/components/pipeline/pipeline-result"
 import {
   Card,
   CardHeader,
@@ -39,6 +44,8 @@ import { getStoredToken } from "@/lib/auth"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
 import { WalletModal } from "@/components/shared/wallet-modal"
+
+const API = () => getApiUrl()
 
 /* ──────────────────────── Auth Gate: No Wallet ──────────────────────── */
 
@@ -75,6 +82,7 @@ function UploadForm({ address }) {
   const { t } = useLanguage()
   const router = useRouter()
   const fileRef = useRef(null)
+  const eventSourceRef = useRef(null)
 
   // Form state
   const [title, setTitle] = useState("")
@@ -82,7 +90,7 @@ function UploadForm({ address }) {
   const [abstract, setAbstract] = useState("")
   const [file, setFile] = useState(null)
   const [isFree, setIsFree] = useState(true)
-  const [priceWei, setPriceWei] = useState("10000000000000000")
+  const [price0G, setPrice0G] = useState("0.01")
   const [dragOver, setDragOver] = useState(false)
 
   // Submission state
@@ -90,45 +98,94 @@ function UploadForm({ address }) {
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState(null)
 
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragOver(false)
-    const f = e.dataTransfer.files[0]
-    if (f) setFile(f)
-  }
+  // Pipeline visualization state
+  const [showPipeline, setShowPipeline] = useState(false)
+  const [stepState, setStepState] = useState({})
+  const [currentStep, setCurrentStep] = useState(null)
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    setDragOver(true)
-  }
+  // Cleanup SSE on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) eventSourceRef.current.close()
+    }
+  }, [])
 
-  const handleDragLeave = () => {
-    setDragOver(false)
-  }
+  // Pipeline helpers
+  const addLog = useCallback((stepId, msg) => {
+    const timestamp = new Date().toLocaleTimeString()
+    setStepState((prev) => ({
+      ...prev,
+      [stepId]: {
+        ...(prev[stepId] || { status: "pending", logs: [] }),
+        logs: [...(prev[stepId]?.logs || []), `${timestamp}: ${msg}`],
+      },
+    }))
+  }, [])
 
-  const handleFileSelect = (e) => {
-    const f = e.target.files[0]
-    if (f) setFile(f)
-  }
+  const setStepStatus = useCallback((stepId, status) => {
+    setStepState((prev) => ({
+      ...prev,
+      [stepId]: { ...(prev[stepId] || { logs: [] }), status },
+    }))
+  }, [])
 
-  const removeFile = () => {
-    setFile(null)
-    if (fileRef.current) fileRef.current.value = ""
-  }
+  // SSE connection for real-time pipeline updates
+  const connectSSE = useCallback((paperId) => {
+    if (eventSourceRef.current) eventSourceRef.current.close()
+    const sseUrl = `${API()}/api/pipeline/${paperId}/stream`
+    const es = new EventSource(sseUrl)
+    eventSourceRef.current = es
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.step && data.status) {
+          setStepStatus(data.step, data.status)
+          setCurrentStep(data.step)
+          if (data.message) addLog(data.step, data.message)
+        }
+        if (data.type === "error") {
+          addLog(data.step || "upload", `Error: ${data.message || data.error}`)
+          setStepStatus(data.step || "upload", "error")
+        }
+      } catch {}
+    }
+
+    es.onerror = () => {
+      es.close()
+      eventSourceRef.current = null
+    }
+  }, [addLog, setStepStatus])
+
+  // Drag & drop handlers
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) setFile(f) }
+  const handleDragOver = (e) => { e.preventDefault(); setDragOver(true) }
+  const handleDragLeave = () => setDragOver(false)
+  const handleFileSelect = (e) => { const f = e.target.files[0]; if (f) setFile(f) }
+  const removeFile = () => { setFile(null); if (fileRef.current) fileRef.current.value = "" }
+
+  // Core upload logic (shared by both buttons)
+  const performUpload = async (watchPipeline) => {
     if (!title.trim()) return
 
     setLoading(true)
     setResult(null)
     setProgress(0)
 
+    if (watchPipeline) {
+      setShowPipeline(true)
+      setStepState({})
+      setCurrentStep(null)
+    }
+
     try {
-      // ── Step 1: Sign upload message (Smart Contract Gate) ──
-      // User harus sign pesan yang berisi detail paper
-      // Kalau user reject/tidak sign → upload batal, AI tidak jalan
+      // Sign upload message
       setProgress(10)
+      if (watchPipeline) {
+        setStepStatus("upload", "running")
+        addLog("upload", "Waiting for wallet signature...")
+      }
+
       const uploadMessage = `RumahPeneliti Paper Submission\n\nTitle: ${title}\nAuthors: ${authors || "N/A"}\nTimestamp: ${new Date().toISOString()}\n\nI approve the submission of this paper for AI curation and on-chain registration.`
 
       let uploadSignature
@@ -137,16 +194,19 @@ function UploadForm({ address }) {
           method: "personal_sign",
           params: [uploadMessage, address],
         })
-      } catch (signError) {
-        // User rejected the signature → batal
+      } catch {
         setLoading(false)
         setResult({ error: "Upload cancelled. You must sign the submission to proceed." })
+        if (watchPipeline) {
+          setStepStatus("upload", "error")
+          addLog("upload", "Signature rejected by user")
+        }
         return
       }
 
       setProgress(30)
+      if (watchPipeline) addLog("upload", "Signature verified, uploading paper...")
 
-      // ── Step 2: Upload paper dengan signature ──
       const interval = setInterval(() => {
         setProgress((p) => Math.min(p + Math.random() * 10, 90))
       }, 500)
@@ -157,11 +217,11 @@ function UploadForm({ address }) {
       fd.append("authors", authors)
       fd.append("abstract", abstract)
       fd.append("author_wallet", address || "")
-      fd.append("price_wei", isFree ? "0" : priceWei)
+      fd.append("price_wei", isFree ? "0" : String(BigInt(Math.floor(Number(price0G) * 1e18))))
       fd.append("upload_message", uploadMessage)
       if (file) fd.append("file", file)
 
-      const res = await fetch(`${getApiUrl()}/api/papers`, {
+      const res = await fetch(`${API()}/api/papers`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -174,19 +234,104 @@ function UploadForm({ address }) {
       setProgress(100)
       setResult(data)
 
-      if (data.success) {
+      if (data.error) throw new Error(data.error)
+
+      // Pipeline visualization
+      if (watchPipeline && data.success) {
+        const pipeline = data.pipeline
+
+        // Upload complete
+        setStepStatus("upload", "completed")
+        addLog("upload", "Paper uploaded successfully")
+
+        // Storage
+        setStepStatus("storage", pipeline?.storageUploaded ? "completed" : "completed")
+        addLog("storage", pipeline?.storageUploaded ? "Uploaded to 0G Storage" : "File saved locally (0G Storage skipped)")
+
+        // DA Proof
+        setStepStatus("da", "completed")
+        addLog("da", pipeline?.daProof ? `DA proof published (${pipeline.daProof.slice(0, 16)}...)` : "DA proof skipped")
+
+        // On-chain Anchor
+        setStepStatus("anchor", "completed")
+        addLog("anchor", pipeline?.chainAnchor ? `Anchored on-chain (tx: ${pipeline.chainAnchor.slice(0, 16)}...)` : "Chain anchor skipped")
+
+        // AI Curation (background)
+        setStepStatus("ai", "running")
+        addLog("ai", "Starting multi-agent AI pipeline...")
+
+        // NFT Minting (background)
+        setStepStatus("nft", "running")
+        addLog("nft", "NFT minting queued (gasless, backend-sponsored)")
+
+        // Connect SSE for real-time updates
+        if (data.paper?.id) connectSSE(data.paper.id)
+      }
+
+      // Simple mode — redirect after success
+      if (!watchPipeline && data.success) {
         setTimeout(() => router.push("/browse"), 2000)
       }
-      if (data.error) throw new Error(data.error)
     } catch (err) {
       setResult({ error: err.message })
+      if (watchPipeline) {
+        setStepStatus("upload", "error")
+        addLog("upload", `Error: ${err.message}`)
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // Success state
-  if (result?.success) {
+  const handleSimpleUpload = (e) => {
+    e.preventDefault()
+    performUpload(false)
+  }
+
+  const handlePipelineUpload = (e) => {
+    e.preventDefault()
+    performUpload(true)
+  }
+
+  const handleReset = () => {
+    setShowPipeline(false)
+    setStepState({})
+    setCurrentStep(null)
+    setResult(null)
+    setLoading(false)
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
+  }
+
+  // Pipeline complete state
+  if (showPipeline && result?.success && !loading) {
+    return (
+      <div className="space-y-6">
+        <PipelineSteps stepState={stepState} currentStep={currentStep} />
+        <PipelineResult result={result} />
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={handleReset} className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Upload Another
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Pipeline running state
+  if (showPipeline && loading) {
+    return (
+      <div className="space-y-6">
+        <PipelineSteps stepState={stepState} currentStep={currentStep} />
+      </div>
+    )
+  }
+
+  // Simple success state
+  if (!showPipeline && result?.success) {
     return (
       <Card className="mx-auto max-w-md">
         <CardHeader className="items-center text-center">
@@ -209,8 +354,9 @@ function UploadForm({ address }) {
     )
   }
 
+  // Form
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form className="space-y-6">
       {/* Title */}
       <div className="space-y-2">
         <Label htmlFor="title">
@@ -320,7 +466,7 @@ function UploadForm({ address }) {
             className="gap-1.5"
             onClick={() => {
               setIsFree(true)
-              setPriceWei("0")
+              setPrice0G("0")
             }}
             disabled={loading}
           >
@@ -334,7 +480,7 @@ function UploadForm({ address }) {
             className="gap-1.5"
             onClick={() => {
               setIsFree(false)
-              if (priceWei === "0") setPriceWei("10000000000000000")
+              if (price0G === "0") setPrice0G("0.01")
             }}
             disabled={loading}
           >
@@ -344,16 +490,20 @@ function UploadForm({ address }) {
         </div>
         {!isFree && (
           <div className="space-y-1.5">
-            <Input
-              type="text"
-              value={priceWei}
-              onChange={(e) => setPriceWei(e.target.value)}
-              placeholder="Price in wei"
-              disabled={loading}
-              className="font-mono"
-            />
+            <div className="flex items-center gap-2 w-48">
+              <Input
+                type="number"
+                step="0.001"
+                min="0"
+                value={price0G}
+                onChange={(e) => setPrice0G(e.target.value)}
+                placeholder="0.01"
+                disabled={loading}
+              />
+              <span className="text-sm font-medium whitespace-nowrap">0G</span>
+            </div>
             <p className="text-xs text-muted-foreground">
-              {"\u2248"} {(Number(priceWei) / 1e18).toFixed(4)} 0G per access
+              Readers pay this amount per access
             </p>
           </div>
         )}
@@ -364,16 +514,14 @@ function UploadForm({ address }) {
         )}
       </div>
 
-      {/* Progress */}
-      {loading && (
+      {/* Progress (simple mode) */}
+      {loading && !showPipeline && (
         <div className="space-y-2">
           <Progress value={progress} className="h-2" />
           <p className="text-center text-xs text-muted-foreground">
-            {loading && progress <= 10
+            {progress <= 10
               ? "Waiting for wallet signature..."
-              : loading
-                ? "Uploading & processing... " + Math.round(progress) + "%"
-                : "Uploading... " + Math.round(progress) + "%"}
+              : "Uploading & processing... " + Math.round(progress) + "%"}
           </p>
         </div>
       )}
@@ -388,28 +536,49 @@ function UploadForm({ address }) {
 
       <Separator />
 
-      {/* Submit */}
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        disabled={loading || !title.trim()}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {progress <= 10 ? "Waiting for Signature..." : "Uploading & Processing..."}
-          </>
-        ) : (
-          <>
-            <UploadCloud className="mr-2 h-4 w-4" />
-            Sign & Upload Paper
-          </>
-        )}
-      </Button>
-      <p className="text-center text-xs text-muted-foreground mt-2">
-        🔐 MetaMask will ask you to sign a message approving the submission.
-        AI curation will only run after your signature is verified.
+      {/* Two submit buttons */}
+      <div className="space-y-3">
+        <Button
+          onClick={handleSimpleUpload}
+          className="w-full"
+          size="lg"
+          disabled={loading || !title.trim()}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {progress <= 10 ? "Waiting for Signature..." : "Uploading..."}
+            </>
+          ) : (
+            <>
+              <UploadCloud className="mr-2 h-4 w-4" />
+              Upload Paper
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={handlePipelineUpload}
+          variant="outline"
+          className="w-full gap-2"
+          size="lg"
+          disabled={loading || !title.trim()}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing Pipeline...
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              Upload & Watch Pipeline
+            </>
+          )}
+        </Button>
+      </div>
+      <p className="text-center text-xs text-muted-foreground">
+        You will be asked to sign the submission with your wallet.
+        AI curation and on-chain registration will begin after upload.
       </p>
     </form>
   )
@@ -473,14 +642,18 @@ function UploadContent() {
     <>
       <Navbar />
       <div className="flex-1">
-        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           {/* Page Heading */}
           <div className="mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground mb-4">
+              <UploadCloud className="h-3.5 w-3.5" />
+              Research Upload
+            </div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
               {t("upload_title")}
             </h1>
-            <p className="mt-2 text-muted-foreground">
-              {t("upload_subtitle")}
+            <p className="mt-2 text-muted-foreground max-w-lg">
+              Upload a research paper for AI curation, decentralized storage, and on-chain registration.
             </p>
           </div>
 

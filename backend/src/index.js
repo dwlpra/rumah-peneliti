@@ -126,6 +126,10 @@ app.get("/api/wallet/status", require("./controllers/wallet-controller"));
 const { getActivity } = require("./controllers/paper-controller");
 app.get("/api/activity", asyncHandler(getActivity));
 
+// Leaderboard
+const { getLeaderboard } = require("./controllers/leaderboard-controller");
+app.get("/api/leaderboard", asyncHandler(getLeaderboard));
+
 // ============================================================
 //  ERROR HANDLING — Must be registered AFTER all routes
 // ============================================================

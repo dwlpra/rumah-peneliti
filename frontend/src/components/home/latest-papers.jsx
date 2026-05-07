@@ -79,7 +79,7 @@ export function LatestPapers() {
             {articles.map(article => {
               const isFree = !article.price_wei || Number(article.price_wei) === 0
               return (
-                <Link key={article.id || article.paper_id} href={`/article/${article.paper_id}`}>
+                <Link key={article.id || article.paper_id} href={`/article/${article.slug || article.paper_id}`}>
                   <Card className="h-full transition-colors hover:border-primary/30 hover:shadow-sm">
                     <CardContent className="flex h-full flex-col p-5">
                       {/* Price badge */}

@@ -42,7 +42,18 @@ const ABI = [
 ];
 
 /**
- * Buat koneksi ke smart contract NFT
+ * Buat koneksi read-only ke smart contract NFT (tanpa signer)
+ * Untuk operasi baca: totalSupply, getTokenByPaper, dll
+ * @returns {ethers.Contract} - Instance contract read-only
+ */
+function getReadContract() {
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  return new ethers.Contract(NFT_CONTRACT_ADDRESS, ABI, provider);
+}
+
+/**
+ * Buat koneksi ke smart contract NFT dengan signer
+ * Untuk operasi tulis: mintResearch
  * @returns {ethers.Contract} - Instance contract yang siap dipanggil
  */
 async function getContract() {
@@ -126,7 +137,7 @@ async function mintResearchNFT(to, paperId, storageRoot, articleBody, metadata) 
  * @returns {Promise<object>} - Data NFT (tokenId, researcher, dll)
  */
 async function getNFTByPaper(paperId) {
-  const contract = await getContract();
+  const contract = getReadContract();
   const token = await contract.getTokenByPaper(paperId);
   return {
     tokenId: token.tokenId.toString(),
@@ -142,7 +153,7 @@ async function getNFTByPaper(paperId) {
  * @returns {Promise<number>} - Total supply
  */
 async function getTotalSupply() {
-  const contract = await getContract();
+  const contract = getReadContract();
   const supply = await contract.totalSupply();
   return Number(supply);
 }

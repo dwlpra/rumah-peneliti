@@ -8,7 +8,6 @@ import {
   Home,
   Search,
   Upload,
-  Cpu,
   Trophy,
   Award,
   ShieldCheck,
@@ -44,7 +43,6 @@ const MAIN_LINKS = [
   { href: "/", labelKey: "nav_home", icon: Home },
   { href: "/browse", labelKey: "nav_browse", icon: Search },
   { href: "/upload", labelKey: "nav_upload", icon: Upload },
-  { href: "/pipeline", labelKey: "Pipeline", icon: Cpu },
 ]
 
 const MORE_LINKS = [

@@ -116,7 +116,7 @@ ${text.slice(0, 10000)}
 Respond in EXACTLY this JSON format (no markdown):
 {
   "curated_title": "a catchy, engaging article title (NOT the original title)",
-  "summary": "a compelling 2-3 sentence summary that hooks the reader",
+  "summary": "a compelling 4-5 sentence summary that includes: what the research found (with a specific number or metric), why it matters to the field, how it compares to prior work, and what the practical implications are. Write for a researcher, not a general audience.",
   "key_takeaways": ["takeaway 1", "takeaway 2", "takeaway 3", "takeaway 4"],
   "body": "full article 5-8 paragraphs, accessible language, paragraphs separated by blank lines"
 }`,

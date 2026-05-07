@@ -44,11 +44,20 @@ async function getPaperNFT(req, res) {
 
 /** Get NFT stats (total supply, contract address) */
 async function getNFTStats(req, res) {
-  const total = await getTotalSupply();
-  res.json({
-    totalSupply: total,
-    contract: process.env.NFT_CONTRACT_ADDRESS,
-  });
+  try {
+    const total = await getTotalSupply();
+    res.json({
+      totalSupply: total,
+      contract: process.env.NFT_CONTRACT_ADDRESS,
+    });
+  } catch (err) {
+    console.error("[NFT] Stats error:", err.message);
+    res.json({
+      totalSupply: 0,
+      contract: process.env.NFT_CONTRACT_ADDRESS,
+      error: "Contract read failed — deployed version may differ from local code",
+    });
+  }
 }
 
 module.exports = { mintPaperNFT, getPaperNFT, getNFTStats };

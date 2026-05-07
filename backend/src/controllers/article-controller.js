@@ -8,6 +8,28 @@
 
 const { stmts, parseArticle, parseArticles } = require("../db");
 
+/**
+ * Resolve article from URL param — supports numeric paper_id, article id, or slug.
+ */
+function resolveArticle(param) {
+  // Try numeric paper_id first
+  let article = stmts.getArticle.get(param);
+  if (article) return article;
+
+  // Try article id
+  article = stmts.getArticleById.get(param);
+  if (article) return article;
+
+  // Try slug → find paper → find article
+  const paper = stmts.getPaperBySlug.get(param);
+  if (paper) {
+    article = stmts.getArticle.get(paper.id);
+    if (article) return article;
+  }
+
+  return null;
+}
+
 /** List semua artikel yang sudah dikurasi AI */
 function listArticles(req, res) {
   const articles = parseArticles(stmts.listArticles.all());
@@ -24,14 +46,7 @@ function listArticles(req, res) {
  * Response termasuk data paper asli.
  */
 function getArticle(req, res) {
-  // Cari berdasarkan article ID
-  let article = stmts.getArticle.get(req.params.id);
-
-  // Fallback: cari berdasarkan paper ID
-  if (!article) {
-    article = stmts.getArticleById.get(req.params.id);
-  }
-
+  const article = resolveArticle(req.params.id);
   if (!article) {
     return res.status(404).json({ error: "Article not found" });
   }

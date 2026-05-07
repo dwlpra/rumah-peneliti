@@ -131,7 +131,7 @@ export function WalletProvider({ children }) {
       // Store the selected provider so event listeners use the right one
       ethereumRef.current = ethereum
 
-      // Step 1: Request wallet connection (MetaMask popup: select account)
+      // Step 1: Request wallet connection (wallet popup: select account)
       const prov = new ethers.BrowserProvider(ethereum)
       const accounts = await prov.send("eth_requestAccounts", [])
       const sign = await prov.getSigner()
@@ -147,7 +147,7 @@ export function WalletProvider({ children }) {
         await switchNetwork()
       }
 
-      // Step 2: Sign message for authentication (MetaMask popup: sign message)
+      // Step 2: Sign message for authentication (wallet popup: sign message)
       try {
         addToast("Please sign the message to verify your identity...", "info")
         await loginWithWallet(accounts[0])

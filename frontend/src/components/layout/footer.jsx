@@ -6,7 +6,6 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
   { href: "/upload", label: "Upload" },
-  { href: "/pipeline", label: "Pipeline" },
 ]
 
 const RESOURCE_LINKS = [

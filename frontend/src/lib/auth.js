@@ -3,7 +3,7 @@
  *
  * Handle wallet-based authentication di frontend:
  *   1. Request nonce dari backend
- *   2. User sign nonce dengan MetaMask
+ *   2. User sign nonce dengan wallet
  *   3. Kirim signature ke backend → dapat JWT token
  *   4. Simpan token di localStorage
  *   5. Attach token ke setiap API request yang butuh auth
@@ -44,15 +44,15 @@ async function requestNonce(address) {
 }
 
 /**
- * Request user sign nonce dengan MetaMask
+ * Request user sign nonce dengan wallet
  */
 async function signNonce(nonce) {
-  if (!window.ethereum) throw new Error("MetaMask not installed");
+  if (!window.ethereum) throw new Error("No wallet detected");
 
   const accounts = await window.ethereum.request({ method: "eth_accounts" });
   if (!accounts.length) throw new Error("No wallet connected");
 
-  // personal_sign — user akan melihat pesan ini di MetaMask popup
+  // personal_sign — user akan melihat pesan ini di wallet popup
   const signature = await window.ethereum.request({
     method: "personal_sign",
     params: [nonce, accounts[0]],
@@ -89,7 +89,7 @@ export async function loginWithWallet(address) {
   // Step 1: Minta nonce dari backend
   const nonce = await requestNonce(address);
 
-  // Step 2: User sign nonce dengan MetaMask (muncul popup)
+  // Step 2: User sign nonce dengan wallet (muncul popup)
   const { signature } = await signNonce(nonce);
 
   // Step 3: Verifikasi signature di backend

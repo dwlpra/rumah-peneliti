@@ -35,7 +35,7 @@ function NFTCard({ nft, paper, index }) {
     : ""
 
   return (
-    <Link href={`/article/${nft.paperId}`} className="group">
+    <Link href={`/article/${nft.slug || nft.paperId}`} className="group">
       <Card className="overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full">
         <div className={`relative h-44 bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-1`}>
           <Award className="h-10 w-10 text-primary opacity-60" />
@@ -208,11 +208,8 @@ function NFTContent() {
                 Be the first to publish research and receive an NFT.
               </p>
               <div className="flex gap-3">
-                <Link href="/pipeline">
-                  <Button variant="default">Try Pipeline</Button>
-                </Link>
                 <Link href="/upload">
-                  <Button variant="outline">Upload Paper</Button>
+                  <Button variant="default">Upload Paper</Button>
                 </Link>
               </div>
             </div>

@@ -57,19 +57,19 @@ function ArticleContent() {
 
   // Check access
   useEffect(() => {
-    if (id && address) {
-      checkAccess(id, address)
+    if (paper?.id && address) {
+      checkAccess(paper.id, address)
         .then((res) => {
           if (res.hasAccess) setUnlocked(true)
         })
         .catch(() => {})
     }
-  }, [id, address])
+  }, [paper?.id, address])
 
   // Unlock handler — send payment via smart contract
   const handleUnlock = async () => {
     if (!window.ethereum) {
-      setToast({ type: "error", message: "Please install MetaMask first!" })
+      setToast({ type: "error", message: "Please install a wallet first!" })
       return
     }
     if (!address) {
@@ -90,14 +90,21 @@ function ArticleContent() {
       // Use ethers Contract with proper ABI instead of hardcoded selector
       const { ethers } = await import("ethers")
       const browserProvider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await browserProvider.getSigner()
       const contract = new ethers.Contract(
         contractAddress,
         ["function purchasePaper(uint256) payable"],
-        browserProvider.getSigner()
+        signer
       )
 
       const priceWei = paper?.price_wei || "1000000000000000"
-      const tx = await contract.purchasePaper(BigInt(id), {
+      const journalId = paper?.journal_id
+      if (journalId == null) {
+        setToast({ type: "error", message: "Paper not registered on-chain yet. Purchase unavailable." })
+        setPaying(false)
+        return
+      }
+      const tx = await contract.purchasePaper(BigInt(journalId), {
         value: BigInt(priceWei),
       })
 
@@ -106,7 +113,7 @@ function ArticleContent() {
       await tx.wait()
 
       // Record purchase in backend
-      await purchasePaper(id, address, tx.hash, priceWei)
+      await purchasePaper(paper.id, address, tx.hash, priceWei)
       setUnlocked(true)
       setToast({ type: "success", message: "Payment confirmed! Article unlocked." })
     } catch (e) {
