@@ -12,5 +12,6 @@ test-results/
 reference/
 CLAUDE.md
 PLAN-V2.md
+docs/
 contracts/artifacts/
 contracts/cache/
