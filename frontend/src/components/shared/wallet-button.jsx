@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Wallet, LogOut, ChevronDown } from "lucide-react"
+import { Wallet, LogOut, ChevronDown, User, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 import { useWallet } from "@/contexts/wallet"
 import { AddressDisplay } from "@/components/shared/address-display"
 import { WalletModal } from "@/components/shared/wallet-modal"
@@ -57,6 +58,18 @@ export function WalletButton() {
           </div>
         )}
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/leaderboard" className="flex items-center cursor-pointer">
+            <Trophy className="mr-2 h-4 w-4" />
+            Leaderboard
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/profile" className="flex items-center cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            Profile
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={disconnect} className="text-destructive focus:text-destructive">
           <LogOut className="mr-2 h-4 w-4" />
           Disconnect

@@ -8,7 +8,7 @@
  */
 
 const { stmts, parseArticle } = require("../db");
-const { mintResearchNFT, getNFTByPaper, getTotalSupply } = require("../services/nft");
+const { mintResearchNFT, getNFTByPaper, getTotalSupply, getAllNFTs } = require("../services/nft");
 
 /**
  * Manual mint NFT untuk paper yang sudah ada
@@ -60,4 +60,24 @@ async function getNFTStats(req, res) {
   }
 }
 
-module.exports = { mintPaperNFT, getPaperNFT, getNFTStats };
+/** Get all minted NFTs from the contract (no indexer needed) */
+async function listNFTs(req, res) {
+  try {
+    const nfts = await getAllNFTs();
+    // Enrich with paper data from local DB
+    const enriched = nfts.map((nft) => {
+      const paper = stmts.getPaper.get(Number(nft.paperId));
+      return {
+        ...nft,
+        slug: paper?.slug || null,
+        paperTitle: paper?.title || null,
+      };
+    });
+    res.json({ nfts: enriched, total: enriched.length });
+  } catch (err) {
+    console.error("[NFT] List error:", err.message);
+    res.json({ nfts: [], total: 0 });
+  }
+}
+
+module.exports = { mintPaperNFT, getPaperNFT, getNFTStats, listNFTs };

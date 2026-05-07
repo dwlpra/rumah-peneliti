@@ -4,7 +4,7 @@ const translations = {
     nav_browse: "Browse",
     nav_upload: "Upload",
     connect_wallet: "Connect Wallet",
-    hero_badge: "Web3 Research Platform",
+    hero_badge: "Open Access Research",
     hero_title_1: "Decentralized",
     hero_title_2: "Research Platform",
     hero_subtitle: "AI-powered article curation meets blockchain micropayments. Making academic research accessible to everyone.",

@@ -14,107 +14,47 @@ import { Separator } from "@/components/ui/separator"
 import { CONTRACTS } from "@/lib/constants"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
-
-const GRADIENTS = [
-  "from-blue-500/20 to-indigo-500/20",
-  "from-emerald-500/20 to-teal-500/20",
-  "from-violet-500/20 to-purple-500/20",
-  "from-amber-500/20 to-orange-500/20",
-  "from-rose-500/20 to-pink-500/20",
-  "from-cyan-500/20 to-sky-500/20",
-]
-
-function NFTCard({ nft, paper, index }) {
-  const gradient = GRADIENTS[index % GRADIENTS.length]
-  const date = nft.timestamp
-    ? new Date(nft.timestamp * 1000).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : ""
-
-  return (
-    <Link href={`/article/${nft.slug || nft.paperId}`} className="group">
-      <Card className="overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md h-full">
-        <div className={`relative h-44 bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-1`}>
-          <Award className="h-10 w-10 text-primary opacity-60" />
-          <span className="text-3xl font-bold text-primary">#{nft.tokenId}</span>
-          <Badge variant="secondary" className="mt-1 font-mono text-xs">
-            ERC-721
-          </Badge>
-        </div>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Research NFT #{nft.tokenId}</span>
-            <Badge variant="outline" className="text-xs">
-              On-chain
-            </Badge>
-          </div>
-          {paper && (
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-              {paper.curated_title || paper.paper_title || `Paper #${nft.paperId}`}
-            </p>
-          )}
-          <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-            <span>Paper #{nft.paperId}</span>
-            <span>{date}</span>
-          </div>
-          <ExplorerLink type="tx" value={nft.txHash} className="text-xs" />
-        </CardContent>
-      </Card>
-    </Link>
-  )
-}
+import { NFTCardSVG } from "@/components/nft/nft-card-svg"
 
 function NFTSkeleton() {
   return (
     <Card className="overflow-hidden">
-      <Skeleton className="h-44" />
-      <CardContent className="p-4 space-y-3">
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-1/2" />
-      </CardContent>
+      <Skeleton className="aspect-[5/7]" />
     </Card>
   )
 }
 
 function NFTContent() {
   const [nfts, setNfts] = useState([])
-  const [papers, setPapers] = useState({})
+  const [articles, setArticles] = useState({})
   const [totalSupply, setTotalSupply] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     Promise.all([
-      fetch(`${getApiUrl()}/api/activity`).then((r) => r.json()),
+      fetch(`${getApiUrl()}/api/nfts`).then((r) => r.json()),
       fetch(`${getApiUrl()}/api/nfts/stats`).then((r) => r.json()),
     ])
-      .then(([activityData, nftStats]) => {
-        const nftItems = (activityData?.activity || []).filter(
-          (a) => a.type === "nft"
-        )
+      .then(async ([nftData, nftStats]) => {
+        const nftItems = nftData?.nfts || []
         setNfts(nftItems)
         setTotalSupply(nftStats?.totalSupply || nftItems.length)
 
-        const paperIds = [...new Set(nftItems.map((n) => n.paperId))]
-        return Promise.all(
-          paperIds.map((id) =>
-            fetch(`${getApiUrl()}/api/articles/${id}`)
+        // Fetch article data for each NFT (for AI score, tags, summary)
+        const articleResults = await Promise.all(
+          nftItems.map((nft) =>
+            fetch(`${getApiUrl()}/api/articles/${nft.paperId}`)
               .then((r) => r.json())
-              .then((a) => ({ id, ...a }))
+              .then((a) => ({ paperId: nft.paperId, ...a }))
               .catch(() => null)
           )
         )
-      })
-      .then((results) => {
-        const m = {}
-        results.filter(Boolean).forEach((p) => {
-          m[p.id] = p
+        const articleMap = {}
+        articleResults.filter(Boolean).forEach((a) => {
+          articleMap[a.paperId] = a
         })
-        setPapers(m)
+        setArticles(articleMap)
       })
       .catch((e) => setError(e.message || "Failed to load NFTs"))
       .finally(() => setLoading(false))
@@ -215,13 +155,16 @@ function NFTContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {nfts.map((nft, i) => (
-                <NFTCard
+              {nfts.map((nft) => (
+                <Link
                   key={nft.tokenId}
-                  nft={nft}
-                  paper={papers[nft.paperId]}
-                  index={i}
-                />
+                  href={`/article/${nft.slug || nft.paperId}`}
+                  className="group"
+                >
+                  <div className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                    <NFTCardSVG nft={nft} article={articles[nft.paperId]} />
+                  </div>
+                </Link>
               ))}
             </div>
           )}
@@ -235,9 +178,5 @@ function NFTContent() {
 }
 
 export default function NFTsPage() {
-  return (
-    <div className="flex min-h-screen flex-col">
-      <NFTContent />
-    </div>
-  )
+  return <NFTContent />
 }

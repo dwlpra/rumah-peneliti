@@ -30,6 +30,7 @@ const {
   getOnChainData,
   getActivity,
   chatAboutPaper,
+  downloadPaper,
 } = require("../controllers/paper-controller");
 const { requireAuth, requireUploadSignature } = require("../middleware/auth");
 
@@ -57,6 +58,7 @@ module.exports = (upload) => {
   router.get("/:id", asyncHandler(getPaper));
   router.get("/:id/onchain", asyncHandler(getOnChainData));
   router.get("/:id/access/:wallet", asyncHandler(checkAccess));
+  router.get("/:id/download", asyncHandler(downloadPaper));
 
   return router;
 };

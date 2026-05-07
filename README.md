@@ -429,14 +429,6 @@ rumah-peneliti
 
 ---
 
-## Author
-
-**akzmee** — Master's Student & Fullstack Developer
-
-Building the future of decentralized academic publishing on 0G.
-
----
-
 ## License
 
 MIT

@@ -46,14 +46,14 @@ async function requestNonce(address) {
 /**
  * Request user sign nonce dengan wallet
  */
-async function signNonce(nonce) {
-  if (!window.ethereum) throw new Error("No wallet detected");
+async function signNonce(nonce, ethereum) {
+  if (!ethereum) throw new Error("No wallet detected");
 
-  const accounts = await window.ethereum.request({ method: "eth_accounts" });
+  const accounts = await ethereum.request({ method: "eth_accounts" });
   if (!accounts.length) throw new Error("No wallet connected");
 
   // personal_sign — user akan melihat pesan ini di wallet popup
-  const signature = await window.ethereum.request({
+  const signature = await ethereum.request({
     method: "personal_sign",
     params: [nonce, accounts[0]],
   });
@@ -85,12 +85,12 @@ async function verifyWithBackend(address, signature) {
  * @param {string} address - Wallet address yang sudah terhubung
  * @returns {Promise<{token, address}>}
  */
-export async function loginWithWallet(address) {
+export async function loginWithWallet(address, ethereum) {
   // Step 1: Minta nonce dari backend
   const nonce = await requestNonce(address);
 
   // Step 2: User sign nonce dengan wallet (muncul popup)
-  const { signature } = await signNonce(nonce);
+  const { signature } = await signNonce(nonce, ethereum || window.ethereum);
 
   // Step 3: Verifikasi signature di backend
   const result = await verifyWithBackend(address, signature);

@@ -271,7 +271,7 @@ function ArticleContent() {
             {/* Body or Paywall */}
             {canRead ? (
               <div className="mt-8">
-                <ArticleBody article={article} />
+                <ArticleBody article={article} abstract={paper?.abstract} />
 
                 {/* Donation button for free papers */}
                 {isFree && (
@@ -347,6 +347,7 @@ function ArticleContent() {
             unlocked={unlocked}
             isFree={isFree}
             priceEth={priceEth}
+            address={address}
           />
         </div>
       </div>

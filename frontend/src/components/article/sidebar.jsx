@@ -1,17 +1,29 @@
 "use client"
 
-import { FileText, User, Tag, CheckCircle, Lock } from "lucide-react"
+import { FileText, User, Tag, CheckCircle, Lock, Download } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { OnChainData } from "@/components/article/on-chain-data"
 import { useLanguage } from "@/contexts/language"
+import { getApiUrl } from "@/lib/api-url"
 
-export function Sidebar({ article, paper, unlocked, isFree, priceEth }) {
+const CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16661", 10)
+const NETWORK_NAME = CHAIN_ID === 16661 ? "0G Mainnet" : "0G Testnet"
+
+export function Sidebar({ article, paper, unlocked, isFree, priceEth, address }) {
   const { t } = useLanguage()
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      {/* Network */}
+      <div className="flex items-center gap-2 px-1">
+        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+        <Badge variant="secondary" className="text-xs font-medium">
+          {NETWORK_NAME}
+        </Badge>
+      </div>
+
       {/* Paper Info */}
       <Card>
         <CardHeader className="pb-3">
@@ -84,6 +96,19 @@ export function Sidebar({ article, paper, unlocked, isFree, priceEth }) {
               </span>
             )}
           </div>
+
+          {/* Download from 0G Storage */}
+          {(unlocked || isFree) && paper?.storage_hash && (
+            <a
+              href={`${getApiUrl()}/api/papers/${paper.id}/download${address ? `?wallet=${address}` : ""}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Download from 0G Storage
+            </a>
+          )}
         </CardContent>
       </Card>
 

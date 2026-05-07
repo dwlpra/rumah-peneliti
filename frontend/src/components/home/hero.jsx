@@ -19,16 +19,8 @@ export function Hero() {
       </div>
 
       <div className="container relative mx-auto flex max-w-screen-xl flex-col items-center px-4 py-20 text-center md:py-28 lg:py-32">
-        {/* Badge */}
-        <div className="hero-entrance hero-entrance-1">
-          <Badge variant="secondary" className="mb-6 gap-1.5 px-3 py-1 text-sm">
-            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 glow-pulse" />
-            {t("hero_badge")}
-          </Badge>
-        </div>
-
         {/* Heading */}
-        <div className="hero-entrance hero-entrance-2">
+        <div className="hero-entrance hero-entrance-1">
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             <span className="text-primary">{t("hero_title_1")}</span>
             <br />

@@ -14,10 +14,11 @@
  */
 
 const fs = require("fs");
+const path = require("path");
 const { ethers } = require("ethers");
 const { stmts, parseArticle, parseArticles, db, generateSlug } = require("../db");
 const { generateArticle } = require("../services/kurasi");
-const { uploadTo0G } = require("../services/storage");
+const { uploadTo0G, downloadFrom0G } = require("../services/storage");
 const { anchorPaper, anchorArticle } = require("../services/anchor");
 const { publishDAProof } = require("../services/da-layer");
 const { mintResearchNFT } = require("../services/nft");
@@ -64,12 +65,21 @@ async function uploadPaper(req, res) {
 
   const filePath = req.file.path;
 
+  // Baca konten file sebelum dihapus (untuk AI curation di background)
+  const fileContent = fs.readFileSync(filePath, "utf-8").slice(0, 50000);
+
   // ── Step 1: Upload ke 0G Storage ──
   let storageHash = "";
   try {
     const result = await uploadTo0G(filePath);
     storageHash = result.rootHash;
     console.log("[Pipeline] ✅ Step 1 — 0G Storage:", storageHash);
+
+    // Hapus file lokal setelah berhasil upload ke 0G Storage
+    try {
+      fs.unlinkSync(filePath);
+      console.log("[Pipeline] 🗑️ Local file deleted:", path.basename(filePath));
+    } catch (_) {}
   } catch (e) {
     console.warn("[Pipeline] ❌ Step 1 — 0G Storage failed:", e.message);
   }
@@ -137,7 +147,7 @@ async function uploadPaper(req, res) {
   // ── Step 4-6: Background processing ──
   runBackgroundPipeline({
     paperId,
-    file: req.file,
+    fileContent,
     title,
     authors,
     abstract,
@@ -342,6 +352,57 @@ async function chatAboutPaper(req, res) {
 }
 
 // ============================================================
+//  DOWNLOAD FROM 0G STORAGE
+// ============================================================
+
+/**
+ * Download paper dari 0G Storage (decentralized)
+ *
+ * File hanya tersedia dari 0G Storage — bukan server lokal.
+ * Local file dihapus setelah upload ke 0G Storage berhasil.
+ */
+async function downloadPaper(req, res) {
+  const id = resolvePaperId(req.params.id);
+  if (!id) return res.status(404).json({ error: "Paper not found" });
+
+  const paper = stmts.getPaper.get(id);
+  if (!paper) return res.status(404).json({ error: "Paper not found" });
+
+  if (!paper.storage_hash) {
+    return res.status(404).json({ error: "Paper not stored on 0G Storage" });
+  }
+
+  // Cek akses: free atau sudah dibeli
+  const isFree = !paper.price_wei || paper.price_wei === "0";
+  const wallet = req.query.wallet || "";
+  const purchase = wallet ? stmts.getPurchase.get(id, wallet) : null;
+
+  if (!isFree && !purchase && paper.author_wallet !== wallet) {
+    return res.status(403).json({ error: "Access denied — purchase required" });
+  }
+
+  const filename = paper.title
+    ? paper.title.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 60) + ".txt"
+    : `paper-${id}.txt`;
+
+  try {
+    const tmpPath = path.join("/tmp", `0g-dl-${id}-${Date.now()}.txt`);
+    await downloadFrom0G(paper.storage_hash, tmpPath);
+
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "text/plain");
+
+    const stream = fs.createReadStream(tmpPath);
+    stream.pipe(res);
+    stream.on("end", () => fs.unlink(tmpPath, () => {}));
+    stream.on("error", () => fs.unlink(tmpPath, () => {}));
+  } catch (e) {
+    console.error("[Download] 0G Storage failed:", e.message);
+    res.status(502).json({ error: "Failed to retrieve file from 0G Storage" });
+  }
+}
+
+// ============================================================
 //  PRIVATE HELPERS
 // ============================================================
 
@@ -366,10 +427,8 @@ async function checkWalletBalance() {
  * Step 5 & 6 berurutan (sequential) karena pakai wallet yang sama.
  * Kalau paralel, akan terjadi nonce conflict.
  */
-function runBackgroundPipeline({ paperId, file, title, authors, abstract, author_wallet, storageHash, anchorResult }) {
-  const textContent = file
-    ? fs.readFileSync(file.path, "utf-8").slice(0, 50000)
-    : abstract || "";
+function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract, author_wallet, storageHash, anchorResult }) {
+  const textContent = fileContent || abstract || "";
 
   generateArticle(paperId, title, abstract, textContent)
     .then(article => {
@@ -524,4 +583,5 @@ module.exports = {
   getOnChainData,
   getActivity,
   chatAboutPaper,
+  downloadPaper,
 };

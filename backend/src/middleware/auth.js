@@ -155,9 +155,12 @@ function requireUploadSignature(req, res, next) {
     });
   }
 
+  // Normalize line endings: FormData on Windows may convert \n to \r\n
+  const normalizedMessage = uploadMessage.replace(/\r\n/g, "\n");
+
   // Recover address dari signature + message
   try {
-    const recovered = ethers.verifyMessage(uploadMessage, signature);
+    const recovered = ethers.verifyMessage(normalizedMessage, signature);
 
     // Bandingkan dengan address dari JWT token (sudah di-set oleh requireAuth)
     if (recovered.toLowerCase() !== req.user.address.toLowerCase()) {

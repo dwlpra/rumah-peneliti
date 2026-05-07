@@ -131,7 +131,18 @@ export function WalletProvider({ children }) {
       // Store the selected provider so event listeners use the right one
       ethereumRef.current = ethereum
 
-      // Step 1: Request wallet connection (wallet popup: select account)
+      // Force MetaMask to show account selection popup
+      // Without this, MetaMask silently returns the cached account
+      try {
+        await ethereum.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }],
+        })
+      } catch (_) {
+        // If wallet doesn't support wallet_requestPermissions, fall through
+      }
+
+      // Step 1: Request wallet connection
       const prov = new ethers.BrowserProvider(ethereum)
       const accounts = await prov.send("eth_requestAccounts", [])
       const sign = await prov.getSigner()
@@ -150,7 +161,7 @@ export function WalletProvider({ children }) {
       // Step 2: Sign message for authentication (wallet popup: sign message)
       try {
         addToast("Please sign the message to verify your identity...", "info")
-        await loginWithWallet(accounts[0])
+        await loginWithWallet(accounts[0], ethereum)
         setIsAuthed(true)
         addToast("Wallet connected & verified!", "success")
       } catch (authErr) {
@@ -191,6 +202,7 @@ export function WalletProvider({ children }) {
         isCorrectNetwork,
         isAuthed,
         switchNetwork,
+        getEthereum: () => ethereumRef.current || window.ethereum,
       }}
     >
       {children}

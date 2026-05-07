@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Settings2,
   BarChart3,
-  User,
   Menu,
   MoreHorizontal,
 } from "lucide-react"
@@ -39,19 +38,20 @@ import { WalletButton } from "@/components/shared/wallet-button"
 import { useLanguage } from "@/contexts/language"
 import { cn } from "@/lib/utils"
 
+const CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "16661", 10)
+const NETWORK_NAME = CHAIN_ID === 16661 ? "0G Mainnet" : "0G Testnet"
+
 const MAIN_LINKS = [
   { href: "/", labelKey: "nav_home", icon: Home },
   { href: "/browse", labelKey: "nav_browse", icon: Search },
   { href: "/upload", labelKey: "nav_upload", icon: Upload },
+  { href: "/nfts", label: "NFTs", icon: Award },
+  { href: "/verify", label: "Verify", icon: ShieldCheck },
 ]
 
 const MORE_LINKS = [
-  { href: "/nfts", label: "NFTs", icon: Award },
-  { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/tech", label: "Tech", icon: Settings2 },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/profile", label: "Profile", icon: User },
 ]
 
 export function Navbar() {
@@ -134,6 +134,24 @@ export function Navbar() {
           <LanguageSwitcher />
           <ThemeToggle />
           <Separator orientation="vertical" className="mx-1 h-6" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="hidden sm:flex items-center gap-1.5 rounded-md border px-2 py-1 hover:bg-accent transition-colors">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                <span className="text-xs font-medium">{NETWORK_NAME}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="gap-2" disabled={CHAIN_ID !== 16661}>
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                <span className="text-xs font-medium">0G Mainnet</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" disabled>
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                <span className="text-xs text-muted-foreground">0G Testnet</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <WalletButton />
         </div>
 
@@ -153,6 +171,16 @@ export function Navbar() {
                 </SheetTitle>
               </SheetHeader>
               <Separator className="my-4" />
+              <div className="flex flex-col gap-1.5 px-3 mb-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                  <span className="text-xs font-medium">{NETWORK_NAME}</span>
+                </div>
+                <div className="flex items-center gap-1.5 opacity-40">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                  <span className="text-xs text-muted-foreground">0G Testnet</span>
+                </div>
+              </div>
               <nav className="flex flex-col gap-1">
                 {MAIN_LINKS.map((link) => renderLink(link, true))}
                 <Separator className="my-2" />

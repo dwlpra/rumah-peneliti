@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Clock, User, Calendar } from "lucide-react"
 
-export function ArticleBody({ article }) {
+export function ArticleBody({ article, abstract }) {
   const [readingProgress, setReadingProgress] = useState(0)
 
   useEffect(() => {
@@ -29,6 +29,14 @@ export function ArticleBody({ article }) {
       />
 
       <article className="prose prose-slate dark:prose-invert max-w-none">
+        {/* Abstract */}
+        {abstract && (
+          <div className="mb-8 rounded-lg border bg-muted/30 px-6 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Abstract</p>
+            <p className="text-sm leading-relaxed text-muted-foreground italic">{abstract}</p>
+          </div>
+        )}
+
         {/* Paragraphs rendered with academic typography */}
         {paragraphs.length > 0 ? (
           <div className="space-y-5">

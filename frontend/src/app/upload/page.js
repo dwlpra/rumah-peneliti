@@ -80,6 +80,7 @@ function ConnectGate() {
 
 function UploadForm({ address }) {
   const { t } = useLanguage()
+  const { getEthereum } = useWallet()
   const router = useRouter()
   const fileRef = useRef(null)
   const eventSourceRef = useRef(null)
@@ -190,7 +191,8 @@ function UploadForm({ address }) {
 
       let uploadSignature
       try {
-        uploadSignature = await window.ethereum.request({
+        const ethereum = getEthereum()
+        uploadSignature = await ethereum.request({
           method: "personal_sign",
           params: [uploadMessage, address],
         })

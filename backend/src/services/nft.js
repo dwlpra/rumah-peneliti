@@ -158,4 +158,30 @@ async function getTotalSupply() {
   return Number(supply);
 }
 
-module.exports = { mintResearchNFT, getNFTByPaper, getTotalSupply };
+/**
+ * Get all minted NFTs directly from the contract (no indexer needed)
+ * @returns {Promise<Array>} - Array of NFT data
+ */
+async function getAllNFTs() {
+  const contract = getReadContract();
+  const supply = await contract.totalSupply();
+  const total = Number(supply);
+  const nfts = [];
+  for (let i = 1; i <= total; i++) {
+    try {
+      const token = await contract.getResearchToken(i);
+      nfts.push({
+        tokenId: token.tokenId.toString(),
+        paperId: token.paperId.toString(),
+        storageRoot: token.storageRoot,
+        researcher: token.researcher,
+        timestamp: token.mintedAt.toString(),
+      });
+    } catch (e) {
+      console.error(`[NFT] Error reading token #${i}:`, e.message);
+    }
+  }
+  return nfts;
+}
+
+module.exports = { mintResearchNFT, getNFTByPaper, getTotalSupply, getAllNFTs };
