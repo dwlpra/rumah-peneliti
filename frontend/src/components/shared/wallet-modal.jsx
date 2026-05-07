@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -10,114 +10,243 @@ import {
 } from "@/components/ui/dialog"
 import { useWallet } from "@/contexts/wallet"
 
-// Wallet identifiers — each wallet extension sets a unique flag on its provider
+// Wallet definitions with multiple detection strategies
+// Each wallet can be detected via:
+//   - Provider flags on window.ethereum (isMetaMask, isRabby, etc.)
+//   - Separate injection points (window.rabby, window.okxwallet, etc.)
 const KNOWN_WALLETS = [
   {
     id: "metamask",
     name: "MetaMask",
-    check: (p) => p.isMetaMask === true,
+    flags: ["isMetaMask"],
+    injectPoint: null,
     color: "bg-orange-500/10",
     download: "https://metamask.io/download/",
     icon: "metamask",
   },
   {
-    id: "backpack",
-    name: "Backpack",
-    check: (p) => p.isBackpack === true,
-    color: "bg-violet-500/10",
-    download: "https://backpack.app/",
-    icon: "backpack",
-  },
-  {
-    id: "haha",
-    name: "HaHa Wallet",
-    check: (p) => p.isHaHa === true || p.isHaha === true,
-    color: "bg-yellow-500/10",
-    download: "https://hahawallet.com/",
-    icon: "haha",
-  },
-  {
-    id: "coinbase",
-    name: "Coinbase Wallet",
-    check: (p) => p.isCoinbaseWallet === true,
-    color: "bg-blue-500/10",
-    download: "https://www.coinbase.com/wallet",
-    icon: "coinbase",
-  },
-  {
-    id: "brave",
-    name: "Brave Wallet",
-    check: (p) => p.isBraveWallet === true,
-    color: "bg-orange-600/10",
-    download: "https://brave.com/wallet/",
-    icon: "brave",
+    id: "rabby",
+    name: "Rabby Wallet",
+    flags: ["isRabby"],
+    injectPoint: "rabby",
+    color: "bg-sky-500/10",
+    download: "https://rabby.io/",
+    icon: "rabby",
   },
   {
     id: "okx",
     name: "OKX Wallet",
-    check: (p) => p.isOkxWallet === true,
+    flags: ["isOkxWallet"],
+    injectPoint: "okxwallet",
     color: "bg-gray-800/10",
     download: "https://www.okx.com/web3",
     icon: "okx",
   },
   {
-    id: "rabby",
-    name: "Rabby Wallet",
-    check: (p) => p.isRabby === true,
-    color: "bg-sky-500/10",
-    download: "https://rabby.io/",
-    icon: "rabby",
+    id: "backpack",
+    name: "Backpack",
+    flags: ["isBackpack"],
+    injectPoint: "backpack",
+    color: "bg-violet-500/10",
+    download: "https://backpack.app/",
+    icon: "backpack",
+  },
+  {
+    id: "coinbase",
+    name: "Coinbase Wallet",
+    flags: ["isCoinbaseWallet"],
+    injectPoint: "coinbaseWalletExtension",
+    color: "bg-blue-500/10",
+    download: "https://www.coinbase.com/wallet",
+    icon: "coinbase",
+  },
+  {
+    id: "haha",
+    name: "HaHa Wallet",
+    flags: ["isHaHa", "isHaha"],
+    injectPoint: "hahaWallet",
+    color: "bg-yellow-500/10",
+    download: "https://hahawallet.com/",
+    icon: "haha",
+  },
+  {
+    id: "brave",
+    name: "Brave Wallet",
+    flags: ["isBraveWallet"],
+    injectPoint: null,
+    color: "bg-orange-600/10",
+    download: "https://brave.com/wallet/",
+    icon: "brave",
+  },
+  {
+    id: "trust",
+    name: "Trust Wallet",
+    flags: ["isTrust"],
+    injectPoint: "trustwallet",
+    color: "bg-blue-600/10",
+    download: "https://trustwallet.com/",
+    icon: "trust",
+  },
+  {
+    id: "bitget",
+    name: "BitGet Wallet",
+    flags: ["isBitKeep", "isBitget"],
+    injectPoint: "bitkeep",
+    color: "bg-emerald-500/10",
+    download: "https://web3.bitget.com/",
+    icon: "bitget",
+  },
+  {
+    id: "phantom",
+    name: "Phantom",
+    flags: ["isPhantom"],
+    injectPoint: "phantom",
+    color: "bg-purple-500/10",
+    download: "https://phantom.app/",
+    icon: "phantom",
   },
 ]
 
-function getProviders() {
-  if (typeof window === "undefined" || !window.ethereum) return []
-  // Multiple wallets: providers array exists (EIP-1193 multi-provider)
-  if (window.ethereum.providers && window.ethereum.providers.length > 0) {
-    return window.ethereum.providers
+/**
+ * Collect ALL available EIP-1193 providers from every possible source:
+ *   1. window.ethereum.providers (multi-wallet)
+ *   2. window.ethereum itself (single wallet override)
+ *   3. Wallet-specific injection points (window.rabby, window.okxwallet, etc.)
+ */
+function getAllProviders() {
+  if (typeof window === "undefined") return []
+
+  const providers = []
+  const seen = new Set()
+
+  function addProvider(p) {
+    if (!p || seen.has(p)) return
+    seen.add(p)
+    providers.push(p)
   }
-  return [window.ethereum]
+
+  // 1) window.ethereum.providers array (EIP-1193 multi-wallet)
+  if (window.ethereum?.providers) {
+    for (const p of window.ethereum.providers) {
+      addProvider(p)
+    }
+  }
+
+  // 2) window.ethereum itself
+  if (window.ethereum) {
+    addProvider(window.ethereum)
+  }
+
+  // 3) Wallet-specific injection points
+  for (const wallet of KNOWN_WALLETS) {
+    if (!wallet.injectPoint) continue
+    const injected = window[wallet.injectPoint]
+    if (injected) {
+      // Some wallets expose the provider directly, others have .ethereum or .provider
+      const provider = injected.ethereum || injected.provider || injected
+      if (provider && typeof provider.request === "function") {
+        addProvider(provider)
+      }
+    }
+  }
+
+  return providers
 }
 
+/**
+ * Check if a provider matches a known wallet via its flags
+ */
+function providerMatches(provider, wallet) {
+  for (const flag of wallet.flags) {
+    if (provider[flag] === true) return true
+  }
+  return false
+}
+
+/**
+ * Detect all available wallets
+ */
 function detectWallets() {
-  const providers = getProviders()
+  const providers = getAllProviders()
   if (providers.length === 0) return { detected: [], hasAny: false }
 
   const detected = []
+  const detectedIds = new Set()
   const matchedProviders = new Set()
 
-  // For each known wallet, find its provider
+  // Match known wallets (each wallet only once)
   for (const wallet of KNOWN_WALLETS) {
+    if (detectedIds.has(wallet.id)) continue
     for (const provider of providers) {
-      if (wallet.check(provider)) {
+      if (matchedProviders.has(provider)) continue
+      if (providerMatches(provider, wallet)) {
         detected.push({ ...wallet, provider })
+        detectedIds.add(wallet.id)
         matchedProviders.add(provider)
         break
       }
     }
   }
 
-  // Any unmatched providers → show as generic "EVM Wallet"
+  // Unmatched providers → generic wallet, but skip if same wallet identity already detected
   for (const provider of providers) {
-    if (!matchedProviders.has(provider)) {
-      detected.push({
-        id: "evm",
-        name: provider._brandingInfo?.name || "EVM Wallet",
-        color: "bg-muted",
-        provider,
-        download: null,
-        icon: "generic",
-      })
+    if (matchedProviders.has(provider)) continue
+
+    // Skip if this provider matches a known wallet we already found (different object, same wallet)
+    let alreadyDetected = false
+    for (const wallet of KNOWN_WALLETS) {
+      if (detectedIds.has(wallet.id) && providerMatches(provider, wallet)) {
+        alreadyDetected = true
+        break
+      }
     }
+    if (alreadyDetected) continue
+
+    const name = guessWalletName(provider) || provider._brandingInfo?.name || "Browser Wallet"
+    detected.push({
+      id: `evm-${detected.length}`,
+      name,
+      color: "bg-muted",
+      provider,
+      download: null,
+      icon: "generic",
+    })
+    matchedProviders.add(provider)
   }
 
-  return { detected, hasAny: true }
+  return { detected, hasAny: detected.length > 0 }
+}
+
+/**
+ * Try to guess wallet name from provider flags for generic entries
+ */
+function guessWalletName(provider) {
+  const hints = []
+  if (provider.isMetaMask) hints.push("MetaMask")
+  if (provider.isRabby) hints.push("Rabby")
+  if (provider.isBackpack) hints.push("Backpack")
+  if (provider.isOkxWallet) hints.push("OKX")
+  if (provider.isCoinbaseWallet) hints.push("Coinbase")
+  if (provider.isTrust) hints.push("Trust")
+  if (provider.isBitKeep) hints.push("BitGet")
+  if (provider.isBitget) hints.push("BitGet")
+  if (provider.isBraveWallet) hints.push("Brave")
+  if (provider.isHaHa || provider.isHaha) hints.push("HaHa")
+  if (provider.isPhantom) hints.push("Phantom")
+  return hints.length > 0 ? hints.join(" / ") : null
 }
 
 export function WalletModal({ open, onOpenChange }) {
   const { connect } = useWallet()
-  const [connecting, setConnecting] = useState(null) // wallet id being connected
-  const { detected, hasAny } = typeof window !== "undefined" ? detectWallets() : { detected: [], hasAny: false }
+  const [connecting, setConnecting] = useState(null)
+  const [wallets, setWallets] = useState({ detected: [], hasAny: false })
+
+  // Re-detect wallets every time modal opens
+  useEffect(() => {
+    if (open) {
+      setWallets(detectWallets())
+    }
+  }, [open])
 
   const handleConnect = async (wallet) => {
     setConnecting(wallet.id)
@@ -128,6 +257,8 @@ export function WalletModal({ open, onOpenChange }) {
       setConnecting(null)
     }
   }
+
+  const { detected, hasAny } = wallets
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -173,41 +304,13 @@ export function WalletModal({ open, onOpenChange }) {
                 No wallet detected in your browser.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                <a
-                  href="https://metamask.io/download/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary underline underline-offset-2"
-                >
-                  MetaMask
-                </a>
+                <a href="https://metamask.io/download/" target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline underline-offset-2">MetaMask</a>
                 <span className="text-xs text-muted-foreground">&middot;</span>
-                <a
-                  href="https://backpack.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary underline underline-offset-2"
-                >
-                  Backpack
-                </a>
+                <a href="https://rabby.io/" target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline underline-offset-2">Rabby</a>
                 <span className="text-xs text-muted-foreground">&middot;</span>
-                <a
-                  href="https://rabby.io/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary underline underline-offset-2"
-                >
-                  Rabby
-                </a>
+                <a href="https://backpack.app/" target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline underline-offset-2">Backpack</a>
                 <span className="text-xs text-muted-foreground">&middot;</span>
-                <a
-                  href="https://www.okx.com/web3"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary underline underline-offset-2"
-                >
-                  OKX
-                </a>
+                <a href="https://www.okx.com/web3" target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline underline-offset-2">OKX</a>
               </div>
             </div>
           )}
@@ -224,6 +327,7 @@ export function WalletModal({ open, onOpenChange }) {
 
 function WalletIcon({ icon, color }) {
   const bg = color || "bg-muted"
+
   // Wallets with proper logo files in /wallets/
   if (icon === "metamask" || icon === "backpack") {
     return (
@@ -238,6 +342,7 @@ function WalletIcon({ icon, color }) {
       </div>
     )
   }
+
   // Coinbase — blue circle with "C" letter
   if (icon === "coinbase") {
     return (
@@ -249,6 +354,7 @@ function WalletIcon({ icon, color }) {
       </div>
     )
   }
+
   // Generic wallet fallback
   return (
     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
