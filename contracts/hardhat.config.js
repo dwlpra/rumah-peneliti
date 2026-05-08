@@ -3,7 +3,13 @@ require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") }
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: "0.8.20",
+  solidity: {
+    version: "0.8.20",
+    settings: {
+      viaIR: true,
+      optimizer: { enabled: true, runs: 200 },
+    },
+  },
   networks: {
     zeroTestnet: {
       url: process.env.ZERO_TESTNET_RPC || "https://evmrpc-testnet.0g.ai",

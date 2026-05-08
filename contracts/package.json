@@ -5,7 +5,9 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "deploy:testnet": "npx hardhat run scripts/deploy.js --network zeroTestnet",
-    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network zeroMainnet"
+    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network zeroMainnet",
+    "deploy:agent:mainnet": "npx hardhat run scripts/deploy-agent.js --network zeroMainnet",
+    "mint:agent": "npx hardhat run scripts/mint-agent.js --network zeroMainnet"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

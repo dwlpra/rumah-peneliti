@@ -25,6 +25,7 @@ const { mintResearchNFT } = require("../services/nft");
 const { registerPaper } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
+const { getAgentById } = require("../services/agent-nft");
 
 /**
  * Resolve paper ID from URL param — supports both numeric ID and slug.
@@ -471,6 +472,10 @@ function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract,
   generateArticle(paperId, title, abstract, textContent)
     .then(article => {
       // Step 4: Simpan hasil AI ke database
+      const meta = article.meta || article.agent_meta || {};
+      const agentTokenId = meta.agent_token_id || parseInt(process.env.KURATOR_AGENT_TOKEN_ID) || null;
+      const agentNftContract = meta.agent_nft_contract || process.env.AGENT_NFT_ADDRESS || null;
+
       stmts.insertArticle.run(
         paperId,
         article.curated_title,
@@ -481,7 +486,9 @@ function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract,
         article.mock ? 1 : 0,
         article.ai_score ? JSON.stringify(article.ai_score) : null,
         article.classification ? JSON.stringify(article.classification) : null,
-        article.agent_meta ? JSON.stringify(article.agent_meta) : null
+        article.agent_meta ? JSON.stringify(article.agent_meta) : null,
+        agentTokenId,
+        agentNftContract
       );
       console.log("[Pipeline] ✅ Step 4 — AI curation done:", paperId, article.mock ? "(mock)" : "(real AI)");
 
@@ -688,6 +695,18 @@ async function chatWith0GCompute(messages) {
   return null;
 }
 
+// ============================================================
+//  AGENT IDENTITY — on-chain agent data
+// ============================================================
+async function getAgentData(req, res) {
+  const tokenId = req.params.tokenId;
+  if (!tokenId) return res.status(400).json({ error: "tokenId required" });
+
+  const agent = await getAgentById(tokenId);
+  if (!agent) return res.status(404).json({ error: "Agent not found" });
+  res.json(agent);
+}
+
 module.exports = {
   uploadPaper,
   listPapers,
@@ -699,4 +718,5 @@ module.exports = {
   getActivity,
   chatAboutPaper,
   downloadPaper,
+  getAgentData,
 };

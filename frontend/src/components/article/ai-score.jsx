@@ -78,6 +78,11 @@ export function AIScore({ score }) {
               &mdash; Agents: {score.agents_used.join(", ")}
             </span>
           )}
+          {score.agent_token_id && (
+            <span className="ml-1">
+              (On-chain Agent NFT #{score.agent_token_id})
+            </span>
+          )}
         </p>
       </CardContent>
     </Card>

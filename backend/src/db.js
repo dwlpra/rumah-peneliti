@@ -76,6 +76,14 @@ try {
   db.exec("ALTER TABLE papers ADD COLUMN journal_id INTEGER DEFAULT NULL");
 } catch (e) {}
 
+// Migration: add agent_token_id and agent_nft_contract to articles
+try {
+  db.exec("ALTER TABLE articles ADD COLUMN agent_token_id INTEGER DEFAULT NULL");
+} catch (e) {}
+try {
+  db.exec("ALTER TABLE articles ADD COLUMN agent_nft_contract TEXT DEFAULT NULL");
+} catch (e) {}
+
 // Migration: backfill slugs for existing papers without one
 {
   const papers = db.prepare("SELECT id, title, slug FROM papers WHERE slug = '' OR slug IS NULL").all();
@@ -98,7 +106,7 @@ const stmts = {
   deletePaper: db.prepare("DELETE FROM papers WHERE id = ?"),
 
   insertArticle: db.prepare(
-    "INSERT OR REPLACE INTO articles (paper_id, curated_title, summary, key_takeaways, body, tags, is_mock, ai_score, classification, agent_meta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT OR REPLACE INTO articles (paper_id, curated_title, summary, key_takeaways, body, tags, is_mock, ai_score, classification, agent_meta, agent_token_id, agent_nft_contract) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ),
   getArticle: db.prepare("SELECT * FROM articles WHERE paper_id = ?"),
   getArticleById: db.prepare("SELECT * FROM articles WHERE id = ?"),
@@ -134,6 +142,8 @@ function parseArticle(row) {
     ai_score: aiScore,
     classification,
     agent_meta: agentMeta,
+    agent_token_id: row.agent_token_id || null,
+    agent_nft_contract: row.agent_nft_contract || null,
   };
 }
 

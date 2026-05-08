@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { OnChainData } from "@/components/article/on-chain-data"
+import { AgentIdentity } from "@/components/article/agent-identity"
 import { useLanguage } from "@/contexts/language"
 import { getApiUrl } from "@/lib/api-url"
 
@@ -126,6 +127,9 @@ export function Sidebar({ article, paper, unlocked, isFree, priceEth, address })
 
       {/* On-Chain Data */}
       <OnChainData paperId={paper?.id || article?.paper_id} />
+
+      {/* Agent Identity */}
+      <AgentIdentity article={article} />
     </aside>
   )
 }
