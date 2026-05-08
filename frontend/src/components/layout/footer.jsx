@@ -9,6 +9,7 @@ const NAV_LINKS = [
 ]
 
 const RESOURCE_LINKS = [
+  { href: "/agents", label: "AI Agents" },
   { href: "/tech", label: "Technology" },
   { href: "/verify", label: "Verify" },
   { href: "/analytics", label: "Analytics" },

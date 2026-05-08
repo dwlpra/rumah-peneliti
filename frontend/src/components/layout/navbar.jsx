@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Settings2,
   BarChart3,
+  Bot,
   Menu,
   MoreHorizontal,
 } from "lucide-react"
@@ -50,6 +51,7 @@ const MAIN_LINKS = [
 ]
 
 const MORE_LINKS = [
+  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/tech", label: "Tech", icon: Settings2 },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ]

@@ -32,6 +32,7 @@ const {
   chatAboutPaper,
   downloadPaper,
   getAgentData,
+  listAgents,
 } = require("../controllers/paper-controller");
 const { requireAuth, requireUploadSignature } = require("../middleware/auth");
 
@@ -56,6 +57,7 @@ module.exports = (upload) => {
   // ═══ Public Routes (tanpa auth) ═══
   router.get("/", asyncHandler(listPapers));
   router.get("/activity", asyncHandler(getActivity));
+  router.get("/agents", asyncHandler(listAgents));
   router.get("/agent/:tokenId", asyncHandler(getAgentData));
   router.get("/:id", asyncHandler(getPaper));
   router.get("/:id/onchain", asyncHandler(getOnChainData));

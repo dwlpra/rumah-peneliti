@@ -119,6 +119,14 @@ const stmts = {
   insertPurchase: db.prepare(
     "INSERT INTO purchases (paper_id, buyer_wallet, tx_hash, amount) VALUES (?, ?, ?, ?)"
   ),
+
+  // Agent stats
+  getAgentStats: db.prepare(
+    "SELECT COUNT(*) as papers_curated, AVG(CAST(JSON_EXTRACT(ai_score, '$.novelty') AS REAL)) as avg_novelty, AVG(CAST(JSON_EXTRACT(ai_score, '$.clarity') AS REAL)) as avg_clarity, AVG(CAST(JSON_EXTRACT(ai_score, '$.methodology') AS REAL)) as avg_methodology, AVG(CAST(JSON_EXTRACT(ai_score, '$.impact') AS REAL)) as avg_impact, MAX(created_date) as last_activity FROM articles WHERE agent_token_id = ?"
+  ),
+  getAgentPapers: db.prepare(
+    "SELECT a.*, p.title, p.slug FROM articles a JOIN papers p ON a.paper_id = p.id WHERE a.agent_token_id = ? ORDER BY a.created_date DESC"
+  ),
   getPurchase: db.prepare(
     "SELECT * FROM purchases WHERE paper_id = ? AND buyer_wallet = ?"
   ),

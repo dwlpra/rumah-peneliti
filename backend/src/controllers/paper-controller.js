@@ -25,7 +25,7 @@ const { mintResearchNFT } = require("../services/nft");
 const { registerPaper } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
-const { getAgentById } = require("../services/agent-nft");
+const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB } = require("../services/agent-nft");
 
 /**
  * Resolve paper ID from URL param — supports both numeric ID and slug.
@@ -704,7 +704,37 @@ async function getAgentData(req, res) {
 
   const agent = await getAgentById(tokenId);
   if (!agent) return res.status(404).json({ error: "Agent not found" });
-  res.json(agent);
+
+  // Merge DB stats
+  const stats = getAgentStatsFromDB(parseInt(tokenId));
+  res.json({ ...agent, stats });
+}
+
+/**
+ * List all agents with their performance stats
+ */
+async function listAgents(req, res) {
+  const agents = await getAllAgents();
+
+  // Attach DB stats for each agent
+  const enriched = agents.map((agent) => ({
+    ...agent,
+    stats: getAgentStatsFromDB(parseInt(agent.tokenId)),
+  }));
+
+  // Get recent activity across all agents
+  const allPapers = [];
+  for (const agent of agents) {
+    const papers = getAgentPapersFromDB(parseInt(agent.tokenId), 5);
+    for (const p of papers) {
+      allPapers.push({ ...p, agent_name: agent.name, agent_token_id: agent.tokenId });
+    }
+  }
+  // Sort by date descending, take top 20
+  allPapers.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+  const recentActivity = allPapers.slice(0, 20);
+
+  res.json({ agents: enriched, recentActivity, total: enriched.length });
 }
 
 module.exports = {
@@ -719,4 +749,5 @@ module.exports = {
   chatAboutPaper,
   downloadPaper,
   getAgentData,
+  listAgents,
 };

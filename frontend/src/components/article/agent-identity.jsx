@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bot, ExternalLink, Shield } from "lucide-react"
+import { Bot, ExternalLink, Shield, Activity } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -58,6 +58,8 @@ export function AgentIdentity({ article }) {
     return null
   }
 
+  const stats = agentData.stats
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -105,6 +107,29 @@ export function AgentIdentity({ article }) {
               </Badge>
             ))}
           </div>
+        )}
+
+        {/* Stats */}
+        {stats && stats.papers_curated > 0 && (
+          <>
+            <Separator />
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Activity className="h-3 w-3" />
+                <span className="font-medium">Performance</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Papers curated</span>
+                  <p className="font-semibold">{stats.papers_curated}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Avg score</span>
+                  <p className="font-semibold">{stats.avg_score}/100</p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <Separator />
