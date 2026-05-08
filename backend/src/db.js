@@ -84,6 +84,19 @@ try {
   db.exec("ALTER TABLE articles ADD COLUMN agent_nft_contract TEXT DEFAULT NULL");
 } catch (e) {}
 
+// Migration: add pipeline_status column for tracking pipeline progress
+try {
+  db.exec("ALTER TABLE papers ADD COLUMN pipeline_status TEXT DEFAULT 'pending'");
+} catch (e) {}
+
+// Migration: add NFT tracking columns
+try {
+  db.exec("ALTER TABLE papers ADD COLUMN nft_token_id INTEGER DEFAULT NULL");
+} catch (e) {}
+try {
+  db.exec("ALTER TABLE papers ADD COLUMN nft_tx_hash TEXT DEFAULT NULL");
+} catch (e) {}
+
 // Migration: backfill slugs for existing papers without one
 {
   const papers = db.prepare("SELECT id, title, slug FROM papers WHERE slug = '' OR slug IS NULL").all();
@@ -133,6 +146,19 @@ const stmts = {
   listPurchases: db.prepare(
     "SELECT * FROM purchases WHERE paper_id = ? ORDER BY purchase_date DESC"
   ),
+
+  // Pipeline progress tracking
+  updatePipelineStatus: db.prepare(
+    "UPDATE papers SET pipeline_status = ? WHERE id = ?"
+  ),
+  updateNFT: db.prepare(
+    "UPDATE papers SET nft_token_id = ?, nft_tx_hash = ?, pipeline_status = 'complete' WHERE id = ?"
+  ),
+  getPaperWithArticle: db.prepare(`
+    SELECT p.*, a.curated_title, a.summary, a.ai_score, a.classification, a.agent_meta, a.agent_token_id, a.is_mock as article_is_mock
+    FROM papers p LEFT JOIN articles a ON p.id = a.paper_id
+    WHERE p.id = ?
+  `),
 };
 
 // Helper: parse JSON fields

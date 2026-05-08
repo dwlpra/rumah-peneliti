@@ -14,8 +14,6 @@ import {
   Gift,
   Diamond,
   X,
-  Cpu,
-  Eye,
   RotateCcw,
 } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
@@ -35,7 +33,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useWallet } from "@/contexts/wallet"
@@ -83,7 +80,7 @@ function UploadForm({ address }) {
   const { getEthereum } = useWallet()
   const router = useRouter()
   const fileRef = useRef(null)
-  const eventSourceRef = useRef(null)
+  const pollRef = useRef(null)
 
   // Form state
   const [title, setTitle] = useState("")
@@ -103,11 +100,12 @@ function UploadForm({ address }) {
   const [showPipeline, setShowPipeline] = useState(false)
   const [stepState, setStepState] = useState({})
   const [currentStep, setCurrentStep] = useState(null)
+  const [pipelineComplete, setPipelineComplete] = useState(false)
 
-  // Cleanup SSE on unmount
+  // Cleanup polling on unmount
   useEffect(() => {
     return () => {
-      if (eventSourceRef.current) eventSourceRef.current.close()
+      if (pollRef.current) clearInterval(pollRef.current)
     }
   }, [])
 
@@ -130,33 +128,67 @@ function UploadForm({ address }) {
     }))
   }, [])
 
-  // SSE connection for real-time pipeline updates
-  const connectSSE = useCallback((paperId) => {
-    if (eventSourceRef.current) eventSourceRef.current.close()
-    const sseUrl = `${API()}/api/pipeline/${paperId}/stream`
-    const es = new EventSource(sseUrl)
-    eventSourceRef.current = es
+  // Poll for pipeline progress after upload
+  const startPolling = useCallback((paperId) => {
+    if (pollRef.current) clearInterval(pollRef.current)
 
-    es.onmessage = (event) => {
+    pollRef.current = setInterval(async () => {
       try {
-        const data = JSON.parse(event.data)
-        if (data.step && data.status) {
-          setStepStatus(data.step, data.status)
-          setCurrentStep(data.step)
-          if (data.message) addLog(data.step, data.message)
-        }
-        if (data.type === "error") {
-          addLog(data.step || "upload", `Error: ${data.message || data.error}`)
-          setStepStatus(data.step || "upload", "error")
-        }
-      } catch {}
-    }
+        const res = await fetch(`${API()}/api/pipeline/${paperId}/progress`)
+        if (!res.ok) return
+        const data = await res.json()
 
-    es.onerror = () => {
-      es.close()
-      eventSourceRef.current = null
-    }
-  }, [addLog, setStepStatus])
+        // Update step states from polling data
+        if (data.steps) {
+          if (data.steps.storage.done && stepState.storage?.status !== "completed") {
+            setStepStatus("storage", "completed")
+            addLog("storage", "Uploaded to 0G Storage")
+          }
+          if (data.steps.da.done && stepState.da?.status !== "completed") {
+            setStepStatus("da", "completed")
+            addLog("da", "DA proof published")
+          }
+          if (data.steps.anchor.done && stepState.anchor?.status !== "completed") {
+            setStepStatus("anchor", "completed")
+            addLog("anchor", "Anchored on-chain")
+          }
+          if (data.steps.ai.done) {
+            if (stepState.ai?.status !== "completed") {
+              setStepStatus("ai", "completed")
+              addLog("ai", data.article?.is_mock ? "AI curation complete (mock fallback)" : "AI curation complete — real AI")
+              setCurrentStep("nft")
+            }
+          }
+          if (data.steps.nft.done) {
+            if (stepState.nft?.status !== "completed") {
+              setStepStatus("nft", "completed")
+              addLog("nft", data.nft ? `NFT #${data.nft.tokenId} minted` : "NFT minting complete")
+            }
+          }
+        }
+
+        // Check if all done
+        if (data.status === "complete") {
+          setPipelineComplete(true)
+          setLoading(false)
+          clearInterval(pollRef.current)
+          pollRef.current = null
+          // Enrich result with article/NFT data
+          setResult(prev => prev ? {
+            ...prev,
+            article: data.article,
+            nft: data.nft,
+          } : prev)
+        } else if (data.status === "error") {
+          clearInterval(pollRef.current)
+          pollRef.current = null
+          setLoading(false)
+        }
+      } catch (e) {
+        // Silently retry
+      }
+    }, 3000)
+  }, [stepState, setStepStatus, addLog])
 
   // Drag & drop handlers
   const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) setFile(f) }
@@ -165,27 +197,25 @@ function UploadForm({ address }) {
   const handleFileSelect = (e) => { const f = e.target.files[0]; if (f) setFile(f) }
   const removeFile = () => { setFile(null); if (fileRef.current) fileRef.current.value = "" }
 
-  // Core upload logic (shared by both buttons)
-  const performUpload = async (watchPipeline) => {
+  // Core upload logic
+  const handleUpload = async (e) => {
+    e.preventDefault()
     if (!title.trim()) return
 
     setLoading(true)
     setResult(null)
     setProgress(0)
-
-    if (watchPipeline) {
-      setShowPipeline(true)
-      setStepState({})
-      setCurrentStep(null)
-    }
+    setShowPipeline(true)
+    setPipelineComplete(false)
+    setStepState({})
+    setCurrentStep(null)
 
     try {
-      // Sign upload message
+      // Step 0: Wallet signature
+      setStepStatus("upload", "running")
+      addLog("upload", "Waiting for wallet signature...")
+      setCurrentStep("upload")
       setProgress(10)
-      if (watchPipeline) {
-        setStepStatus("upload", "running")
-        addLog("upload", "Waiting for wallet signature...")
-      }
 
       const uploadMessage = `RumahPeneliti Paper Submission\n\nTitle: ${title}\nAuthors: ${authors || "N/A"}\nTimestamp: ${new Date().toISOString()}\n\nI approve the submission of this paper for AI curation and on-chain registration.`
 
@@ -199,15 +229,13 @@ function UploadForm({ address }) {
       } catch {
         setLoading(false)
         setResult({ error: "Upload cancelled. You must sign the submission to proceed." })
-        if (watchPipeline) {
-          setStepStatus("upload", "error")
-          addLog("upload", "Signature rejected by user")
-        }
+        setStepStatus("upload", "error")
+        addLog("upload", "Signature rejected by user")
         return
       }
 
       setProgress(30)
-      if (watchPipeline) addLog("upload", "Signature verified, uploading paper...")
+      addLog("upload", "Signature verified, uploading paper...")
 
       const interval = setInterval(() => {
         setProgress((p) => Math.min(p + Math.random() * 10, 90))
@@ -238,61 +266,38 @@ function UploadForm({ address }) {
 
       if (data.error) throw new Error(data.error)
 
-      // Pipeline visualization
-      if (watchPipeline && data.success) {
-        const pipeline = data.pipeline
-
-        // Upload complete
+      // Mark synchronous steps as completed
+      if (data.success) {
         setStepStatus("upload", "completed")
         addLog("upload", "Paper uploaded successfully")
+        setCurrentStep("ai")
 
-        // Storage
-        setStepStatus("storage", pipeline?.storageUploaded ? "completed" : "completed")
-        addLog("storage", pipeline?.storageUploaded ? "Uploaded to 0G Storage" : "File saved locally (0G Storage skipped)")
+        setStepStatus("storage", data.pipeline?.storageUploaded ? "completed" : "completed")
+        addLog("storage", data.pipeline?.storageUploaded ? "Uploaded to 0G Storage" : "File saved locally")
 
-        // DA Proof
         setStepStatus("da", "completed")
-        addLog("da", pipeline?.daProof ? `DA proof published (${pipeline.daProof.slice(0, 16)}...)` : "DA proof skipped")
+        addLog("da", data.pipeline?.daProof ? `DA proof published` : "DA proof skipped")
 
-        // On-chain Anchor
         setStepStatus("anchor", "completed")
-        addLog("anchor", pipeline?.chainAnchor ? `Anchored on-chain (tx: ${pipeline.chainAnchor.slice(0, 16)}...)` : "Chain anchor skipped")
+        addLog("anchor", data.pipeline?.chainAnchor ? `Anchored on-chain (tx: ${data.pipeline.chainAnchor.slice(0, 16)}...)` : "Chain anchor skipped")
 
-        // AI Curation (background)
+        // AI and NFT start running
         setStepStatus("ai", "running")
-        addLog("ai", "Starting multi-agent AI pipeline...")
+        addLog("ai", "Launching multi-agent AI pipeline (Summarizer, Scorer, Tagger)...")
 
-        // NFT Minting (background)
-        setStepStatus("nft", "running")
-        addLog("nft", "NFT minting queued (gasless, backend-sponsored)")
+        setStepStatus("nft", "pending")
 
-        // Connect SSE for real-time updates
-        if (data.paper?.id) connectSSE(data.paper.id)
-      }
-
-      // Simple mode — redirect after success
-      if (!watchPipeline && data.success) {
-        setTimeout(() => router.push("/browse"), 2000)
+        // Start polling for progress
+        if (data.paper?.id) {
+          startPolling(data.paper.id)
+        }
       }
     } catch (err) {
       setResult({ error: err.message })
-      if (watchPipeline) {
-        setStepStatus("upload", "error")
-        addLog("upload", `Error: ${err.message}`)
-      }
-    } finally {
+      setStepStatus("upload", "error")
+      addLog("upload", `Error: ${err.message}`)
       setLoading(false)
     }
-  }
-
-  const handleSimpleUpload = (e) => {
-    e.preventDefault()
-    performUpload(false)
-  }
-
-  const handlePipelineUpload = (e) => {
-    e.preventDefault()
-    performUpload(true)
   }
 
   const handleReset = () => {
@@ -301,22 +306,28 @@ function UploadForm({ address }) {
     setCurrentStep(null)
     setResult(null)
     setLoading(false)
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
+    setPipelineComplete(false)
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
     }
   }
 
   // Pipeline complete state
-  if (showPipeline && result?.success && !loading) {
+  if (showPipeline && pipelineComplete && result?.success) {
     return (
       <div className="space-y-6">
         <PipelineSteps stepState={stepState} currentStep={currentStep} />
         <PipelineResult result={result} />
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-3">
           <Button variant="outline" onClick={handleReset} className="gap-2">
             <RotateCcw className="h-4 w-4" />
             Upload Another
+          </Button>
+          <Button asChild className="gap-2">
+            <a href={`/article/${result.paper?.slug || result.paper?.id}`}>
+              View Article
+            </a>
           </Button>
         </div>
       </div>
@@ -324,41 +335,42 @@ function UploadForm({ address }) {
   }
 
   // Pipeline running state
-  if (showPipeline && loading) {
+  if (showPipeline && (loading || result?.success)) {
     return (
       <div className="space-y-6">
         <PipelineSteps stepState={stepState} currentStep={currentStep} />
+        {loading && (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>AI agents are processing your paper...</span>
+          </div>
+        )}
       </div>
     )
   }
 
-  // Simple success state
-  if (!showPipeline && result?.success) {
+  // Error state in pipeline mode
+  if (showPipeline && result?.error) {
     return (
-      <Card className="mx-auto max-w-md">
-        <CardHeader className="items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
-            <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <CardTitle className="mt-4 text-xl">
-            Paper Uploaded Successfully
-          </CardTitle>
-          <CardDescription>
-            {result.paper?.title || title}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Redirecting to browse page...
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <PipelineSteps stepState={stepState} currentStep={currentStep} />
+        <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{result.error}</span>
+        </div>
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={handleReset} className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Try Again
+          </Button>
+        </div>
+      </div>
     )
   }
 
   // Form
   return (
-    <form className="space-y-6">
+    <form className="space-y-6" onSubmit={handleUpload}>
       {/* Title */}
       <div className="space-y-2">
         <Label htmlFor="title">
@@ -443,13 +455,13 @@ function UploadForm({ address }) {
                 </span>
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                PDF, TXT, DOC, DOCX
+                PDF only
               </p>
             </div>
             <input
               ref={fileRef}
               type="file"
-              accept=".pdf,.txt,.doc,.docx"
+              accept=".pdf"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -516,18 +528,6 @@ function UploadForm({ address }) {
         )}
       </div>
 
-      {/* Progress (simple mode) */}
-      {loading && !showPipeline && (
-        <div className="space-y-2">
-          <Progress value={progress} className="h-2" />
-          <p className="text-center text-xs text-muted-foreground">
-            {progress <= 10
-              ? "Waiting for wallet signature..."
-              : "Uploading & processing... " + Math.round(progress) + "%"}
-          </p>
-        </div>
-      )}
-
       {/* Error */}
       {result?.error && (
         <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -538,10 +538,10 @@ function UploadForm({ address }) {
 
       <Separator />
 
-      {/* Two submit buttons */}
+      {/* Single submit button */}
       <div className="space-y-3">
         <Button
-          onClick={handleSimpleUpload}
+          type="submit"
           className="w-full"
           size="lg"
           disabled={loading || !title.trim()}
@@ -549,7 +549,7 @@ function UploadForm({ address }) {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {progress <= 10 ? "Waiting for Signature..." : "Uploading..."}
+              {progress <= 10 ? "Waiting for Signature..." : "Uploading & Processing..."}
             </>
           ) : (
             <>
@@ -558,29 +558,10 @@ function UploadForm({ address }) {
             </>
           )}
         </Button>
-        <Button
-          onClick={handlePipelineUpload}
-          variant="outline"
-          className="w-full gap-2"
-          size="lg"
-          disabled={loading || !title.trim()}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing Pipeline...
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4" />
-              Upload & Watch Pipeline
-            </>
-          )}
-        </Button>
       </div>
       <p className="text-center text-xs text-muted-foreground">
-        You will be asked to sign the submission with your wallet.
-        AI curation and on-chain registration will begin after upload.
+        After upload, watch AI agents curate your paper in real-time.
+        On-chain registration and NFT minting happen automatically.
       </p>
     </form>
   )

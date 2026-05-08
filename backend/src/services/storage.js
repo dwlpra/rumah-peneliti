@@ -25,10 +25,10 @@ const { ethers } = require("ethers");
 const fs = require("fs");
 const path = require("path");
 
-// Konfigurasi koneksi ke 0G Storage
-const INDEXER_URL = process.env.STORAGE_INDEXER || "https://indexer-storage-turbo.0g.ai";
-const RPC_URL = process.env.RPC_URL || "https://evmrpc.0g.ai";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
+// Konfigurasi koneksi ke 0G Storage — lazy evaluation (read at call time, not module load)
+function getIndexerUrl() { return process.env.STORAGE_INDEXER || "https://indexer-storage-turbo.0g.ai"; }
+function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
+function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
 
 /**
  * Upload file ke 0G Storage network
@@ -44,23 +44,23 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
  *   console.log(result.txHash);   // "0xdef456..."
  */
 async function uploadTo0G(filePath) {
-  if (!PRIVATE_KEY) {
+  if (!getPrivateKey()) {
     throw new Error("PRIVATE_KEY not configured for 0G Storage uploads");
   }
 
   // Siapkan wallet untuk signing transaksi (bayar gas)
-  const signer = new ethers.Wallet(PRIVATE_KEY, new ethers.JsonRpcProvider(RPC_URL));
+  const signer = new ethers.Wallet(getPrivateKey(), new ethers.JsonRpcProvider(getRpcUrl()));
 
   // Indexer adalah "pintu masuk" ke jaringan storage
   // Dia yang menentukan node mana yang akan menyimpan file
-  const indexer = new Indexer(INDEXER_URL);
+  const indexer = new Indexer(getIndexerUrl());
 
   // Buka file untuk di-upload
   const file = await ZgFile.fromFilePath(filePath);
 
   try {
     // Upload file ke jaringan storage
-    const [rootHash, err] = await indexer.upload(file, RPC_URL, signer);
+    const [rootHash, err] = await indexer.upload(file, getRpcUrl(), signer);
 
     if (err) {
       throw new Error(`0G Storage upload failed: ${err.message}`);
@@ -108,7 +108,7 @@ async function uploadBufferTo0G(buffer, filename) {
  * @returns {Promise<string>} - Path file yang sudah di-download
  */
 async function downloadFrom0G(rootHash, outputPath) {
-  const indexer = new Indexer(INDEXER_URL);
+  const indexer = new Indexer(getIndexerUrl());
   const err = await indexer.download(rootHash, outputPath, false);
 
   if (err) {

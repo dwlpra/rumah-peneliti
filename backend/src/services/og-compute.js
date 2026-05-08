@@ -31,20 +31,25 @@ async function getBroker() {
   return brokerInitPromise;
 }
 
-async function ensureLedger(minBalance = 3) {
+async function ensureLedger(minAvailable = 2) {
   const broker = await getBroker();
   try {
     const account = await broker.ledger.getLedger();
-    const balance = Number(ethers.formatEther(account.totalBalance));
-    console.log("[0G Compute] Ledger balance:", balance, "0G");
-    if (balance < minBalance) {
-      console.log("[0G Compute] Depositing funds...");
-      await broker.ledger.depositFund(minBalance);
+    const available = Number(ethers.formatEther(account.availableBalance || 0));
+    const total = Number(ethers.formatEther(account.totalBalance));
+    console.log("[0G Compute] Ledger balance:", total, "0G (available:", available, "0G)");
+
+    if (available < minAvailable) {
+      // Auto-deposit from wallet to cover the gap
+      const depositAmount = Math.max(minAvailable - available, 2);
+      console.log("[0G Compute] Available insufficient, auto-depositing", depositAmount, "0G from wallet...");
+      await broker.ledger.depositFund(depositAmount);
+      console.log("[0G Compute] Deposit done.");
     }
   } catch (e) {
     if (e.message?.includes("does not exist") || e.message?.includes("not found")) {
-      console.log("[0G Compute] Creating new ledger with", minBalance, "0G");
-      await broker.ledger.addLedger(minBalance);
+      console.log("[0G Compute] Creating new ledger with", minAvailable, "0G");
+      await broker.ledger.addLedger(minAvailable);
     } else throw e;
   }
 }

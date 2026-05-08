@@ -26,6 +26,7 @@ const { registerPaper } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
 const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats } = require("../services/agent-nft");
+const { emitPipelineEvent } = require("./pipeline-controller");
 
 /**
  * Resolve paper ID from URL param — supports both numeric ID and slug.
@@ -68,7 +69,25 @@ async function uploadPaper(req, res) {
   const filePath = req.file.path;
 
   // Baca konten file sebelum dihapus (untuk AI curation di background)
-  const fileContent = fs.readFileSync(filePath, "utf-8").slice(0, 50000);
+  let fileContent = "";
+  try {
+    if (req.file.mimetype === "application/pdf" || filePath.endsWith(".pdf")) {
+      const { PDFParse } = require("pdf-parse");
+      const pdfBuffer = fs.readFileSync(filePath);
+      const parser = new PDFParse(pdfBuffer);
+      await parser.load();
+      const pages = await parser.getText();
+      // pages is an array of { page, lines: [{ text }] }
+      const text = pages.map(p => (p.lines || []).map(l => l.text || "").join("\n")).join("\n\n");
+      fileContent = text.slice(0, 50000);
+      console.log("[Pipeline] PDF extracted:", fileContent.length, "chars,", pages.length, "pages");
+    } else {
+      fileContent = fs.readFileSync(filePath, "utf-8").slice(0, 50000);
+    }
+  } catch (e) {
+    console.warn("[Pipeline] File read failed:", e.message);
+    fileContent = "";
+  }
 
   // ── Step 1: Upload ke 0G Storage ──
   let storageHash = "";
@@ -147,6 +166,11 @@ async function uploadPaper(req, res) {
   }
 
   // ── Step 4-6: Background processing ──
+  stmts.updatePipelineStatus.run("processing", paperId);
+  emitPipelineEvent(paperId, "upload", "Upload", "completed", { message: "Paper uploaded successfully" });
+  emitPipelineEvent(paperId, "storage", "0G Storage", "completed", { message: storageHash ? "Uploaded to 0G Storage" : "File saved locally" });
+  emitPipelineEvent(paperId, "da", "DA Proof", "completed", { message: daProof ? "DA proof published" : "DA proof skipped" });
+  emitPipelineEvent(paperId, "anchor", "On-chain Anchor", "completed", { message: anchorResult?.txHash ? `Anchored on-chain (tx: ${anchorResult.txHash.slice(0, 16)}...)` : "Chain anchor skipped" });
   runBackgroundPipeline({
     paperId,
     fileContent,
@@ -469,6 +493,10 @@ async function checkWalletBalance() {
 function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract, author_wallet, storageHash, anchorResult }) {
   const textContent = fileContent || abstract || "";
 
+  // Mark pipeline as AI running
+  stmts.updatePipelineStatus.run("ai_running", paperId);
+  emitPipelineEvent(paperId, "ai", "AI Curation", "running", { message: "Launching multi-agent AI pipeline (Summarizer, Scorer, Tagger)..." });
+
   generateArticle(paperId, title, abstract, textContent)
     .then(article => {
       // Step 4: Simpan hasil AI ke database
@@ -492,11 +520,18 @@ function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract,
       );
       console.log("[Pipeline] ✅ Step 4 — AI curation done:", paperId, article.mock ? "(mock)" : "(real AI)");
 
+      // Update DB status
+      stmts.updatePipelineStatus.run("ai_done", paperId);
+      emitPipelineEvent(paperId, "ai", "AI Curation", "completed", { message: `AI curation complete — ${article.mock ? "mock fallback" : "real AI"}` });
+
       // Step 5 & 6: Anchor artikel lalu mint NFT (berurutan)
       if (anchorResult?.paperId) {
+        emitPipelineEvent(paperId, "anchor", "Article Anchor", "running", { message: "Anchoring article on-chain..." });
         return anchorArticle(anchorResult.paperId, article.body)
           .then(() => {
             console.log("[Pipeline] ✅ Step 5 — Article anchored, minting NFT...");
+            emitPipelineEvent(paperId, "anchor", "Article Anchor", "completed", { message: "Article anchored on-chain" });
+            emitPipelineEvent(paperId, "nft", "NFT Minting", "running", { message: "Minting research NFT (gasless)..." });
             return mintResearchNFT(
               author_wallet || "0x7AefA5B4fE9CFaf837CC0a0EbEA2a5a890aFAf55",
               Number(anchorResult.paperId),
@@ -506,11 +541,36 @@ function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract,
             );
           })
           .then(nftResult => {
-            console.log("[Pipeline] ✅ Step 6 — NFT minted:", nftResult.tokenId);
+            console.log("[Pipeline] ✅ Step 6 — NFT:", nftResult.skipped ? `already exists #${nftResult.tokenId}` : `minted #${nftResult.tokenId}`);
+            stmts.updateNFT.run(nftResult.tokenId, nftResult.txHash, paperId);
+            emitPipelineEvent(paperId, "nft", "NFT Minting", "completed", { message: nftResult.skipped ? `NFT #${nftResult.tokenId} already exists` : `NFT #${nftResult.tokenId} minted`, tokenId: nftResult.tokenId });
+          })
+          .catch(nftErr => {
+            // "Paper already minted" is not a real error — NFT exists from a previous run
+            if (nftErr.message?.includes("already minted")) {
+              console.log("[Pipeline] ✅ Step 6 — NFT already exists for this paper");
+              emitPipelineEvent(paperId, "nft", "NFT Minting", "completed", { message: "NFT already minted for this paper" });
+              stmts.updatePipelineStatus.run("complete", paperId);
+            } else {
+              throw nftErr;
+            }
           });
+      } else {
+        // No anchor result — mark complete (storage-only mode)
+        stmts.updatePipelineStatus.run("complete", paperId);
       }
     })
-    .catch(e => console.warn("[Pipeline] ❌ Background step failed:", e.message));
+    .catch(e => {
+      console.warn("[Pipeline] ❌ Background step failed:", e.message);
+      // Don't mark as error if NFT already minted
+      if (e.message?.includes("already minted")) {
+        stmts.updatePipelineStatus.run("complete", paperId);
+        emitPipelineEvent(paperId, "nft", "NFT Minting", "completed", { message: "NFT already minted for this paper" });
+      } else {
+        stmts.updatePipelineStatus.run("error", paperId);
+        emitPipelineEvent(paperId, "ai", "AI Curation", "error", { message: `Pipeline error: ${e.message}` });
+      }
+    });
 }
 
 /** Filter papers berdasarkan teks pencarian */

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { BookOpen, FlaskConical } from "lucide-react"
+import { BookOpen, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/contexts/language"
@@ -46,8 +46,8 @@ export function Hero() {
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2">
               <Link href="/upload">
-                <FlaskConical className="h-4 w-4" />
-                Try Pipeline
+                <Upload className="h-4 w-4" />
+                Upload Paper
               </Link>
             </Button>
           </div>

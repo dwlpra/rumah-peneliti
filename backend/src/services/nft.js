@@ -26,10 +26,11 @@
 
 const { ethers } = require("ethers");
 
-// Konfigurasi koneksi blockchain
-const RPC_URL = process.env.RPC_URL || "https://evmrpc.0g.ai";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
-const NFT_CONTRACT_ADDRESS = process.env.NFT_CONTRACT_ADDRESS || "0x5495b92aca76B4414C698f60CdaAD85B364011a1";
+// Konfigurasi koneksi blockchain — lazy evaluation (read at call time, not module load)
+// This ensures dotenv has loaded before we try to read env vars
+function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
+function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
+function getNFTAddress() { return process.env.NFT_CONTRACT_ADDRESS || "0x5495b92aca76B4414C698f60CdaAD85B364011a1"; }
 
 // ABI (interface) smart contract ResearchNFT
 const ABI = [
@@ -47,8 +48,8 @@ const ABI = [
  * @returns {ethers.Contract} - Instance contract read-only
  */
 function getReadContract() {
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  return new ethers.Contract(NFT_CONTRACT_ADDRESS, ABI, provider);
+  const provider = new ethers.JsonRpcProvider(getRpcUrl());
+  return new ethers.Contract(getNFTAddress(), ABI, provider);
 }
 
 /**
@@ -57,10 +58,11 @@ function getReadContract() {
  * @returns {ethers.Contract} - Instance contract yang siap dipanggil
  */
 async function getContract() {
-  if (!PRIVATE_KEY) throw new Error("PRIVATE_KEY not configured");
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-  return new ethers.Contract(NFT_CONTRACT_ADDRESS, ABI, wallet);
+  const pk = getPrivateKey();
+  if (!pk) throw new Error("PRIVATE_KEY not configured");
+  const provider = new ethers.JsonRpcProvider(getRpcUrl());
+  const wallet = new ethers.Wallet(pk, provider);
+  return new ethers.Contract(getNFTAddress(), ABI, wallet);
 }
 
 /**
@@ -82,6 +84,18 @@ async function getContract() {
  */
 async function mintResearchNFT(to, paperId, storageRoot, articleBody, metadata) {
   const contract = await getContract();
+  const readContract = getReadContract();
+
+  // Pre-check: skip mint if NFT already exists for this paper
+  try {
+    const existing = await readContract.getTokenByPaper(paperId);
+    if (existing && existing.tokenId > 0n) {
+      console.log("[NFT] NFT already exists for paper:", paperId, "tokenId:", existing.tokenId.toString());
+      return { tokenId: existing.tokenId.toString(), txHash: null, contractAddress: getNFTAddress(), skipped: true };
+    }
+  } catch (e) {
+    // getTokenByPaper reverts if no NFT — that's fine, proceed with mint
+  }
 
   // Hash dari artikel AI — ini yang disimpan di NFT sebagai bukti kurasi
   const curationHash = ethers.keccak256(ethers.toUtf8Bytes(articleBody || ""));
@@ -128,7 +142,7 @@ async function mintResearchNFT(to, paperId, storageRoot, articleBody, metadata) 
   }
 
   console.log("[NFT] Minted! Token:", tokenId, "Tx:", receipt.hash);
-  return { tokenId, txHash: receipt.hash, contractAddress: NFT_CONTRACT_ADDRESS };
+  return { tokenId, txHash: receipt.hash, contractAddress: getNFTAddress() };
 }
 
 /**

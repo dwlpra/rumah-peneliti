@@ -25,10 +25,10 @@
 
 const { ethers } = require("ethers");
 
-// Konfigurasi koneksi blockchain
-const RPC_URL = process.env.RPC_URL || "https://evmrpc.0g.ai";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
-const PAPER_ANCHOR_ADDRESS = process.env.PAPER_ANCHOR_ADDRESS || "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE";
+// Konfigurasi koneksi blockchain — lazy evaluation (read at call time, not module load)
+function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
+function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
+function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE"; }
 
 // ABI (interface) smart contract — fungsi-fungsi yang bisa dipanggil
 const ABI = [
@@ -56,10 +56,11 @@ function toBytes32(str) {
  * @returns {ethers.Contract} - Instance contract yang siap dipanggil
  */
 async function getContract() {
-  if (!PRIVATE_KEY) throw new Error("PRIVATE_KEY not configured");
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-  return new ethers.Contract(PAPER_ANCHOR_ADDRESS, ABI, wallet);
+  const pk = getPrivateKey();
+  if (!pk) throw new Error("PRIVATE_KEY not configured");
+  const provider = new ethers.JsonRpcProvider(getRpcUrl());
+  const wallet = new ethers.Wallet(pk, provider);
+  return new ethers.Contract(getAnchorAddress(), ABI, wallet);
 }
 
 /**

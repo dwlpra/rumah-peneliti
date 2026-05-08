@@ -7,9 +7,10 @@
 
 const { ethers } = require("ethers");
 
-const RPC_URL = process.env.RPC_URL || process.env.ZERO_MAINNET_RPC || "https://evmrpc.0g.ai";
-const AGENT_NFT_ADDRESS = process.env.AGENT_NFT_ADDRESS || "";
-const TIP_JAR_ADDRESS = process.env.AGENT_TIP_JAR_ADDRESS || "";
+// Lazy evaluation — read env at call time, not module load
+function getRpcUrl() { return process.env.RPC_URL || process.env.ZERO_MAINNET_RPC || "https://evmrpc.0g.ai"; }
+function getAgentNftAddress() { return process.env.AGENT_NFT_ADDRESS || ""; }
+function getTipJarAddress() { return process.env.AGENT_TIP_JAR_ADDRESS || ""; }
 
 const ABI = [
   "function getAgent(uint256 tokenId) external view returns (tuple(uint256 tokenId, string name, string description, uint8 agentType, string model, string capabilities, address creator, uint256 createdAt, uint256 updatedAt, bool active))",
@@ -26,21 +27,28 @@ const AGENT_TYPE_NAMES = ["Kurator", "Scorer", "Summarizer", "Tagger", "Reviewer
 
 let _contract = null;
 let _tipJar = null;
+let _cachedRpcUrl = null;
 
 function getContract() {
-  if (!AGENT_NFT_ADDRESS) return null;
-  if (!_contract) {
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    _contract = new ethers.Contract(AGENT_NFT_ADDRESS, ABI, provider);
+  const addr = getAgentNftAddress();
+  const rpc = getRpcUrl();
+  if (!addr) return null;
+  // Re-create contract if RPC URL changed or not yet created
+  if (!_contract || _cachedRpcUrl !== rpc) {
+    const provider = new ethers.JsonRpcProvider(rpc);
+    _contract = new ethers.Contract(addr, ABI, provider);
+    _cachedRpcUrl = rpc;
   }
   return _contract;
 }
 
 function getTipJar() {
-  if (!TIP_JAR_ADDRESS) return null;
-  if (!_tipJar) {
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    _tipJar = new ethers.Contract(TIP_JAR_ADDRESS, TIP_JAR_ABI, provider);
+  const addr = getTipJarAddress();
+  const rpc = getRpcUrl();
+  if (!addr) return null;
+  if (!_tipJar || _cachedRpcUrl !== rpc) {
+    const provider = new ethers.JsonRpcProvider(rpc);
+    _tipJar = new ethers.Contract(addr, TIP_JAR_ABI, provider);
   }
   return _tipJar;
 }
@@ -58,7 +66,7 @@ function formatAgent(agent) {
     createdAt: Number(agent.createdAt),
     updatedAt: Number(agent.updatedAt),
     active: agent.active,
-    contractAddress: AGENT_NFT_ADDRESS,
+    contractAddress: getAgentNftAddress(),
   };
 }
 
@@ -172,7 +180,7 @@ async function getAgentTipStats(tokenId) {
       tipBalance: ethers.formatEther(stats.balance),
       totalTips: ethers.formatEther(stats.totalTips),
       tipCount: Number(stats.tipCount),
-      tipJarAddress: TIP_JAR_ADDRESS,
+      tipJarAddress: getTipJarAddress(),
     };
   } catch (e) {
     console.warn("[AgentTipJar] Failed to get tip stats:", e.message);

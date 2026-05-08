@@ -101,6 +101,13 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // Maks 50MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf" || file.originalname.endsWith(".pdf")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files are allowed"));
+    }
+  },
 });
 
 // ============================================================

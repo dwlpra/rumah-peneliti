@@ -10,9 +10,10 @@
 
 const { ethers } = require("ethers");
 
-const RPC_URL = process.env.RPC_URL || "https://evmrpc.0g.ai";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2";
+// Lazy evaluation — read env at call time, not module load
+function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
+function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
+function getJournalAddress() { return process.env.CONTRACT_ADDRESS || "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2"; }
 
 const ABI = [
   "function uploadPaper(string calldata _title, string calldata _paperHash, uint256 _price) external returns (uint256)",
@@ -24,10 +25,11 @@ const ABI = [
 ];
 
 async function getContract() {
-  if (!PRIVATE_KEY) throw new Error("PRIVATE_KEY not configured");
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-  return new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
+  const pk = getPrivateKey();
+  if (!pk) throw new Error("PRIVATE_KEY not configured");
+  const provider = new ethers.JsonRpcProvider(getRpcUrl());
+  const wallet = new ethers.Wallet(pk, provider);
+  return new ethers.Contract(getJournalAddress(), ABI, wallet);
 }
 
 /**
