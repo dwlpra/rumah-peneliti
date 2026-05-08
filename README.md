@@ -19,7 +19,7 @@
   <a href="https://chainscan.0g.ai/address/0xF5E23E98a6a93Db2c814a033929F68D5B74445E2">JournalPayment</a> ·
   <a href="https://chainscan.0g.ai/address/0x410837Dd2476d7E70210063D11030D0842653f69">PaperAnchor</a> ·
   <a href="https://chainscan.0g.ai/address/0x78C414367A91917fe5DC8123119467c9910a4B6d">ResearchNFT</a> ·
-  <a href="https://chainscan-galileo.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6">AgentNFT</a>
+  <a href="https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6">AgentNFT</a>
 </p>
 
 ---
@@ -330,7 +330,7 @@ This project integrates **all 4 core 0G components** plus an **on-chain agent id
 | JournalPayment | `0xF5E23E98a6a93Db2c814a033929F68D5B74445E2` | Micropayments | [View](https://chainscan.0g.ai/address/0xF5E23E98a6a93Db2c814a033929F68D5B74445E2) |
 | PaperAnchor | `0x410837Dd2476d7E70210063D11030D0842653f69` | Hash verification | [View](https://chainscan.0g.ai/address/0x410837Dd2476d7E70210063D11030D0842653f69) |
 | ResearchNFT | `0x78C414367A91917fe5DC8123119467c9910a4B6d` | Paper NFTs | [View](https://chainscan.0g.ai/address/0x78C414367A91917fe5DC8123119467c9910a4B6d) |
-| AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` | **AI Agent Identity** (ERC-7857) | [View](https://chainscan-galileo.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6) |
+| AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` | **AI Agent Identity** (ERC-7857) | [View](https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6) |
 
 ---
 

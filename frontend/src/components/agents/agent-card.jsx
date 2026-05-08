@@ -1,11 +1,19 @@
 "use client"
 
-import { Bot, ExternalLink, Shield, Activity } from "lucide-react"
+import { useState } from "react"
+import { Bot, ExternalLink, Shield, Activity, Coffee, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
 import { EXPLORER_URL, CONTRACTS } from "@/lib/constants"
+
+const TIP_AMOUNTS = [
+  { label: "0.001", wei: "1000000000000000" },
+  { label: "0.005", wei: "5000000000000000" },
+  { label: "0.01", wei: "10000000000000000" },
+]
 
 function getScoreColor(score) {
   if (score >= 80) return "text-emerald-600 dark:text-emerald-400"
@@ -15,6 +23,43 @@ function getScoreColor(score) {
 
 export function AgentCard({ agent }) {
   const stats = agent.stats || {}
+  const tips = agent.tips || {}
+  const [selectedTip, setSelectedTip] = useState(0)
+  const [tipping, setTipping] = useState(false)
+  const [tipSuccess, setTipSuccess] = useState(false)
+
+  const handleTip = async () => {
+    if (!window.ethereum) {
+      alert("Please install a wallet to tip agents")
+      return
+    }
+
+    setTipping(true)
+    setTipSuccess(false)
+    try {
+      const { ethers } = await import("ethers")
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const contract = new ethers.Contract(
+        CONTRACTS.agentTipJar,
+        ["function tipAgent(uint256 tokenId, string calldata message) external payable"],
+        signer
+      )
+
+      const amount = TIP_AMOUNTS[selectedTip].wei
+      const tx = await contract.tipAgent(BigInt(agent.tokenId), "", {
+        value: BigInt(amount),
+      })
+      await tx.wait()
+      setTipSuccess(true)
+      setTimeout(() => setTipSuccess(false), 3000)
+    } catch (e) {
+      if (e.code !== 4001) {
+        console.error("Tip failed:", e)
+      }
+    }
+    setTipping(false)
+  }
 
   return (
     <Card className="h-full flex flex-col">
@@ -93,10 +138,10 @@ export function AgentCard({ agent }) {
           {(stats.avg_novelty > 0 || stats.avg_clarity > 0 || stats.avg_methodology > 0 || stats.avg_impact > 0) && (
             <div className="space-y-2">
               {[
-                { label: "Novelty", value: stats.avg_novelty || 0, color: "bg-blue-500" },
-                { label: "Clarity", value: stats.avg_clarity || 0, color: "bg-emerald-500" },
-                { label: "Methodology", value: stats.avg_methodology || 0, color: "bg-amber-500" },
-                { label: "Impact", value: stats.avg_impact || 0, color: "bg-purple-500" },
+                { label: "Novelty", value: stats.avg_novelty || 0 },
+                { label: "Clarity", value: stats.avg_clarity || 0 },
+                { label: "Methodology", value: stats.avg_methodology || 0 },
+                { label: "Impact", value: stats.avg_impact || 0 },
               ].map((dim) => (
                 <div key={dim.label}>
                   <div className="flex items-center justify-between mb-0.5">
@@ -114,6 +159,67 @@ export function AgentCard({ agent }) {
               Last active: {new Date(stats.last_activity).toLocaleDateString()}
             </p>
           )}
+        </div>
+
+        <Separator />
+
+        {/* Tip Section */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Coffee className="h-3 w-3" />
+            <span className="font-medium">Tip this Agent</span>
+            {Number(tips.totalTips || 0) > 0 && (
+              <span className="ml-auto text-[10px] font-mono">
+                {Number(tips.totalTips).toFixed(4)} 0G earned
+              </span>
+            )}
+          </div>
+
+          {/* Amount selector */}
+          <div className="flex gap-1.5">
+            {TIP_AMOUNTS.map((amt, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedTip(i)}
+                className={`flex-1 rounded-md border px-2 py-1 text-[11px] font-mono transition-colors ${
+                  selectedTip === i
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-muted hover:border-muted-foreground/30 text-muted-foreground"
+                }`}
+              >
+                {amt.label}
+              </button>
+            ))}
+          </div>
+
+          <Button
+            onClick={handleTip}
+            disabled={tipping}
+            size="sm"
+            className="w-full gap-1.5"
+            variant={tipSuccess ? "outline" : "default"}
+          >
+            {tipping ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Confirming...
+              </>
+            ) : tipSuccess ? (
+              <>
+                <Coffee className="h-3 w-3" />
+                Tipped!
+              </>
+            ) : (
+              <>
+                <Coffee className="h-3 w-3" />
+                Tip {TIP_AMOUNTS[selectedTip].label} 0G
+              </>
+            )}
+          </Button>
+
+          <p className="text-[10px] text-muted-foreground text-center">
+            Funds agent's 0G Compute usage
+          </p>
         </div>
 
         {/* Footer */}

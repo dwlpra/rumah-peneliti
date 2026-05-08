@@ -25,7 +25,7 @@ const { mintResearchNFT } = require("../services/nft");
 const { registerPaper } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
-const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB } = require("../services/agent-nft");
+const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats } = require("../services/agent-nft");
 
 /**
  * Resolve paper ID from URL param — supports both numeric ID and slug.
@@ -705,9 +705,10 @@ async function getAgentData(req, res) {
   const agent = await getAgentById(tokenId);
   if (!agent) return res.status(404).json({ error: "Agent not found" });
 
-  // Merge DB stats
+  // Merge DB stats + on-chain tip stats
   const stats = getAgentStatsFromDB(parseInt(tokenId));
-  res.json({ ...agent, stats });
+  const tips = await getAgentTipStats(parseInt(tokenId));
+  res.json({ ...agent, stats, tips });
 }
 
 /**
@@ -716,11 +717,13 @@ async function getAgentData(req, res) {
 async function listAgents(req, res) {
   const agents = await getAllAgents();
 
-  // Attach DB stats for each agent
-  const enriched = agents.map((agent) => ({
-    ...agent,
-    stats: getAgentStatsFromDB(parseInt(agent.tokenId)),
-  }));
+  // Attach DB stats + on-chain tip stats for each agent
+  const enriched = [];
+  for (const agent of agents) {
+    const stats = getAgentStatsFromDB(parseInt(agent.tokenId));
+    const tips = await getAgentTipStats(parseInt(agent.tokenId));
+    enriched.push({ ...agent, stats, tips });
+  }
 
   // Get recent activity across all agents
   const allPapers = [];

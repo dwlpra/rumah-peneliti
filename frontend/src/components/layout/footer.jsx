@@ -80,7 +80,7 @@ export function Footer() {
           <p className="text-xs text-muted-foreground">
             Powered by{" "}
             <a
-              href="https://chainscan-galileo.0g.ai"
+              href="https://chainscan.0g.ai"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"

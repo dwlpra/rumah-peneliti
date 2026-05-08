@@ -1,16 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bot, ExternalLink, Shield, Activity } from "lucide-react"
+import { Bot, ExternalLink, Shield, Activity, Coffee, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { EXPLORER_URL } from "@/lib/constants"
+import { Button } from "@/components/ui/button"
+import { EXPLORER_URL, CONTRACTS } from "@/lib/constants"
 import { getApiUrl } from "@/lib/api-url"
 
 export function AgentIdentity({ article }) {
   const [agentData, setAgentData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [tipping, setTipping] = useState(false)
+  const [tipSuccess, setTipSuccess] = useState(false)
 
   const agentTokenId = article?.agent_token_id
   const agentMeta = article?.agent_meta
@@ -28,6 +31,37 @@ export function AgentIdentity({ article }) {
       })
       .catch(() => setLoading(false))
   }, [agentTokenId])
+
+  const handleTip = async () => {
+    if (!window.ethereum) {
+      alert("Please install a wallet to tip agents")
+      return
+    }
+
+    setTipping(true)
+    setTipSuccess(false)
+    try {
+      const { ethers } = await import("ethers")
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const contract = new ethers.Contract(
+        CONTRACTS.agentTipJar,
+        ["function tipAgent(uint256 tokenId, string calldata message) external payable"],
+        signer
+      )
+      const tx = await contract.tipAgent(BigInt(agentData.tokenId), "", {
+        value: BigInt("1000000000000000"), // 0.001 0G
+      })
+      await tx.wait()
+      setTipSuccess(true)
+      setTimeout(() => setTipSuccess(false), 3000)
+    } catch (e) {
+      if (e.code !== 4001) {
+        console.error("Tip failed:", e)
+      }
+    }
+    setTipping(false)
+  }
 
   if (loading) return null
 
@@ -59,6 +93,7 @@ export function AgentIdentity({ article }) {
   }
 
   const stats = agentData.stats
+  const tips = agentData.tips || {}
 
   return (
     <Card>
@@ -131,6 +166,47 @@ export function AgentIdentity({ article }) {
             </div>
           </>
         )}
+
+        {/* Tip section */}
+        <Separator />
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Coffee className="h-3 w-3" />
+            <span className="font-medium">Support this Agent</span>
+            {Number(tips.totalTips || 0) > 0 && (
+              <span className="ml-auto text-[10px] font-mono">
+                {Number(tips.totalTips).toFixed(4)} 0G earned
+              </span>
+            )}
+          </div>
+          <Button
+            onClick={handleTip}
+            disabled={tipping}
+            size="sm"
+            className="w-full gap-1.5"
+            variant={tipSuccess ? "outline" : "default"}
+          >
+            {tipping ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Confirming...
+              </>
+            ) : tipSuccess ? (
+              <>
+                <Coffee className="h-3 w-3" />
+                Tipped!
+              </>
+            ) : (
+              <>
+                <Coffee className="h-3 w-3" />
+                Tip 0.001 0G
+              </>
+            )}
+          </Button>
+          <p className="text-[10px] text-muted-foreground text-center">
+            Funds agent's 0G Compute usage
+          </p>
+        </div>
 
         <Separator />
 

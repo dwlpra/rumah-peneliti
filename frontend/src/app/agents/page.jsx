@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Bot, ExternalLink, Shield, Loader2, Inbox, Activity, FileText } from "lucide-react"
+import { Bot, ExternalLink, Shield, Loader2, Inbox, Activity, FileText, Coffee } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { ExplorerLink } from "@/components/shared/explorer-link"
@@ -65,6 +65,7 @@ function AgentsContent() {
   // Calculate total stats
   const totalPapers = agents.reduce((sum, a) => sum + (a.stats?.papers_curated || 0), 0)
   const activeAgents = agents.filter((a) => a.active).length
+  const totalTips = agents.reduce((sum, a) => sum + Number(a.tips?.totalTips || 0), 0)
 
   return (
     <PageTransition>
@@ -111,6 +112,14 @@ function AgentsContent() {
                     <span className="text-2xl font-bold">{totalPapers}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">Papers Curated</span>
+                </div>
+                <Separator orientation="vertical" className="h-10" />
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Coffee className="h-4 w-4 text-amber-500" />
+                    <span className="text-2xl font-bold">{totalTips.toFixed(4)}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">0G Tips Earned</span>
                 </div>
               </div>
             </div>

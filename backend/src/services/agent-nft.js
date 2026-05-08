@@ -9,6 +9,7 @@ const { ethers } = require("ethers");
 
 const RPC_URL = process.env.RPC_URL || process.env.ZERO_MAINNET_RPC || "https://evmrpc.0g.ai";
 const AGENT_NFT_ADDRESS = process.env.AGENT_NFT_ADDRESS || "";
+const TIP_JAR_ADDRESS = process.env.AGENT_TIP_JAR_ADDRESS || "";
 
 const ABI = [
   "function getAgent(uint256 tokenId) external view returns (tuple(uint256 tokenId, string name, string description, uint8 agentType, string model, string capabilities, address creator, uint256 createdAt, uint256 updatedAt, bool active))",
@@ -17,9 +18,15 @@ const ABI = [
   "function ownerOf(uint256 tokenId) external view returns (address)",
 ];
 
+const TIP_JAR_ABI = [
+  "function getAgentStats(uint256 tokenId) external view returns (uint256 balance, uint256 totalTips, uint256 tipCount)",
+];
+
 const AGENT_TYPE_NAMES = ["Kurator", "Scorer", "Summarizer", "Tagger", "Reviewer", "Custom"];
 
 let _contract = null;
+let _tipJar = null;
+
 function getContract() {
   if (!AGENT_NFT_ADDRESS) return null;
   if (!_contract) {
@@ -27,6 +34,15 @@ function getContract() {
     _contract = new ethers.Contract(AGENT_NFT_ADDRESS, ABI, provider);
   }
   return _contract;
+}
+
+function getTipJar() {
+  if (!TIP_JAR_ADDRESS) return null;
+  if (!_tipJar) {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    _tipJar = new ethers.Contract(TIP_JAR_ADDRESS, TIP_JAR_ABI, provider);
+  }
+  return _tipJar;
 }
 
 function formatAgent(agent) {
@@ -96,12 +112,16 @@ async function getAllAgents() {
 }
 
 /**
- * Get agent stats from the DB for a specific agent token ID
+ * Get agent stats from the DB for a specific agent token ID.
+ * All pipeline agents (1-4) work on the same papers together,
+ * so they share the same stats from the lead agent (Kurator, ID 1).
  */
 function getAgentStatsFromDB(tokenId) {
   const { stmts } = require("../db");
   if (!stmts.getAgentStats) return null;
-  const stats = stmts.getAgentStats.get(tokenId);
+  // All 4 pipeline agents work on every paper — query using lead agent
+  const queryId = (tokenId >= 1 && tokenId <= 4) ? 1 : tokenId;
+  const stats = stmts.getAgentStats.get(queryId);
   if (!stats || stats.papers_curated === 0) {
     return { papers_curated: 0, avg_score: 0, last_activity: null };
   }
@@ -140,4 +160,24 @@ function getAgentPapersFromDB(tokenId, limit = 10) {
   });
 }
 
-module.exports = { getAgentById, getAgentByName, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB };
+/**
+ * Get on-chain tip stats for an agent from AgentTipJar contract
+ */
+async function getAgentTipStats(tokenId) {
+  const tipJar = getTipJar();
+  if (!tipJar || !tokenId) return { tipBalance: "0", totalTips: "0", tipCount: 0 };
+  try {
+    const stats = await tipJar.getAgentStats(tokenId);
+    return {
+      tipBalance: ethers.formatEther(stats.balance),
+      totalTips: ethers.formatEther(stats.totalTips),
+      tipCount: Number(stats.tipCount),
+      tipJarAddress: TIP_JAR_ADDRESS,
+    };
+  } catch (e) {
+    console.warn("[AgentTipJar] Failed to get tip stats:", e.message);
+    return { tipBalance: "0", totalTips: "0", tipCount: 0 };
+  }
+}
+
+module.exports = { getAgentById, getAgentByName, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats };

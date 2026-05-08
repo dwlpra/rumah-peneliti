@@ -53,7 +53,7 @@ test.describe("Agent Identity UI", () => {
     const link = page.locator('a:has-text("View Contract")').first();
     await expect(link).toBeVisible({ timeout: 5000 });
     const href = await link.getAttribute("href");
-    expect(href).toBe("https://chainscan-galileo.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6");
+    expect(href).toBe("https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6");
   });
 
   test("AI Score section shows 0G Compute footer", async ({ page }) => {
