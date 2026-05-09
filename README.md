@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/AI_Agent-On__Chain_Identity-blue?style=for-the-badge" alt="On-Chain Agent" />
   <img src="https://img.shields.io/badge/Multi--Agent-3_+_1_Parallel-orange?style=for-the-badge" alt="Multi-Agent" />
   <img src="https://img.shields.io/badge/ERC--7857_Inspired-Agent_NFT-9cf?style=for-the-badge" alt="ERC-7857" />
-  <img src="https://img.shields.io/badge/Tests-107_Passing-success?style=for-the-badge" alt="107 Tests" />
+  <img src="https://img.shields.io/badge/Tests-16_E2E_Passing-success?style=for-the-badge" alt="16 E2E Tests" />
   <img src="https://img.shields.io/badge/Solo_Dev-Built-red?style=for-the-badge" alt="Solo Dev" />
 </p>
 
@@ -17,7 +17,7 @@
 <p align="center">
   <a href="https://rumahpeneliti.com">Live App</a> ·
   <a href="https://chainscan.0g.ai/address/0xF5E23E98a6a93Db2c814a033929F68D5B74445E2">JournalPayment</a> ·
-  <a href="https://chainscan.0g.ai/address/0x410837Dd2476d7E70210063D11030D0842653f69">PaperAnchor</a> ·
+  <a href="https://chainscan.0g.ai/address/0x4ad80352231407Afa845c5428fa8fE870b4509A9">PaperAnchor</a> ·
   <a href="https://chainscan.0g.ai/address/0x78C414367A91917fe5DC8123119467c9910a4B6d">ResearchNFT</a> ·
   <a href="https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6">AgentNFT</a>
 </p>
@@ -110,30 +110,30 @@ Click "View Contract" → 0G Explorer shows full agent metadata
 ```mermaid
 graph TB
     subgraph Frontend["RumahPeneliti — Next.js 14"]
-        UI["11 Pages<br/>Home · Browse · Upload · Article<br/>Pipeline · Profile · NFTs<br/>Verify · Analytics · Leaderboard · Tech"]
+        UI["12 Pages<br/>Home · Browse · Upload · Article<br/>Pipeline · Profile · NFTs · Agents<br/>Verify · Analytics · Leaderboard · Tech"]
         Wallet["MetaMask<br/>Sign-In · Auth · Micropayments"]
         AgentUI["Agent Identity Card<br/>On-Chain Agent Data · Explorer Link"]
     end
 
     subgraph Backend["Express.js API"]
-        API["REST API<br/>10 Controllers · 8 Routes"]
+        API["REST API<br/>11 Controllers · 8 Routes"]
         Auth["JWT Auth<br/>Nonce → Sign → Verify"]
         Pipeline["6-Step Pipeline<br/>Upload → DA → Anchor → AI → Article → NFT"]
         AgentSvc["Agent NFT Service<br/>Read On-Chain Agent Data"]
     end
 
     subgraph AI["Multi-Agent Pipeline"]
-        Summarizer["Summarizer<br/>Agent NFT #1"]
-        Scorer["Scorer<br/>Agent NFT #1"]
-        Tagger["Tagger<br/>Agent NFT #1"]
-        Reviewer["Reviewer<br/>On-Demand"]
+        Summarizer["Summarizer<br/>Agent NFT #2"]
+        Scorer["Scorer<br/>Agent NFT #3"]
+        Tagger["Tagger<br/>Agent NFT #4"]
+        Reviewer["Kurator<br/>Agent NFT #1"]
     end
 
     subgraph ZeroG["0G Infrastructure"]
         Storage[("0G Storage<br/>Merkle-Verified")]
         Compute["0G Compute<br/>TEE Inference · GLM-5"]
         DA["0G DA Layer<br/>Blob Commitments"]
-        Chain["0G Chain<br/>4 Smart Contracts"]
+        Chain["0G Chain<br/>5 Smart Contracts"]
         AgentNFT["AgentNFT<br/>ERC-7857 Inspired<br/>On-Chain Agent Identity"]
     end
 
@@ -231,11 +231,11 @@ flowchart LR
     E --> G
     F --> G
 
-    subgraph G["3 Parallel Agents — NFT #1"]
+    subgraph G["3 Parallel Agents — Each with NFT Identity"]
         direction TB
-        S["Summarizer<br/>curated_title · summary<br/>key_takeaways · body"]
-        SC["Scorer<br/>novelty · clarity<br/>methodology · impact"]
-        T["Tagger<br/>tags · domain · subdomain<br/>research_type · difficulty"]
+        S["Summarizer · Agent NFT #2<br/>curated_title · summary<br/>key_takeaways · body"]
+        SC["Scorer · Agent NFT #3<br/>novelty · clarity<br/>methodology · impact"]
+        T["Tagger · Agent NFT #4<br/>tags · domain · subdomain<br/>research_type · difficulty"]
     end
 
     G --> H{Quality<br/>Threshold?}
@@ -292,9 +292,16 @@ classDiagram
         +AgentType: Kurator, Scorer, Summarizer, Tagger, Reviewer, Custom
     }
 
+    class AgentTipJar {
+        +tipAgent(tokenId, message) payable
+        +withdraw(tokenId)
+        +getAgentStats(tokenId) (balance, totalTips, tipCount)
+    }
+
     JournalPayment --> PaperAnchor : paperId reference
     PaperAnchor --> ResearchNFT : paperId → tokenId
     AgentNFT --> ResearchNFT : agent curated this paper
+    AgentTipJar --> AgentNFT : tip by agent tokenId
 ```
 
 ---
@@ -320,7 +327,7 @@ This project integrates **all 4 core 0G components** plus an **on-chain agent id
 | **0G Storage** | Paper files uploaded via `@0gfoundation/0g-ts-sdk`. Merkle tree built client-side. Root hash stored on-chain for verification. Supports upload, download. | `ZgFile`, `Indexer` |
 | **0G Compute** | All AI inference via `@0glabs/0g-serving-broker`. GLM-5-FP8 model. TEE-verified responses via `processResponse()`. On-chain ledger billing with auto-deposit. | `createZGComputeNetworkBroker` |
 | **0G DA Layer** | Blob commitments (`keccak256` of storage root + metadata) published as on-chain transactions. Self-transfer pattern with `RP:DA:` prefix. | `ethers.js v6` |
-| **0G Chain** | 4 Solidity contracts: `JournalPayment`, `PaperAnchor`, `ResearchNFT`, `AgentNFT`. Handles anchoring, micropayments, NFT minting, citations, access control, and agent identity. | Hardhat, ethers.js |
+| **0G Chain** | 5 Solidity contracts: `JournalPayment`, `PaperAnchor`, `ResearchNFT`, `AgentNFT`, `AgentTipJar`. Handles anchoring, micropayments, NFT minting, citations, access control, agent identity, and agent tipping. | Hardhat, ethers.js |
 | **Agent Identity** | ERC-7857 inspired `AgentNFT` contract. AI agents registered as NFTs with structured metadata (name, type, model, capabilities). Every curation linked to an on-chain agent. Verifiable via explorer. | Solidity 0.8.20, ethers.js |
 
 ### Contract Addresses (0G Mainnet)
@@ -328,9 +335,10 @@ This project integrates **all 4 core 0G components** plus an **on-chain agent id
 | Contract | Address | Purpose | Explorer |
 |:---|:---|:---|:---:|
 | JournalPayment | `0xF5E23E98a6a93Db2c814a033929F68D5B74445E2` | Micropayments | [View](https://chainscan.0g.ai/address/0xF5E23E98a6a93Db2c814a033929F68D5B74445E2) |
-| PaperAnchor | `0x410837Dd2476d7E70210063D11030D0842653f69` | Hash verification | [View](https://chainscan.0g.ai/address/0x410837Dd2476d7E70210063D11030D0842653f69) |
+| PaperAnchor | `0x4ad80352231407Afa845c5428fa8fE870b4509A9` | Hash verification | [View](https://chainscan.0g.ai/address/0x4ad80352231407Afa845c5428fa8fE870b4509A9) |
 | ResearchNFT | `0x78C414367A91917fe5DC8123119467c9910a4B6d` | Paper NFTs | [View](https://chainscan.0g.ai/address/0x78C414367A91917fe5DC8123119467c9910a4B6d) |
 | AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` | **AI Agent Identity** (ERC-7857) | [View](https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6) |
+| AgentTipJar | `0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6` | **Agent Tipping** (Agentic Economy) | [View](https://chainscan.0g.ai/address/0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6) |
 
 ---
 
@@ -402,7 +410,7 @@ Authors set a price in 0G tokens (or free). Readers pay directly to the author v
 ### Prerequisites
 - Node.js >= 18
 - MetaMask or compatible wallet
-- 0G tokens on Mainnet or Testnet
+- 0G tokens on Mainnet
 
 ### Setup
 
@@ -464,7 +472,7 @@ cd backend && npm run test:api  # Vitest API pipeline tests
 rumah-peneliti
 ├── backend/                     # Express.js API server
 │   └── src/
-│       ├── controllers/         # 10 controllers (papers, auth, analytics, nft, pipeline...)
+│       ├── controllers/         # 11 controllers (papers, auth, analytics, nft, pipeline...)
 │       ├── routes/              # 8 route modules
 │       ├── services/
 │       │   ├── storage.js       # 0G Storage upload (ZgFile, Indexer, Merkle)
@@ -479,24 +487,28 @@ rumah-peneliti
 │       └── db.js                # SQLite setup + auto-seed
 ├── frontend/                    # Next.js 14 App Router
 │   └── src/
-│       ├── app/                 # 11 pages (home, browse, upload, article, pipeline, nfts...)
+│       ├── app/                 # 12 pages (home, browse, upload, article, pipeline, nfts, agents...)
 │       ├── components/
 │       │   ├── article/         # AI chat, score, agent-identity, on-chain-data, sidebar
 │       │   ├── shared/          # Wallet modal with multi-wallet deduplication
 │       │   ├── home/            # Hero, stats, latest-papers, how-it-works
 │       │   └── ui/              # 14 shadcn/ui primitives
 │       ├── contexts/            # React Context (wallet, theme, language)
-│       └── lib/                 # Auth, API client, constants (4 contract addresses)
+│       └── lib/                 # Auth, API client, constants (5 contract addresses)
 ├── contracts/                   # Solidity smart contracts
 │   ├── contracts/
 │   │   ├── JournalPayment.sol   # Micropayments
 │   │   ├── PaperAnchor.sol      # Paper hash verification + citations
 │   │   ├── ResearchNFT.sol      # ERC-721 NFT minting
-│   │   └── AgentNFT.sol         # ERC-7857 inspired on-chain agent identity
+│   │   ├── AgentNFT.sol         # ERC-7857 inspired on-chain agent identity
+│   │   └── AgentTipJar.sol      # On-chain agent tipping (Agentic Economy)
 │   └── scripts/
 │       ├── deploy-agent.js      # Deploy AgentNFT contract
-│       ├── mint-agent.js        # Mint AI agent NFT
-│       └── deploy.js            # Deploy other contracts
+│       ├── deploy-tipjar.js     # Deploy AgentTipJar contract
+│       ├── mint-agent.js        # Mint AI Kurator agent NFT
+│       ├── mint-agents.js       # Mint Summarizer, Scorer, Tagger agents
+│       ├── deploy-mainnet.js    # Deploy all contracts to mainnet
+│       └── deploy.js            # Deploy to testnet
 ├── indexer/                     # Ponder blockchain event indexer
 │   ├── ponder.config.ts         # Chain config + contract addresses
 │   ├── ponder.schema.ts         # 4 tables schema
@@ -512,7 +524,7 @@ rumah-peneliti
 
 | Layer | Technology |
 |:---|:---|
-| Smart Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin v5 (ERC-721, Ownable) |
+| Smart Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin v5 (ERC-721, Ownable) — 5 contracts deployed on 0G Mainnet |
 | Agent Identity | ERC-7857 inspired AgentNFT — on-chain agent metadata, verifiable identity |
 | AI Inference | GLM-5-FP8 via 0G Compute (TEE), Z.AI GLM-5.1 API (fallback) |
 | 0G Storage | `@0gfoundation/0g-ts-sdk` — Merkle proofs, upload/download |
@@ -521,7 +533,7 @@ rumah-peneliti
 | Frontend | Next.js 14, React 18, Tailwind CSS, shadcn/ui (Radix), Ethers.js v6 |
 | Indexer | Ponder v0.7, PGLite, Viem, Hono |
 | Blockchain | 0G Mainnet (Chain ID 16661) |
-| Testing | Vitest (API), Playwright (E2E) — 107 tests passing |
+| Testing | Vitest (API), Playwright (E2E) — 16 API pipeline tests + 6 agent identity E2E tests |
 
 ---
 
