@@ -73,7 +73,7 @@ async function uploadPaper(req, res) {
   try {
     if (req.file.mimetype === "application/pdf" || filePath.endsWith(".pdf")) {
       const { PDFParse } = require("pdf-parse");
-      const pdfBuffer = fs.readFileSync(filePath);
+      const pdfBuffer = new Uint8Array(fs.readFileSync(filePath));
       const parser = new PDFParse(pdfBuffer);
       await parser.load();
       const pages = await parser.getText();
@@ -163,6 +163,11 @@ async function uploadPaper(req, res) {
       parseInt(journalResult.journalPaperId),
       paperId
     );
+  }
+
+  // Store anchor tx hash
+  if (anchorResult?.txHash) {
+    stmts.updateAnchorTx.run(anchorResult.txHash, paperId);
   }
 
   // ── Step 4-6: Background processing ──
@@ -319,12 +324,53 @@ function deletePaper(req, res) {
 async function getOnChainData(req, res) {
   const id = resolvePaperId(req.params.id);
   if (!id) return res.status(404).json({ error: "Paper not found" });
-  try {
-    const data = await getPaperOnChainData(id);
-    res.json({ paperId: id, ...data });
-  } catch {
-    res.json({ paperId: id, anchor: null, nft: null, articleAnchors: [], explorerBase: "https://chainscan.0g.ai" });
+
+  // Primary source: SQLite DB (has real tx hashes from pipeline)
+  const paper = stmts.getPaper.get(id);
+  if (!paper) return res.status(404).json({ error: "Paper not found" });
+
+  const result = { paperId: id, anchor: null, nft: null, articleAnchors: [], explorerBase: "https://chainscan.0g.ai" };
+
+  // Build anchor data from DB
+  if (paper.storage_hash || paper.anchor_tx_hash) {
+    result.anchor = {
+      paperId: id,
+      storageRoot: paper.storage_hash || null,
+      txHash: paper.anchor_tx_hash || null,
+    };
   }
+
+  // Build NFT data from DB
+  if (paper.nft_token_id) {
+    result.nft = {
+      tokenId: paper.nft_token_id,
+      paperId: id,
+      txHash: paper.nft_tx_hash || null,
+    };
+  }
+
+  // Check for articles (for article anchors count)
+  const article = stmts.getArticle.get(id);
+  if (article) {
+    result.articleAnchors = [{ paperId: id }];
+  }
+
+  // Enrich with Ponder data if available (timestamps, block numbers)
+  try {
+    const ponderData = await getPaperOnChainData(id);
+    if (ponderData?.anchor && result.anchor) {
+      result.anchor.blockNumber = ponderData.anchor.blockNumber;
+      result.anchor.timestamp = ponderData.anchor.timestamp;
+    }
+    if (ponderData?.nft && result.nft) {
+      result.nft.researcher = ponderData.nft.researcher;
+      result.nft.blockNumber = ponderData.nft.blockNumber;
+    }
+  } catch {
+    // Ponder unavailable, DB data is sufficient
+  }
+
+  res.json(result);
 }
 
 // ============================================================

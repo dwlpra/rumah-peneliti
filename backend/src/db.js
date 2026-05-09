@@ -97,6 +97,11 @@ try {
   db.exec("ALTER TABLE papers ADD COLUMN nft_tx_hash TEXT DEFAULT NULL");
 } catch (e) {}
 
+// Migration: add anchor tx hash column
+try {
+  db.exec("ALTER TABLE papers ADD COLUMN anchor_tx_hash TEXT DEFAULT NULL");
+} catch (e) {}
+
 // Migration: backfill slugs for existing papers without one
 {
   const papers = db.prepare("SELECT id, title, slug FROM papers WHERE slug = '' OR slug IS NULL").all();
@@ -153,6 +158,18 @@ const stmts = {
   ),
   updateNFT: db.prepare(
     "UPDATE papers SET nft_token_id = ?, nft_tx_hash = ?, pipeline_status = 'complete' WHERE id = ?"
+  ),
+  updateAnchorTx: db.prepare(
+    "UPDATE papers SET anchor_tx_hash = ? WHERE id = ?"
+  ),
+  findPaperByAnchorTx: db.prepare(
+    "SELECT id, title FROM papers WHERE LOWER(anchor_tx_hash) = ?"
+  ),
+  findPaperByNftTx: db.prepare(
+    "SELECT id, title FROM papers WHERE LOWER(nft_tx_hash) = ?"
+  ),
+  findPaperByStorageHash: db.prepare(
+    "SELECT id, title FROM papers WHERE LOWER(storage_hash) = ?"
   ),
   getPaperWithArticle: db.prepare(`
     SELECT p.*, a.curated_title, a.summary, a.ai_score, a.classification, a.agent_meta, a.agent_token_id, a.is_mock as article_is_mock

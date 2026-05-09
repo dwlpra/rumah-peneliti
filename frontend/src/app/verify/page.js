@@ -34,9 +34,9 @@ function InfoCard() {
         </div>
         <h3 className="text-lg font-semibold">What is Verification?</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Enter a paper ID or transaction hash to verify its authenticity
-          on-chain. This checks whether the paper has been anchored to the 0G
-          blockchain and whether a Research NFT has been minted for it.
+          Enter a paper ID, transaction hash, or storage root to verify its
+          authenticity on-chain. Checks anchor status, NFT minting, and storage
+          on the 0G blockchain.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -86,6 +86,9 @@ function ResultCard({ data }) {
           <CheckCircle className="h-5 w-5 text-emerald-500" />
           Verification Result
         </CardTitle>
+        {data.title && (
+          <p className="text-sm text-muted-foreground mt-1">{data.title}</p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Anchor */}
@@ -187,7 +190,7 @@ function VerifyContent() {
     setSearched(true)
 
     try {
-      const res = await fetch(`${getApiUrl()}/api/papers/${q}/onchain`)
+      const res = await fetch(`${getApiUrl()}/api/verify?q=${encodeURIComponent(q)}`)
       const data = await res.json()
       setResult(data)
     } catch {
@@ -223,7 +226,7 @@ function VerifyContent() {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Enter paper ID or transaction hash..."
+                  placeholder="Paper ID, tx hash, or storage root (0x...)..."
                   className="pl-10"
                 />
               </div>

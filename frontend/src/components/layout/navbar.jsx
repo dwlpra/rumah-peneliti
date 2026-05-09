@@ -46,12 +46,12 @@ const MAIN_LINKS = [
   { href: "/", labelKey: "nav_home", icon: Home },
   { href: "/browse", labelKey: "nav_browse", icon: Search },
   { href: "/upload", labelKey: "nav_upload", icon: Upload },
+  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/nfts", label: "NFTs", icon: Award },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
 ]
 
 const MORE_LINKS = [
-  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/tech", label: "Tech", icon: Settings2 },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ]
