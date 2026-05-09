@@ -13,7 +13,7 @@ async function getBroker() {
   if (brokerInitPromise) return brokerInitPromise;
 
   brokerInitPromise = (async () => {
-    const RPC_URL = process.env.RPC_URL || "https://evmrpc-testnet.0g.ai";
+    const RPC_URL = process.env.RPC_URL || "https://evmrpc.0g.ai";
     const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
     if (!PRIVATE_KEY) throw new Error("PRIVATE_KEY not configured for 0G Compute");
@@ -163,6 +163,8 @@ You MUST respond in EXACTLY this JSON format (no markdown code block):
           key_takeaways: parsed.key_takeaways || [],
           body: parsed.body || "",
           tags: parsed.tags || [],
+          ai_score: parsed.ai_score || null,
+          classification: parsed.classification || null,
           mock: false,
           provider: service.provider,
           model: metadata.model,

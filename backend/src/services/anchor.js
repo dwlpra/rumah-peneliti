@@ -28,7 +28,7 @@ const { ethers } = require("ethers");
 // Konfigurasi koneksi blockchain — lazy evaluation (read at call time, not module load)
 function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
 function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
-function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0xbb9775A363c63b84e7e7a949eE410eDd1eCB1FCE"; }
+function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0x4ad80352231407Afa845c5428fa8fE870b4509A9"; }
 
 // ABI (interface) smart contract — fungsi-fungsi yang bisa dipanggil
 const ABI = [

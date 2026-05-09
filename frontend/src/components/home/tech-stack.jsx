@@ -23,7 +23,7 @@ const TECH_STACK = [
   {
     icon: FileCode,
     name: "0G Smart Contracts",
-    description: "Immutable on-chain anchoring and ERC-721 NFT minting on 0G Galileo testnet.",
+    description: "Immutable on-chain anchoring and ERC-721 NFT minting on 0G Mainnet.",
   },
 ]
 
