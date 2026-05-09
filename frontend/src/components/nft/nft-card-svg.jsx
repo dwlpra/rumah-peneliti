@@ -49,7 +49,9 @@ function getFieldStyle(tags, classification) {
 
 function getRarity(score) {
   if (!score) return { label: "COMMON", stars: 1, color: "#94a3b8" }
-  const s = typeof score === "object" ? (score.overall || 0) : Number(score)
+  const s = typeof score === "object"
+    ? Math.round(((score.novelty || 0) + (score.clarity || 0) + (score.methodology || 0) + (score.impact || 0)) / 4)
+    : Number(score)
   if (s >= 90) return { label: "MYTHIC", stars: 5, color: "#f59e0b" }
   if (s >= 75) return { label: "RARE", stars: 4, color: "#8b5cf6" }
   if (s >= 60) return { label: "UNCOMMON", stars: 3, color: "#3b82f6" }
@@ -153,11 +155,13 @@ export function NFTCardSVG({ nft, article }) {
   const rarity = getRarity(article?.ai_score)
   const score = article?.ai_score
     ? typeof article.ai_score === "object"
-      ? Math.round(article.ai_score.overall || 0)
+      ? Math.round(((article.ai_score.novelty || 0) + (article.ai_score.clarity || 0) + (article.ai_score.methodology || 0) + (article.ai_score.impact || 0)) / 4)
       : Math.round(Number(article.ai_score))
     : 0
 
-  const title = truncate(nft.paperTitle || article?.curated_title || `Research #${nft.tokenId}`, 42)
+  const rawTitle = nft.paperTitle || article?.curated_title || `Research #${nft.tokenId}`
+  const titleLines = wrapText(rawTitle, 36, 2)
+  const ty = titleLines.length > 1 ? 12 : 0  // extra offset for 2-line title
   const summary = truncate(article?.summary || "", 140)
   const summaryLines = wrapText(summary, 44, 3)
   const tags = (article?.tags || []).slice(0, 3)
@@ -171,10 +175,10 @@ export function NFTCardSVG({ nft, article }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 480 672"
-      width="480"
-      height="672"
-      style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+      viewBox={`0 0 480 ${672 + ty}`}
+      width="100%"
+      height="100%"
+      style={{ fontFamily: "system-ui, -apple-system, sans-serif", display: "block" }}
     >
       <defs>
         <linearGradient id={`bg-${nft.tokenId}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -199,10 +203,10 @@ export function NFTCardSVG({ nft, article }) {
       </defs>
 
       {/* Card background */}
-      <rect width="480" height="672" rx="16" fill={`url(#bg-${nft.tokenId})`} />
+      <rect width="480" height={672 + ty} rx="16" fill={`url(#bg-${nft.tokenId})`} />
 
       {/* Border glow */}
-      <rect x="1" y="1" width="478" height="670" rx="16" fill="none" stroke={style.primary} strokeWidth="1.5" opacity="0.4" />
+      <rect x="1" y="1" width="478" height={670 + ty} rx="16" fill="none" stroke={style.primary} strokeWidth="1.5" opacity="0.4" />
 
       {/* ── TOP BAR: Field badge + Rarity ── */}
       <rect x="20" y="16" width="440" height="32" rx="6" fill={style.primary} opacity="0.15" />
@@ -230,25 +234,32 @@ export function NFTCardSVG({ nft, article }) {
       <text x="240" y="168" textAnchor="middle" fill={style.secondary} fontSize="10" fontWeight="600" letterSpacing="1">AI SCORE</text>
 
       {/* ── TITLE BAR ── */}
-      <rect x="20" y="286" width="440" height="44" rx="8" fill={`url(#title-${nft.tokenId})`} />
-      <text x="240" y="314" textAnchor="middle" fill="white" fontSize="15" fontWeight="700">{title}</text>
+      <rect x="20" y="286" width="440" height={titleLines.length > 1 ? 56 : 44} rx="8" fill={`url(#title-${nft.tokenId})`} />
+      {titleLines.length === 1 ? (
+        <text x="240" y="314" textAnchor="middle" fill="white" fontSize="15" fontWeight="700">{titleLines[0]}</text>
+      ) : (
+        <>
+          <text x="240" y="308" textAnchor="middle" fill="white" fontSize="14" fontWeight="700">{titleLines[0]}</text>
+          <text x="240" y="328" textAnchor="middle" fill="white" fontSize="13" fontWeight="600" opacity="0.9">{titleLines[1]}</text>
+        </>
+      )}
 
       {/* ── STATS BAR ── */}
-      <rect x="20" y="340" width="210" height="36" rx="6" fill="white" opacity="0.05" />
-      <text x="36" y="363" fill="#94a3b8" fontSize="10" fontWeight="600" letterSpacing="0.5">PAPER ID</text>
-      <text x="200" y="363" textAnchor="end" fill="white" fontSize="14" fontWeight="700" fontFamily="monospace">#{nft.paperId}</text>
+      <rect x="20" y={340 + ty} width="210" height="36" rx="6" fill="white" opacity="0.05" />
+      <text x="36" y={363 + ty} fill="#94a3b8" fontSize="10" fontWeight="600" letterSpacing="0.5">PAPER ID</text>
+      <text x="200" y={363 + ty} textAnchor="end" fill="white" fontSize="14" fontWeight="700" fontFamily="monospace">#{nft.paperId}</text>
 
-      <rect x="250" y="340" width="210" height="36" rx="6" fill="white" opacity="0.05" />
-      <text x="266" y="363" fill="#94a3b8" fontSize="10" fontWeight="600" letterSpacing="0.5">NETWORK</text>
-      <circle cx="420" cy="358" r="4" fill="#10b981" />
-      <text x="445" y="363" textAnchor="end" fill="white" fontSize="11" fontWeight="600">0G</text>
+      <rect x="250" y={340 + ty} width="210" height="36" rx="6" fill="white" opacity="0.05" />
+      <text x="266" y={363 + ty} fill="#94a3b8" fontSize="10" fontWeight="600" letterSpacing="0.5">NETWORK</text>
+      <circle cx="420" cy={358 + ty} r="4" fill="#10b981" />
+      <text x="445" y={363 + ty} textAnchor="end" fill="white" fontSize="11" fontWeight="600">0G</text>
 
       {/* ── SUMMARY ── */}
       {summaryLines.length > 0 && (
-        <rect x="20" y="388" width="440" height={summaryLines.length * 22 + 16} rx="8" fill="white" opacity="0.03" />
+        <rect x="20" y={388 + ty} width="440" height={summaryLines.length * 22 + 16} rx="8" fill="white" opacity="0.03" />
       )}
       {summaryLines.map((line, i) => (
-        <text key={i} x="36" y={410 + i * 22} fill="#94a3b8" fontSize="12" fontWeight="400">
+        <text key={i} x="36" y={410 + ty + i * 22} fill="#94a3b8" fontSize="12" fontWeight="400">
           {line}
         </text>
       ))}
@@ -260,8 +271,8 @@ export function NFTCardSVG({ nft, article }) {
             const x = 24 + i * 120
             return (
               <g key={i}>
-                <rect x={x} y={540} width="110" height="26" rx="13" fill={style.primary} opacity="0.15" />
-                <text x={x + 55} y={558} textAnchor="middle" fill={style.secondary} fontSize="10" fontWeight="600">#{tag}</text>
+                <rect x={x} y={540 + ty} width="110" height="26" rx="13" fill={style.primary} opacity="0.15" />
+                <text x={x + 55} y={558 + ty} textAnchor="middle" fill={style.secondary} fontSize="10" fontWeight="600">#{tag}</text>
               </g>
             )
           })}
@@ -269,23 +280,23 @@ export function NFTCardSVG({ nft, article }) {
       )}
 
       {/* ── FOOTER ── */}
-      <rect x="20" y="580" width="440" height="1" fill="white" opacity="0.06" />
+      <rect x="20" y={580 + ty} width="440" height="1" fill="white" opacity="0.06" />
 
       {/* Researcher address */}
-      <text x="36" y="608" fill="#64748b" fontSize="10" fontWeight="500">RESEARCHER</text>
-      <text x="36" y="626" fill="#94a3b8" fontSize="11" fontFamily="monospace">
+      <text x="36" y={608 + ty} fill="#64748b" fontSize="10" fontWeight="500">RESEARCHER</text>
+      <text x="36" y={626 + ty} fill="#94a3b8" fontSize="11" fontFamily="monospace">
         {nft.researcher ? `${nft.researcher.slice(0, 8)}...${nft.researcher.slice(-6)}` : "Unknown"}
       </text>
 
       {/* Timestamp */}
-      <text x="444" y="608" textAnchor="end" fill="#64748b" fontSize="10" fontWeight="500">MINTED</text>
-      <text x="444" y="626" textAnchor="end" fill="#94a3b8" fontSize="11" fontFamily="monospace">
+      <text x="444" y={608 + ty} textAnchor="end" fill="#64748b" fontSize="10" fontWeight="500">MINTED</text>
+      <text x="444" y={626 + ty} textAnchor="end" fill="#94a3b8" fontSize="11" fontFamily="monospace">
         {nft.timestamp ? new Date(Number(nft.timestamp) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
       </text>
 
       {/* Branding */}
-      <rect x="20" y="640" width="440" height="24" rx="4" fill="white" opacity="0.02" />
-      <text x="240" y="656" textAnchor="middle" fill="#475569" fontSize="10" fontWeight="600" letterSpacing="2">
+      <rect x="20" y={640 + ty} width="440" height="24" rx="4" fill="white" opacity="0.02" />
+      <text x="240" y={656 + ty} textAnchor="middle" fill="#475569" fontSize="10" fontWeight="600" letterSpacing="2">
         RUMAHPENELITI × 0G NETWORK
       </text>
     </svg>
