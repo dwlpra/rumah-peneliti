@@ -117,7 +117,6 @@ function ArticleContent() {
       setUnlocked(true)
       setToast({ type: "success", message: "Payment confirmed! Article unlocked." })
     } catch (e) {
-      console.error("Payment error:", e)
       if (e.code !== 4001) {
         setToast({ type: "error", message: "Payment failed: " + (e.message || "Unknown error") })
       }

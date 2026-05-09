@@ -36,12 +36,12 @@ echo "  ✅ Dependencies installed"
 echo ""
 echo "🔧 Setting up environment..."
 
-# Backend .env
-if [ ! -f backend/.env ]; then
-    cp backend/.env.example backend/.env
-    echo "  ✅ backend/.env created (edit with your keys)"
+# Backend .env (root level)
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "  ✅ .env created (edit with your keys)"
 else
-    echo "  ✅ backend/.env already exists"
+    echo "  ✅ .env already exists"
 fi
 
 # Frontend .env
@@ -49,8 +49,8 @@ if [ ! -f frontend/.env.local ]; then
     cat > frontend/.env.local << 'EOF'
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xF5E23E98a6a93Db2c814a033929F68D5B74445E2
-NEXT_PUBLIC_CHAIN_ID=16602
-NEXT_PUBLIC_RPC_URL=https://evmrpc-testnet.0g.ai
+NEXT_PUBLIC_CHAIN_ID=16661
+NEXT_PUBLIC_CHAIN_RPC=https://evmrpc.0g.ai
 EOF
     echo "  ✅ frontend/.env.local created"
 else

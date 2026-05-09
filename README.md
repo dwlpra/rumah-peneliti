@@ -1,17 +1,17 @@
 <p align="center">
   <img src="https://img.shields.io/badge/0G-Mainnet-brightgreen?style=for-the-badge&logo=ethereum" alt="0G Mainnet" />
+  <img src="https://img.shields.io/badge/Decentralized_Journal-On__Chain_Publishing-9cf?style=for-the-badge" alt="Decentralized Journal" />
   <img src="https://img.shields.io/badge/Agentic_Economy-Self_Sustaining-blue?style=for-the-badge" alt="Agentic Economy" />
-  <img src="https://img.shields.io/badge/Agent--as--a--Service-On__Chain_NFT-9cf?style=for-the-badge" alt="Agent-as-a-Service" />
   <img src="https://img.shields.io/badge/Auto_Billing-Tip_→_Compute-green?style=for-the-badge" alt="Auto Billing" />
   <img src="https://img.shields.io/badge/Multi--Agent-3_+_1_Parallel-orange?style=for-the-badge" alt="Multi-Agent" />
   <img src="https://img.shields.io/badge/Tests-39_Passing-success?style=for-the-badge" alt="39 Tests" />
 </p>
 
 <h1 align="center">RumahPeneliti</h1>
-<h3 align="center">Agent-as-a-Service Platform with Self-Sustaining Agentic Economy on 0G</h3>
+<h3 align="center">Decentralized Journal Platform with Self-Sustaining Agentic Economy on 0G</h3>
 
 <p align="center">
-  <i>AI agents earn tokens by curating research papers. Their earnings auto-fund their own compute. No human pays for AI operations — agents sustain themselves. A closed-loop agent economy on-chain.</i>
+  <i>Research papers live forever on-chain. AI agents curate them, earn tips from readers, and auto-fund their own compute. No publisher middleman, no single point of failure — a closed-loop agent economy powering a decentralized academic journal.</i>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 
 ---
 
-> **RumahPeneliti** — an **Agent-as-a-Service** platform where AI agents with on-chain NFT identities provide research curation services. Readers tip agents whose work they value. Tips are **automatically recycled into 0G Compute billing** — agents fund their own inference costs. Researchers pay authors via **on-chain micropayments** with 0% platform cut. The result: a self-sustaining **Agentic Economy** where AI agents earn, spend, and operate autonomously on 0G Mainnet.
+> **RumahPeneliti** — a **decentralized journal platform** where research papers are stored permanently on-chain via 0G Storage, curated by AI agents with on-chain NFT identities, and minted as NFTs owned by authors. Readers tip agents whose work they value. Tips are **automatically recycled into 0G Compute billing** — agents fund their own inference costs. Authors set prices and receive payments directly with **0% platform cut**. The result: a self-sustaining **Agentic Economy** powering a censorship-resistant academic journal, fully on 0G Mainnet.
 
 ---
 
@@ -446,15 +446,15 @@ Every curated article records which agent NFT performed the curation. Readers ve
 <td>
 
 ### Full Pipeline — End to End
-Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by identified agent) → Article Anchor → NFT Mint. The entire flow completes in ~40 seconds. Steps 1-3 are synchronous, steps 4-6 run async with SSE progress updates. Every step touches a different 0G component.
+Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by identified agent) → Article Anchor → NFT Mint. The entire flow completes in ~40 seconds. Steps 1-3 are synchronous, steps 4-6 run async with polling progress updates. Every step touches a different 0G component.
 
 </td>
 </tr>
 <tr>
 <td>
 
-### Multi-Agent AI Curation (3 + 1 Parallel)
-3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute's TEE inference. Each has a distinct role — one generates the article, one scores quality across 4 dimensions, one classifies and tags. A 4th Reviewer agent re-evaluates papers that fall below threshold. All via GLM-5-FP8.
+### Multi-Agent AI Curation (3 Parallel)
+3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute's TEE inference. Each has a distinct role — one generates the article, one scores quality across 4 dimensions, one classifies and tags. All via GLM-5-FP8.
 
 </td>
 <td>
@@ -475,12 +475,24 @@ Every 0G component is deeply integrated: **Storage** (permanent file hosting), *
 - MetaMask or compatible wallet
 - 0G tokens on Mainnet
 
-### Setup
+### One-Command Setup
 
 ```bash
 git clone https://github.com/akzmee/rumah-peneliti
 cd rumah-peneliti
 
+# Full setup + run (install deps, create .env, setup DB, start servers)
+bash scripts/setup.sh
+
+# Or step by step:
+bash scripts/setup.sh --setup   # Setup only (install, env, DB)
+# Edit .env — add LLM_API_KEY and PRIVATE_KEY
+bash scripts/setup.sh --run     # Start servers
+```
+
+### Manual Setup
+
+```bash
 # Install all dependencies
 make install
 

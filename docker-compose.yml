@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
       - NEXT_PUBLIC_CONTRACT_ADDRESS=0xF5E23E98a6a93Db2c814a033929F68D5B74445E2
       - NEXT_PUBLIC_CHAIN_ID=16661
       - NEXT_PUBLIC_RPC_URL=https://evmrpc.0g.ai

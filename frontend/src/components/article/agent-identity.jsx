@@ -57,7 +57,7 @@ export function AgentIdentity({ article }) {
       setTimeout(() => setTipSuccess(false), 3000)
     } catch (e) {
       if (e.code !== 4001) {
-        console.error("Tip failed:", e)
+        /* Tip error: user rejected or network issue */
       }
     }
     setTipping(false)

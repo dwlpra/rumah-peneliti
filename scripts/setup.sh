@@ -170,8 +170,7 @@ fi
 
 # Start frontend
 cd "$FRONTEND_DIR"
-# Capture port from next dev output
-PORT_OUTPUT=$(npm run dev 2>&1) &
+npm run dev &
 FRONTEND_PID=$!
 
 # Wait for frontend and detect port
