@@ -24,46 +24,63 @@
 
 ---
 
-> **RumahPeneliti** (Indonesian: "Researcher's Home") is a decentralized autonomous research platform for the **0G APAC Hackathon 2026** (Track 3: Agentic Economy). It features **AI agents with on-chain identities** — each agent is registered as an ERC-7857 inspired NFT on 0G Chain. Researchers upload papers that are autonomously curated by these identified agents via **0G Compute**, stored on **0G Storage**, proven on **0G DA Layer**, anchored on **0G Chain**, and minted as NFTs. Every curation decision is traceable to a specific, verifiable AI agent.
+> **RumahPeneliti** (Indonesian: "Researcher's Home") — researchers upload papers that are **stored permanently on 0G Storage**, curated into readable articles by **AI agents with on-chain identities** via **0G Compute**, anchored immutably on **0G Chain**, and minted as **NFTs**. No single point of failure. No boring PDFs. No black-box AI.
 
 ---
 
 ## The Problem
 
-Academic publishing is broken — and so is AI curation.
+Research papers today are trapped in **centralized journals** with two fundamental flaws:
 
-**Publishing:** Researchers hand copyright to publishers who charge $30-50 per paper view, while authors receive $0. Peer review takes months.
+**1. Fragile Storage â Years of Research Gone in One Server Crash**
 
-**AI Opacity:** When AI curates content, nobody knows which model was used, what version, or who deployed it. AI decisions are black boxes with zero accountability. If an AI agent produces biased scoring or hallucinated summaries, there's no way to trace, audit, or hold it accountable.
+Academic papers live on centralized servers controlled by a handful of publishers. When a journal shuts down, gets acquired, or suffers an outage â the papers vanish. Studies show over 20% of papers suffer from link rot within 5 years. Years of research, peer review, and data â gone. Researchers don't own their own work. The platform does.
 
 ```
-Current AI Curation:
-  Paper → ??? (some AI model, who knows) → Curated Article
-          No agent identity
-          No version tracking
-          No on-chain proof of who curated what
-          No accountability for AI decisions
+Centralized Journal:
+  Paper â Upload to publisher server â That's it
+          Single point of failure
+          If server dies â paper disappears
+          If publisher shuts down â years of research lost
+          If they change URL â all citations break
+```
+
+**2. Papers Are Stuck in Boring PDF Format**
+
+Research papers are written as dense, dry PDFs â walls of text that nobody wants to read. Important findings are buried in jargon. There's no summary, no visual breakdown, no quick takeaway. Students and researchers spend hours skimming papers only to find they're not relevant. The format hasn't evolved in 30 years.
+
+```
+Traditional Paper:
+  Upload PDF â Store on server â Hope someone reads it
+               No AI curation
+               No readability improvement
+               No scoring or classification
+               Same format since the 1990s
 ```
 
 ## The Solution
 
-RumahPeneliti introduces **On-Chain Agent Identity** — every AI agent in our pipeline is registered as an NFT on 0G Chain with verifiable metadata. When a paper is curated, readers can see exactly which agent did the work, what model it uses, and verify its identity on-chain.
+RumahPeneliti fixes both problems using **0G's decentralized infrastructure** and **AI agents with on-chain identity**:
+
+- **Permanent storage** on 0G Storage â papers survive any server failure, with Merkle proof verification
+- **AI curation** transforms boring PDFs into engaging, readable articles â with summaries, key takeaways, scoring, and classification
+- **On-chain agent identity** â every curation is traceable to a specific AI agent registered as an NFT. Not "some AI" â a verifiable, accountable agent
 
 | Capability | What It Does | 0G Component |
 |:---:|:---|:---:|
-| **On-Chain Agent Identity** | AI agents registered as ERC-7857 inspired NFTs with verifiable metadata | 0G Chain |
-| **Autonomous AI Curation** | 3 parallel agents + 1 reviewer, each with on-chain identity | 0G Compute |
-| **Decentralized Storage** | Paper files stored permanently with Merkle proofs | 0G Storage |
-| **Data Availability** | Blob commitments published on-chain for proof | 0G DA Layer |
-| **On-Chain Anchoring** | Paper hashes, citations, and article hashes anchored in smart contracts | 0G Chain |
-| **NFT Minting** | Every curated paper becomes a transferable ERC-721 NFT | 0G Chain |
-| **Micropayments** | Readers pay authors directly in 0G tokens | 0G Chain |
+| **Permanent Storage** | Papers stored on decentralized network with Merkle proofs â survives any server failure | 0G Storage |
+| **AI Curation** | Dense PDFs transformed into readable articles with summaries, scores, and tags | 0G Compute |
+| **On-Chain Agent Identity** | AI agents registered as NFTs with verifiable metadata â every curation is traceable | 0G Chain |
+| **Data Availability** | Blob commitments published on-chain for proof of existence | 0G DA Layer |
+| **On-Chain Anchoring** | Paper hashes, citations, and article hashes anchored immutably in smart contracts | 0G Chain |
+| **NFT Minting** | Every curated paper becomes a transferable ERC-721 NFT â researchers own their work | 0G Chain |
+| **Micropayments** | Readers support authors directly in 0G tokens â no publisher middleman | 0G Chain |
 
 ---
 
 ## Agent Identity — How It Works
 
-This is the core innovation for Track 3 (Agentic Economy). Each AI agent is minted as an NFT with structured on-chain metadata:
+This is the core innovation of RumahPeneliti. Each AI agent is minted as an NFT with structured on-chain metadata:
 
 ```solidity
 struct Agent {
@@ -572,7 +589,7 @@ MIT
 ---
 
 <p align="center">
-  Built for the <a href="https://www.hackquest.io/hackathons/0G-APAC-Hackathon">0G APAC Hackathon 2026</a> (Track 3: Agentic Economy & Autonomous Applications)
+  Built for the <a href="https://www.hackquest.io/hackathons/0G-APAC-Hackathon">0G APAC Hackathon 2026</a>
   <br/>
   <b>#0GHackathon #BuildOn0G</b>
 </p>
