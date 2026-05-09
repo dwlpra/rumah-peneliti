@@ -101,6 +101,19 @@ Reader sees: "Curated by AI Kurator — GLM-5-FP8 — VERIFIED ✓"
 Click "View Contract" → 0G Explorer shows full agent metadata
 ```
 
+### Registered Agents (On-Chain)
+
+All 4 agents are minted as NFTs on `AgentNFT` (`0x9ebf66F0...`). Each has verifiable on-chain metadata:
+
+| Token ID | Name | Type | Role | Model | Capabilities |
+|:---:|:---|:---:|:---|:---|:---|
+| #1 | **AI Kurator** | Kurator (0) | Lead orchestrator, quality review, final approval | GLM-5 via 0G Compute | summarize, score, tag, classify, review |
+| #2 | **Summarizer** | Summarizer (2) | Generates curated titles, summaries, key takeaways, article body | GLM-5 via 0G Compute | summarize, extract, rewrite |
+| #3 | **Scorer** | Scorer (1) | Scores papers across 4 dimensions: novelty, clarity, methodology, impact | GLM-5 via 0G Compute | score, evaluate, reason |
+| #4 | **Tagger** | Tagger (3) | Classifies domain, subdomain, research type, difficulty; generates tags | GLM-5 via 0G Compute | tag, classify, categorize |
+
+Each agent can receive tips via `AgentTipJar` (`0x7e59BB6f...`). Readers tip agents whose curation they find valuable — agents earn to fund their own compute. This creates a self-sustaining **Agentic Economy**.
+
 ---
 
 ## Architecture
