@@ -5,12 +5,12 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light")
+  const [theme, setTheme] = useState("dark")
   const [mounted, setMounted] = useState(false)
 
   // Sync with localStorage after mount to avoid hydration mismatch
   useEffect(() => {
-    const stored = localStorage.getItem("rp-theme") || "light"
+    const stored = localStorage.getItem("rp-theme") || "dark"
     setTheme(stored)
     setMounted(true)
   }, [])

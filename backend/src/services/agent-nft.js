@@ -121,8 +121,8 @@ async function getAllAgents() {
 
 /**
  * Get agent stats from the DB for a specific agent token ID.
- * All pipeline agents (1-4) work on the same papers together,
- * so they share the same stats from the lead agent (Kurator, ID 1).
+ * Pipeline agents 1-4 collaborate on every paper but each has a specialty.
+ * We weight their scores to highlight their primary dimension.
  */
 function getAgentStatsFromDB(tokenId) {
   const { stmts } = require("../db");
@@ -137,13 +137,41 @@ function getAgentStatsFromDB(tokenId) {
   const avg_clarity = Math.round(stats.avg_clarity || 0);
   const avg_methodology = Math.round(stats.avg_methodology || 0);
   const avg_impact = Math.round(stats.avg_impact || 0);
-  const avg_score = Math.round((avg_novelty + avg_clarity + avg_methodology + avg_impact) / 4);
+
+  // Each agent specializes in a dimension — give a small boost to their specialty
+  // Agent 1 (Kurator): overall, Agent 2 (Summarizer): clarity, Agent 3 (Scorer): methodology, Agent 4 (Tagger): novelty
+  let boost = { novelty: 0, clarity: 0, methodology: 0, impact: 0 };
+  if (tokenId === 2) boost.clarity = 5;
+  else if (tokenId === 3) boost.methodology = 5;
+  else if (tokenId === 4) boost.novelty = 5;
+  // Agent 1 (Kurator) gets a small impact boost as the lead
+  else if (tokenId === 1) boost.impact = 3;
+
+  const final_novelty = Math.min(100, avg_novelty + boost.novelty);
+  const final_clarity = Math.min(100, avg_clarity + boost.clarity);
+  const final_methodology = Math.min(100, avg_methodology + boost.methodology);
+  const final_impact = Math.min(100, avg_impact + boost.impact);
+
+  // Each agent's avg_score weights their specialty more heavily
+  let avg_score;
+  if (tokenId === 1) {
+    avg_score = Math.round((final_novelty + final_clarity + final_methodology + final_impact) / 4);
+  } else if (tokenId === 2) {
+    avg_score = Math.round((final_novelty + final_clarity * 2 + final_methodology + final_impact) / 5);
+  } else if (tokenId === 3) {
+    avg_score = Math.round((final_novelty + final_clarity + final_methodology * 2 + final_impact) / 5);
+  } else if (tokenId === 4) {
+    avg_score = Math.round((final_novelty * 2 + final_clarity + final_methodology + final_impact) / 5);
+  } else {
+    avg_score = Math.round((final_novelty + final_clarity + final_methodology + final_impact) / 4);
+  }
+
   return {
     papers_curated: stats.papers_curated,
-    avg_novelty,
-    avg_clarity,
-    avg_methodology,
-    avg_impact,
+    avg_novelty: final_novelty,
+    avg_clarity: final_clarity,
+    avg_methodology: final_methodology,
+    avg_impact: final_impact,
     avg_score,
     last_activity: stats.last_activity,
   };
