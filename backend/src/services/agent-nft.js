@@ -21,6 +21,7 @@ const ABI = [
 
 const TIP_JAR_ABI = [
   "function getAgentStats(uint256 tokenId) external view returns (uint256 balance, uint256 totalTips, uint256 tipCount)",
+  "function withdraw(uint256 tokenId) external",
 ];
 
 const AGENT_TYPE_NAMES = ["Kurator", "Scorer", "Summarizer", "Tagger", "Reviewer", "Custom"];
@@ -216,4 +217,52 @@ async function getAgentTipStats(tokenId) {
   }
 }
 
-module.exports = { getAgentById, getAgentByName, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats };
+/**
+ * Withdraw accumulated tips from AgentTipJar for all agents owned by the backend wallet.
+ * Returns the total amount withdrawn in ETH (0G).
+ * The backend wallet owns all agent NFTs, so it can call withdraw() for each.
+ */
+async function withdrawAgentTips() {
+  const tipJarAddr = getTipJarAddress();
+  const pk = process.env.PRIVATE_KEY;
+  if (!tipJarAddr || !pk) return 0;
+
+  try {
+    const provider = new ethers.JsonRpcProvider(getRpcUrl());
+    const wallet = new ethers.Wallet(pk, provider);
+    const tipJar = new ethers.Contract(tipJarAddr, TIP_JAR_ABI, wallet);
+
+    // Get agent count
+    const agentContract = getContract();
+    if (!agentContract) return 0;
+    const count = await agentContract.agentCount();
+    const total = Number(count);
+
+    let totalWithdrawn = 0;
+    for (let i = 1; i <= total; i++) {
+      try {
+        const stats = await tipJar.getAgentStats(i);
+        const balance = stats.balance;
+        if (balance > 0n) {
+          console.log(`[AgentTipJar] Withdrawing ${ethers.formatEther(balance)} 0G from agent #${i}`);
+          const tx = await tipJar.withdraw(i);
+          await tx.wait();
+          totalWithdrawn += Number(ethers.formatEther(balance));
+          console.log(`[AgentTipJar] Withdrawn from agent #${i}, tx: ${tx.hash}`);
+        }
+      } catch (e) {
+        console.warn(`[AgentTipJar] Withdraw failed for agent #${i}:`, e.message);
+      }
+    }
+
+    if (totalWithdrawn > 0) {
+      console.log(`[AgentTipJar] Total recycled to operator wallet: ${totalWithdrawn.toFixed(6)} 0G`);
+    }
+    return totalWithdrawn;
+  } catch (e) {
+    console.warn("[AgentTipJar] withdrawAgentTips failed:", e.message);
+    return 0;
+  }
+}
+
+module.exports = { getAgentById, getAgentByName, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats, withdrawAgentTips };

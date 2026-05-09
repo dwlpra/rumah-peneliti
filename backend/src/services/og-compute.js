@@ -33,6 +33,20 @@ async function getBroker() {
 
 async function ensureLedger(minAvailable = 2) {
   const broker = await getBroker();
+
+  // Agentic Economy: sweep tips from AgentTipJar before checking balance
+  // This recycles reader tips into 0G Compute funding
+  try {
+    const { withdrawAgentTips } = require("./agent-nft");
+    const recycled = await withdrawAgentTips();
+    if (recycled > 0) {
+      console.log("[0G Compute] Recycled", recycled.toFixed(6), "0G from agent tips");
+    }
+  } catch (e) {
+    // Non-critical — tips may not be available yet
+    console.log("[0G Compute] Tip recycling skipped:", e.message);
+  }
+
   try {
     const account = await broker.ledger.getLedger();
     const available = Number(ethers.formatEther(account.availableBalance || 0));
