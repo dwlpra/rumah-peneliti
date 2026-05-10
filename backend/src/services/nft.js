@@ -30,7 +30,7 @@ const { ethers } = require("ethers");
 // This ensures dotenv has loaded before we try to read env vars
 function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
 function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
-function getNFTAddress() { return process.env.NFT_CONTRACT_ADDRESS || "0x78C414367A91917fe5DC8123119467c9910a4B6d"; }
+function getNFTAddress() { return process.env.NFT_CONTRACT_ADDRESS || "0x010a70be3D661B98f69Ab4De1e213CA56C90de4a"; }
 
 // ABI (interface) smart contract ResearchNFT
 const ABI = [

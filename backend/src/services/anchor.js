@@ -28,11 +28,11 @@ const { ethers } = require("ethers");
 // Konfigurasi koneksi blockchain — lazy evaluation (read at call time, not module load)
 function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
 function getPrivateKey() { return process.env.PRIVATE_KEY || ""; }
-function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0x4ad80352231407Afa845c5428fa8fE870b4509A9"; }
+function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7"; }
 
 // ABI (interface) smart contract — fungsi-fungsi yang bisa dipanggil
 const ABI = [
-  "function anchorPaper(bytes32 storageRoot, bytes32 curationHash, bytes32 metadataHash) external returns (uint256)",
+  "function anchorPaper(address _author, bytes32 storageRoot, bytes32 curationHash, bytes32 metadataHash) external returns (uint256)",
   "function setArticle(uint256 paperId, bytes32 articleHash) external",
   "function getPaper(uint256 paperId) external view returns (tuple(uint256 id, bytes32 storageRoot, bytes32 curationHash, bytes32 metadataHash, address author, uint256 timestamp, bool hasArticle, uint256 citationCount))",
   "function verifyPaper(uint256 paperId, bytes32 storageRoot) external view returns (bool)",
@@ -79,18 +79,20 @@ async function getContract() {
  *   - paperId: ID on-chain paper (auto-increment dari contract)
  *   - txHash: Hash transaksi blockchain
  */
-async function anchorPaper(storageRootHex, title, authors, abstract) {
+async function anchorPaper(storageRootHex, title, authors, abstract, authorWallet) {
   const contract = await getContract();
 
   const storageRoot = storageRootHex || ethers.ZeroHash;
   const metadataHash = toBytes32(JSON.stringify({ title, authors, abstract }));
   const curationHash = ethers.ZeroHash; // Diisi nanti setelah AI curation
+  const author = authorWallet || contract.runner.address;
 
   console.log("[Anchor] Anchoring paper:", title);
   console.log("[Anchor] Storage root:", storageRoot);
+  console.log("[Anchor] Author wallet:", author);
 
   // Kirim transaksi ke smart contract
-  const tx = await contract.anchorPaper(storageRoot, curationHash, metadataHash);
+  const tx = await contract.anchorPaper(author, storageRoot, curationHash, metadataHash);
   const receipt = await tx.wait();
 
   // Baca event PaperAnchored dari receipt untuk mendapatkan paperId

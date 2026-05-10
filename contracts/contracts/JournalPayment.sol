@@ -27,21 +27,24 @@ contract JournalPayment {
 
     /**
      * @notice Upload a new paper with price
+     * @param _author Real author wallet address (not msg.sender, since backend calls on behalf of author)
      * @param _title Paper title
      * @param _paperHash 0G Storage content hash
      * @param _price Price in wei for readers to access
      */
     function uploadPaper(
+        address _author,
         string calldata _title,
         string calldata _paperHash,
         uint256 _price
     ) external returns (uint256) {
+        require(_author != address(0), "Author required");
         require(bytes(_title).length > 0, "Title required");
         require(bytes(_paperHash).length > 0, "Paper hash required");
 
         uint256 paperId = paperCount++;
         papers[paperId] = Paper({
-            author: msg.sender,
+            author: _author,
             title: _title,
             paperHash: _paperHash,
             price: _price,
@@ -49,7 +52,7 @@ contract JournalPayment {
             exists: true
         });
 
-        emit PaperUploaded(paperId, msg.sender, _title, _paperHash, _price);
+        emit PaperUploaded(paperId, _author, _title, _paperHash, _price);
         return paperId;
     }
 

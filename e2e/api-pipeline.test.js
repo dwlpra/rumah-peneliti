@@ -40,7 +40,7 @@ describe("🏥 Health & Status", () => {
   test("GET /api/nfts/stats returns contract info", async () => {
     const { status, data } = await api("/api/nfts/stats");
     expect(status).toBe(200);
-    expect(data.contract).toBe("0x78C414367A91917fe5DC8123119467c9910a4B6d");
+    expect(data.contract).toBe("0x010a70be3D661B98f69Ab4De1e213CA56C90de4a");
     expect(typeof data.totalSupply).toBe("number");
   });
 });
@@ -152,11 +152,13 @@ describe("💰 Purchase Operations", () => {
     expect(data).toHaveProperty("hasAccess");
   });
 
-  test("Access returns false for unknown wallet", async () => {
+  test("Access returns true for free papers regardless of wallet", async () => {
     const { data } = await api(
       "/api/papers/1/access/0x0000000000000000000000000000000000000001"
     );
-    expect(data.hasAccess).toBe(false);
+    expect(data).toHaveProperty("hasAccess");
+    // Free papers (price_wei=0) grant access to everyone
+    expect(data.hasAccess).toBe(true);
   });
 });
 
@@ -164,9 +166,9 @@ describe("💰 Purchase Operations", () => {
 describe("🔗 Smart Contract Verification", () => {
   test("Contract addresses are valid checksum addresses", () => {
     const addresses = {
-      JournalPayment: "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2",
-      PaperAnchor: "0x4ad80352231407Afa845c5428fa8fE870b4509A9",
-      ResearchNFT: "0x78C414367A91917fe5DC8123119467c9910a4B6d",
+      JournalPayment: "0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0",
+      PaperAnchor: "0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7",
+      ResearchNFT: "0x010a70be3D661B98f69Ab4De1e213CA56C90de4a",
     };
 
     for (const [name, addr] of Object.entries(addresses)) {
@@ -176,6 +178,6 @@ describe("🔗 Smart Contract Verification", () => {
 
   test("Explorer URLs are correctly formed", () => {
     expect(EXPLORER).toBe("https://chainscan.0g.ai");
-    expect(`${EXPLORER}/address/0xF5E23E98a6a93Db2c814a033929F68D5B74445E2`).toContain("chainscan");
+    expect(`${EXPLORER}/address/0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0`).toContain("chainscan");
   });
 });

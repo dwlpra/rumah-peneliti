@@ -17,19 +17,19 @@ export default createConfig({
     PaperAnchor: {
       network: "zeroMainnet",
       abi: PaperAnchor.abi,
-      address: "0x4ad80352231407Afa845c5428fa8fE870b4509A9",
+      address: "0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7",
       startBlock: 28937500,
     },
     ResearchNFT: {
       network: "zeroMainnet",
       abi: ResearchNFT.abi,
-      address: "0x78C414367A91917fe5DC8123119467c9910a4B6d",
+      address: "0x010a70be3D661B98f69Ab4De1e213CA56C90de4a",
       startBlock: 28939000,
     },
     JournalPayment: {
       network: "zeroMainnet",
       abi: JournalPayment.abi,
-      address: "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2",
+      address: "0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0",
       startBlock: 28937500,
     },
   },

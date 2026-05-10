@@ -125,7 +125,8 @@ async function uploadPaper(req, res) {
         storageHash,
         title,
         authors || "",
-        abstract || ""
+        abstract || "",
+        author_wallet
       );
       console.log("[Pipeline] ✅ Step 3 — Anchor ID:", anchorResult.paperId);
     } catch (e) {
@@ -136,7 +137,7 @@ async function uploadPaper(req, res) {
   // ── Step 3b: Register on JournalPayment (for micropayments) ──
   let journalResult = null;
   try {
-    journalResult = await registerPaper(title, storageHash, price_wei || "0");
+    journalResult = await registerPaper(author_wallet, title, storageHash, price_wei || "0");
     console.log("[Pipeline] ✅ Step 3b — Journal ID:", journalResult.journalPaperId);
   } catch (e) {
     console.warn("[Pipeline] ❌ Step 3b — Journal registration failed:", e.message);

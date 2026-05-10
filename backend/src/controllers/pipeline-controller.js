@@ -42,7 +42,7 @@ function getPipelineStatus(req, res) {
     },
     anchor: {
       configured: true,
-      contract: process.env.PAPER_ANCHOR_ADDRESS || "0x4ad80352231407Afa845c5428fa8fE870b4509A9",
+      contract: process.env.PAPER_ANCHOR_ADDRESS || "0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7",
     },
     compute: {
       configured: !!process.env.PRIVATE_KEY,

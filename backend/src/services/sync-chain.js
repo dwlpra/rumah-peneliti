@@ -18,9 +18,9 @@ const { generateArticle } = require("./kurasi");
 
 // ── Config ──
 function getRpcUrl() { return process.env.RPC_URL || "https://evmrpc.0g.ai"; }
-function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0x4ad80352231407Afa845c5428fa8fE870b4509A9"; }
-function getJournalAddress() { return process.env.CONTRACT_ADDRESS || "0xF5E23E98a6a93Db2c814a033929F68D5B74445E2"; }
-function getNftAddress() { return process.env.NFT_CONTRACT_ADDRESS || "0x78C414367A91917fe5DC8123119467c9910a4B6d"; }
+function getAnchorAddress() { return process.env.PAPER_ANCHOR_ADDRESS || "0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7"; }
+function getJournalAddress() { return process.env.CONTRACT_ADDRESS || "0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0"; }
+function getNftAddress() { return process.env.NFT_CONTRACT_ADDRESS || "0x010a70be3D661B98f69Ab4De1e213CA56C90de4a"; }
 
 const ANCHOR_ABI = [
   "function nextId() view returns (uint256)",
@@ -30,6 +30,7 @@ const ANCHOR_ABI = [
 const JOURNAL_ABI = [
   "function paperCount() view returns (uint256)",
   "function getPaper(uint256 _paperId) view returns (address author, string title, string paperHash, uint256 price, string articleHash, bool hasArticle)",
+  "function uploadPaper(address _author, string calldata _title, string calldata _paperHash, uint256 _price) external returns (uint256)",
 ];
 
 const NFT_ABI = [
@@ -194,21 +195,24 @@ async function syncChain() {
 
       if (!dbPaper) {
         // Scenario 1: Paper on-chain but not in DB — insert
+        // NOTE: On-chain `author` is msg.sender (usually backend/deployer wallet),
+        // NOT the real paper author. We store it as author_wallet for reference
+        // but it may not reflect the actual author identity.
         const jp = journalByHash.get(anchor.storageRoot.toLowerCase());
         const title = jp?.title || `Paper #${anchor.id}`;
-        const author = jp?.author || anchor.author;
+        const onChainAuthor = jp?.author || anchor.author;
         const price = jp?.price || "0";
 
         const result = db.prepare(
           "INSERT INTO papers (title, authors, abstract, file_path, storage_hash, price_wei, author_wallet, pipeline_status, anchor_tx_hash, journal_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         ).run(
           title,
-          author,
+          onChainAuthor,
           "",
           "",
           anchor.storageRoot,
           price,
-          author,
+          onChainAuthor,
           anchor.hasArticle ? "complete" : "anchored",
           "synced-from-chain",
           journalPapers.find(j => j.paperHash?.toLowerCase() === anchor.storageRoot.toLowerCase())?.id || null,

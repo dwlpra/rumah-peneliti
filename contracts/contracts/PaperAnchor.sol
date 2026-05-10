@@ -57,15 +57,18 @@ contract PaperAnchor {
 
     /**
      * @notice Anchor a new paper to the blockchain
+     * @param _author Real author wallet address (not msg.sender, since backend calls on behalf of author)
      * @param storageRoot 0G Storage Merkle root hash
      * @param curationHash Hash of the AI-curated article (can be empty initially)
      * @param metadataHash Hash of paper metadata (title, authors, abstract)
      */
     function anchorPaper(
+        address _author,
         bytes32 storageRoot,
         bytes32 curationHash,
         bytes32 metadataHash
     ) external returns (uint256) {
+        require(_author != address(0), "Author required");
         require(storageRoot != bytes32(0), "Storage root required");
 
         uint256 id = ++nextId;
@@ -74,16 +77,16 @@ contract PaperAnchor {
             storageRoot: storageRoot,
             curationHash: curationHash,
             metadataHash: metadataHash,
-            author: msg.sender,
+            author: _author,
             timestamp: block.timestamp,
             hasArticle: curationHash != bytes32(0),
             citationCount: 0
         });
 
-        authorPapers[msg.sender].push(id);
+        authorPapers[_author].push(id);
         rootToId[storageRoot] = id;
 
-        emit PaperAnchored(id, storageRoot, curationHash, metadataHash, msg.sender, block.timestamp);
+        emit PaperAnchored(id, storageRoot, curationHash, metadataHash, _author, block.timestamp);
         return id;
     }
 

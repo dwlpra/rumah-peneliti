@@ -35,9 +35,9 @@ Data flow: Frontend → Backend API → AI Curation (GLM-5) → 0G Storage uploa
 
 | Contract | Address |
 |----------|---------|
-| JournalPayment | `0xF5E23E98a6a93Db2c814a033929F68D5B74445E2` |
-| PaperAnchor | `0x4ad80352231407Afa845c5428fa8fE870b4509A9` |
-| ResearchNFT | `0x78C414367A91917fe5DC8123119467c9910a4B6d` |
+| JournalPayment | `0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0` |
+| PaperAnchor | `0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7` |
+| ResearchNFT | `0x010a70be3D661B98f69Ab4De1e213CA56C90de4a` |
 | AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` |
 | AgentTipJar | `0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6` |
 
