@@ -171,7 +171,7 @@ New article created → readers tip → cycle repeats
 graph TB
     subgraph Frontend["RumahPeneliti — Next.js 14"]
         UI["12 Pages<br/>Home · Browse · Upload · Article<br/>Pipeline · Profile · NFTs · Agents<br/>Verify · Analytics · Leaderboard · Tech"]
-        Wallet["MetaMask<br/>Sign-In · Auth · Micropayments · Tips"]
+        Wallet["Multi-Wallet (10+)<br/>Sign-In · Auth · Micropayments · Tips"]
         AgentUI["Agent Identity Card<br/>On-Chain Agent Data · Explorer Link"]
     end
 
@@ -472,7 +472,7 @@ Every 0G component is deeply integrated: **Storage** (permanent file hosting), *
 
 ### Prerequisites
 - Node.js >= 18
-- MetaMask or compatible wallet
+- MetaMask, Rabby, OKX, Backpack, Coinbase, Trust, and 5+ more wallets
 - 0G tokens on Mainnet
 
 ### One-Command Setup
