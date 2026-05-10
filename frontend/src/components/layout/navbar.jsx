@@ -94,9 +94,12 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 max-w-screen-xl items-center px-4">
         {/* Logo */}
-        <Link href="/" className="mr-6 flex items-center gap-2 font-bold">
+        <Link href="/" className="mr-4 sm:mr-6 flex items-center gap-2 font-bold">
           <BookOpen className="h-5 w-5 text-primary" />
-          <span className="text-lg">
+          <span className="text-lg sm:hidden">
+            <span className="text-primary">RP</span>
+          </span>
+          <span className="hidden sm:inline text-lg">
             Rumah<span className="text-primary">Peneliti</span>
           </span>
         </Link>
@@ -133,9 +136,9 @@ export function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-1">
-          <LanguageSwitcher />
-          <ThemeToggle />
-          <Separator orientation="vertical" className="mx-1 h-6" />
+          <span className="hidden sm:block"><LanguageSwitcher /></span>
+          <span className="hidden sm:block"><ThemeToggle /></span>
+          <Separator orientation="vertical" className="mx-1 h-6 hidden sm:block" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="hidden sm:flex items-center gap-1.5 rounded-md border px-2 py-1 hover:bg-accent transition-colors">
