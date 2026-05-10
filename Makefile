@@ -103,6 +103,10 @@ dev-frontend: ## 🎨 Jalankan frontend saja
 	@echo "$(GREEN)🎨 Starting frontend on port $(PORT_FRONTEND)...$(RESET)"
 	cd $(FRONTEND_DIR) && npm run dev
 
+dev-indexer: ## 📊 Jalankan indexer saja
+	@echo "$(GREEN)📊 Starting Ponder indexer on port 42069...$(RESET)"
+	cd indexer && npm run dev
+
 # ============================================================
 #  DOCKER
 # ============================================================

@@ -69,4 +69,19 @@ async function registerPaper(title, paperHash, priceWei) {
   return { journalPaperId, txHash: receipt.hash };
 }
 
-module.exports = { registerPaper };
+/**
+ * Get total registered paper count directly from JournalPayment contract (no indexer needed)
+ * @returns {Promise<number>}
+ */
+async function getPaperCount() {
+  try {
+    const provider = new ethers.JsonRpcProvider(getRpcUrl());
+    const contract = new ethers.Contract(getJournalAddress(), ["function paperCount() view returns (uint256)"], provider);
+    const count = await contract.paperCount();
+    return Number(count);
+  } catch {
+    return 0;
+  }
+}
+
+module.exports = { registerPaper, getPaperCount };

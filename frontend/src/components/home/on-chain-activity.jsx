@@ -52,6 +52,7 @@ function ActivityRow({ item }) {
 
 export function OnChainActivity() {
   const [activity, setActivity] = useState([])
+  const [stats, setStats] = useState({ anchors: 0, nfts: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export function OnChainActivity() {
       .then(r => r.json())
       .then(d => {
         setActivity(d.activity || [])
+        setStats(d.stats || { anchors: 0, nfts: 0 })
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -86,9 +88,14 @@ export function OnChainActivity() {
                 ))}
               </div>
             ) : activity.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                No on-chain activity yet. Be the first to anchor a paper!
-              </p>
+              <div className="py-6 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {stats.anchors > 0 || stats.nfts > 0
+                    ? `${stats.anchors} papers anchored, ${stats.nfts} NFTs minted on-chain. Start the indexer for full activity feed.`
+                    : "No on-chain activity yet. Be the first to anchor a paper!"
+                  }
+                </p>
+              </div>
             ) : (
               <div>
                 {activity.slice(0, 6).map((item, i) => (

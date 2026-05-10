@@ -145,4 +145,19 @@ async function verifyPaperOnChain(paperId, storageRoot) {
   return contract.verifyPaper(paperId, storageRoot);
 }
 
-module.exports = { anchorPaper, anchorArticle, verifyPaperOnChain };
+/**
+ * Get total anchored paper count directly from contract (no indexer needed)
+ * @returns {Promise<number>}
+ */
+async function getAnchorCount() {
+  try {
+    const provider = new ethers.JsonRpcProvider(getRpcUrl());
+    const contract = new ethers.Contract(getAnchorAddress(), ["function nextId() view returns (uint256)"], provider);
+    const count = await contract.nextId();
+    return Number(count);
+  } catch {
+    return 0;
+  }
+}
+
+module.exports = { anchorPaper, anchorArticle, verifyPaperOnChain, getAnchorCount };

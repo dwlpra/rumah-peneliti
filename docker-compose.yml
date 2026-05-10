@@ -36,6 +36,12 @@ services:
       - AGENT_TIP_JAR_ADDRESS=0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6
       - PONDER_URL=http://172.19.0.1:42069
 
+  indexer:
+    build: ./indexer
+    restart: unless-stopped
+    ports:
+      - "42069:42069"
+
 volumes:
   backend-data:
   backend-uploads:

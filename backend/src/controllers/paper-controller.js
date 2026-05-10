@@ -19,10 +19,10 @@ const { ethers } = require("ethers");
 const { stmts, parseArticle, parseArticles, db, generateSlug } = require("../db");
 const { generateArticle } = require("../services/kurasi");
 const { uploadTo0G, downloadFrom0G } = require("../services/storage");
-const { anchorPaper, anchorArticle } = require("../services/anchor");
+const { anchorPaper, anchorArticle, getAnchorCount } = require("../services/anchor");
 const { publishDAProof } = require("../services/da-layer");
-const { mintResearchNFT } = require("../services/nft");
-const { registerPaper } = require("../services/journal");
+const { mintResearchNFT, getTotalSupply } = require("../services/nft");
+const { registerPaper, getPaperCount } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
 const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats } = require("../services/agent-nft");
@@ -382,8 +382,17 @@ async function getActivity(req, res) {
     const data = await getActivityFeed(20);
     res.json(data);
   } catch {
-    // Ponder indexer not running — return empty data
-    res.json({ activity: [], stats: { anchors: 0, nfts: 0 } });
+    // Ponder indexer not running — fallback to direct on-chain reads
+    try {
+      const [anchors, nfts, payments] = await Promise.all([
+        getAnchorCount(),
+        getTotalSupply(),
+        getPaperCount(),
+      ]);
+      res.json({ activity: [], stats: { anchors, nfts, payments } });
+    } catch {
+      res.json({ activity: [], stats: { anchors: 0, nfts: 0, payments: 0 } });
+    }
   }
 }
 

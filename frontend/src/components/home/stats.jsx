@@ -52,8 +52,8 @@ export function Stats() {
   const items = [
     { value: stats.papers, label: t("stats_papers") },
     { value: stats.articles, label: t("stats_articles") },
-    { value: stats.anchors, label: "On-chain Anchors" },
-    { value: stats.nfts, label: "NFTs Minted" },
+    { value: stats.anchors, label: "On-chain Anchors", onChain: true },
+    { value: stats.nfts, label: "NFTs Minted", onChain: true },
   ]
 
   return (

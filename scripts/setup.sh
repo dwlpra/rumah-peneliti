@@ -65,6 +65,8 @@ cd "$BACKEND_DIR" && npm install --silent 2>/dev/null
 ok "Backend dependencies installed"
 cd "$FRONTEND_DIR" && npm install --silent 2>/dev/null
 ok "Frontend dependencies installed"
+cd "$ROOT_DIR/indexer" && npm install --silent 2>/dev/null
+ok "Indexer dependencies installed"
 
 # ── 3. Environment files ──
 step "Configuring environment..."
@@ -172,6 +174,11 @@ fi
 cd "$FRONTEND_DIR"
 npm run dev &
 FRONTEND_PID=$!
+
+# Start indexer (Ponder)
+cd "$ROOT_DIR/indexer"
+npm run dev &
+INDEXER_PID=$!
 
 # Wait for frontend and detect port
 echo "${DIM}Waiting for frontend...${RESET}"
