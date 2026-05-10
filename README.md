@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Agentic_Economy-Self_Sustaining-blue?style=for-the-badge" alt="Agentic Economy" />
   <img src="https://img.shields.io/badge/Auto_Billing-Tip_→_Compute-green?style=for-the-badge" alt="Auto Billing" />
   <img src="https://img.shields.io/badge/Multi--Agent-3_+_1_Parallel-orange?style=for-the-badge" alt="Multi-Agent" />
-  <img src="https://img.shields.io/badge/Tests-39_Passing-success?style=for-the-badge" alt="39 Tests" />
+  <img src="https://img.shields.io/badge/Tests-101_Passing-success?style=for-the-badge" alt="101 Tests" />
 </p>
 
 <h1 align="center">RumahPeneliti</h1>
@@ -478,7 +478,7 @@ Every 0G component is deeply integrated: **Storage** (permanent file hosting), *
 ### One-Command Setup
 
 ```bash
-git clone https://github.com/akzmee/rumah-peneliti
+git clone https://github.com/dwlpra/rumah-peneliti
 cd rumah-peneliti
 
 # Full setup + run (install deps, create .env, setup DB, start servers)
