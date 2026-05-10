@@ -472,8 +472,8 @@ Every 0G component is deeply integrated: **Storage** (permanent file hosting), *
 
 ### Prerequisites
 - Node.js >= 18
-- MetaMask, Rabby, OKX, Backpack, Coinbase, Trust, and 5+ more wallets
-- 0G tokens on Mainnet
+- Any EVM wallet (MetaMask, Rabby, OKX, Backpack, Coinbase, Trust, and 5+ more)
+- 0G tokens on Mainnet (for transactions)
 
 ### One-Command Setup
 
@@ -527,6 +527,15 @@ npx hardhat run scripts/deploy-agent.js --network zeroMainnet
 
 # Mint AI Kurator agent
 npx hardhat run scripts/mint-agent.js --network zeroMainnet
+```
+
+### Run Indexer (Optional)
+
+```bash
+cd indexer
+cp .env.example .env        # Set RPC_URL
+cp ../contracts/artifacts/ .  # Symlink contract ABIs
+npm run dev                   # Ponder GraphQL on :42069
 ```
 
 ### Test
@@ -623,7 +632,7 @@ rumah-peneliti
 | Frontend | Next.js 14, React 18, Tailwind CSS, shadcn/ui (Radix), Ethers.js v6 |
 | Indexer | Ponder v0.7, PGLite, Viem, Hono |
 | Blockchain | 0G Mainnet (Chain ID 16661) |
-| Testing | Vitest (API), Playwright (E2E) — 16 API + 17 UI + 6 agent identity = 39 tests |
+| Testing | Vitest (API), Playwright (E2E) — 16 API + 17 UI + 6 agent identity + 66 E2E assertions = 101 tests |
 
 ---
 
