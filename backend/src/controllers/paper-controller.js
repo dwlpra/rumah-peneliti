@@ -22,7 +22,7 @@ const { uploadTo0G, downloadFrom0G } = require("../services/storage");
 const { anchorPaper, anchorArticle, getAnchorCount } = require("../services/anchor");
 const { publishDAProof } = require("../services/da-layer");
 const { mintResearchNFT, getTotalSupply } = require("../services/nft");
-const { registerPaper, getPaperCount } = require("../services/journal");
+const { registerPaper, getPaperCount, checkOnChainAccess } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
 const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats } = require("../services/agent-nft");
@@ -298,11 +298,35 @@ function purchasePaper(req, res) {
 //  CHECK ACCESS
 // ============================================================
 
-function checkAccess(req, res) {
+async function checkAccess(req, res) {
   const id = resolvePaperId(req.params.id);
   if (!id) return res.json({ hasAccess: false });
-  const purchase = stmts.getPurchase.get(id, req.params.wallet);
-  res.json({ hasAccess: !!purchase });
+  const wallet = req.params.wallet;
+  const paper = stmts.getPaper.get(id);
+  // Author always has access (consistent with on-chain checkAccess)
+  if (paper && paper.author_wallet && paper.author_wallet.toLowerCase() === wallet.toLowerCase()) {
+    return res.json({ hasAccess: true });
+  }
+  // Free papers are accessible to everyone
+  if (paper && Number(paper.price_wei) === 0) {
+    return res.json({ hasAccess: true });
+  }
+  // Check DB first
+  const purchase = stmts.getPurchase.get(id, wallet);
+  if (purchase) return res.json({ hasAccess: true });
+  // Fallback: check on-chain (covers case where DB wasn't updated after tx)
+  if (paper && paper.journal_id) {
+    const onChainAccess = await checkOnChainAccess(paper.journal_id, wallet);
+    if (onChainAccess) {
+      // Backfill DB record so next check is fast
+      try {
+        db.prepare("INSERT OR IGNORE INTO purchases (paper_id, buyer_wallet, tx_hash, amount) VALUES (?, ?, ?, ?)")
+          .run(id, wallet, "on-chain-verified", paper.price_wei || "0");
+      } catch {}
+      return res.json({ hasAccess: true });
+    }
+  }
+  res.json({ hasAccess: false });
 }
 
 // ============================================================

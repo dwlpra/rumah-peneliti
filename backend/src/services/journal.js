@@ -84,4 +84,22 @@ async function getPaperCount() {
   }
 }
 
-module.exports = { registerPaper, getPaperCount };
+/**
+ * Check if a wallet has access to a paper on-chain (via JournalPayment contract)
+ * @param {number} journalId - On-chain paper ID
+ * @param {string} wallet - Wallet address
+ * @returns {Promise<boolean>}
+ */
+async function checkOnChainAccess(journalId, wallet) {
+  try {
+    const provider = new ethers.JsonRpcProvider(getRpcUrl());
+    const contract = new ethers.Contract(getJournalAddress(), [
+      "function checkAccess(uint256 _paperId, address _reader) view returns (bool)",
+    ], provider);
+    return await contract.checkAccess(journalId, wallet);
+  } catch {
+    return false;
+  }
+}
+
+module.exports = { registerPaper, getPaperCount, checkOnChainAccess };

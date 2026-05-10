@@ -78,6 +78,7 @@ function ArticleContent() {
     }
 
     setPaying(true)
+    const priceWei = paper?.price_wei || "1000000000000000"
     try {
       const contractAddress =
         process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || CONTRACTS.journalPayment
@@ -97,7 +98,6 @@ function ArticleContent() {
         signer
       )
 
-      const priceWei = paper?.price_wei || "1000000000000000"
       const journalId = paper?.journal_id
       if (journalId == null) {
         setToast({ type: "error", message: "Paper not registered on-chain yet. Purchase unavailable." })
@@ -117,7 +117,13 @@ function ArticleContent() {
       setUnlocked(true)
       setToast({ type: "success", message: "Payment confirmed! Article unlocked." })
     } catch (e) {
-      if (e.code !== 4001) {
+      const errMsg = e?.data?.message || e?.message || ""
+      // Already purchased on-chain — just record in backend and unlock
+      if (errMsg.includes("Already purchased")) {
+        await purchasePaper(paper.id, address, "already-purchased", priceWei).catch(() => {})
+        setUnlocked(true)
+        setToast({ type: "success", message: "Already purchased! Article unlocked." })
+      } else if (e.code !== 4001) {
         setToast({ type: "error", message: "Payment failed: " + (e.message || "Unknown error") })
       }
     }
