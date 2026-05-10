@@ -56,6 +56,9 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:3002",
+  "https://rumahpeneliti.com",
+  "https://www.rumahpeneliti.com",
+  "https://api.rumahpeneliti.com",
   ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : []),
 ];
 

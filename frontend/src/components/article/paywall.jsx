@@ -3,9 +3,11 @@
 import { Lock, Loader2, Wallet } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useLanguage } from "@/contexts/language"
 
 export function Paywall({ priceEth, address, onUnlock, paying, isFree }) {
+  const { t } = useLanguage()
+
   if (isFree) return null
 
   return (
@@ -34,9 +36,9 @@ export function Paywall({ priceEth, address, onUnlock, paying, isFree }) {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold">This article requires payment</h3>
+              <h3 className="text-lg font-semibold">{t('paywall_title_new')}</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Purchase access to read the full curated article
+                {t('paywall_purchase_desc')}
               </p>
             </div>
 
@@ -54,23 +56,23 @@ export function Paywall({ priceEth, address, onUnlock, paying, isFree }) {
               {paying ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {t('paywall_processing')}
                 </>
               ) : !address ? (
                 <>
                   <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
+                  {t('connect_wallet')}
                 </>
               ) : (
                 <>
                   <Lock className="mr-2 h-4 w-4" />
-                  Unlock for {priceEth} 0G
+                  {t('paywall_unlock_for')} {priceEth} 0G
                 </>
               )}
             </Button>
 
             <p className="text-xs text-muted-foreground">
-              Secured by 0G blockchain smart contract
+              {t('paywall_secured_by')}
             </p>
           </CardContent>
         </Card>

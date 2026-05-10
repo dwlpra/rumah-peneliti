@@ -70,12 +70,16 @@ export function OnChainData({ paperId }) {
               <span className="text-sm font-semibold">Anchored on 0G</span>
               <Badge variant="success">CONFIRMED</Badge>
             </div>
-            <ExplorerLink
-              type="tx"
-              value={data.anchor.txHash}
-              label={`Tx: ${data.anchor.txHash.slice(0, 16)}...`}
-              className="text-xs"
-            />
+            {data.anchor.txHash ? (
+              <ExplorerLink
+                type="tx"
+                value={data.anchor.txHash}
+                label={`Tx: ${data.anchor.txHash.slice(0, 16)}...`}
+                className="text-xs"
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">Transaction hash pending</p>
+            )}
             {!isZeroRoot(data.anchor.storageRoot) && (
               <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground font-mono">
                 <Package className="h-3 w-3" />
@@ -97,12 +101,16 @@ export function OnChainData({ paperId }) {
                 </span>
                 <Badge variant="secondary">MINTED</Badge>
               </div>
-              <ExplorerLink
-                type="tx"
-                value={data.nft.txHash}
-                label={`Tx: ${data.nft.txHash.slice(0, 16)}...`}
-                className="text-xs"
-              />
+              {data.nft.txHash ? (
+                <ExplorerLink
+                  type="tx"
+                  value={data.nft.txHash}
+                  label={`Tx: ${data.nft.txHash.slice(0, 16)}...`}
+                  className="text-xs"
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground">Transaction hash pending</p>
+              )}
             </div>
           </>
         )}

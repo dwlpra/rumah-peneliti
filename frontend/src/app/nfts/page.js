@@ -15,6 +15,7 @@ import { CONTRACTS } from "@/lib/constants"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
 import { NFTCardSVG } from "@/components/nft/nft-card-svg"
+import { useLanguage } from "@/contexts/language"
 
 function NFTSkeleton() {
   return (
@@ -30,6 +31,7 @@ function NFTContent() {
   const [totalSupply, setTotalSupply] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     Promise.all([
@@ -71,14 +73,13 @@ function NFTContent() {
           <div className="container mx-auto max-w-screen-xl px-4 py-12 text-center">
             <Badge variant="secondary" className="mb-4">
               <Award className="mr-1.5 h-3.5 w-3.5" />
-              ERC-721 Research NFTs
+              {t('nfts_badge')}
             </Badge>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Research NFT Gallery
+              {t('nfts_title')}
             </h1>
             <p className="mt-3 text-muted-foreground max-w-lg mx-auto leading-relaxed">
-              Every curated paper is minted as a unique ERC-721 NFT on the 0G
-              blockchain. Gasless, permanent, and verifiable.
+              {t('nfts_desc')}
             </p>
 
             {/* Stats */}
@@ -88,7 +89,7 @@ function NFTContent() {
                   <Palette className="h-4 w-4 text-primary" />
                   <span className="text-2xl font-bold">{totalSupply}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">NFTs Minted</span>
+                <span className="text-xs text-muted-foreground">{t('nfts_minted')}</span>
               </div>
               <Separator orientation="vertical" className="h-10" />
               <div className="text-center">
@@ -96,7 +97,7 @@ function NFTContent() {
                   <Fuel className="h-4 w-4 text-emerald-500" />
                   <span className="text-2xl font-bold">0</span>
                 </div>
-                <span className="text-xs text-muted-foreground">Gas (Sponsored)</span>
+                <span className="text-xs text-muted-foreground">{t('nfts_gas')}</span>
               </div>
               <Separator orientation="vertical" className="h-10" />
               <div className="text-center">
@@ -104,7 +105,7 @@ function NFTContent() {
                   <Globe className="h-4 w-4 text-blue-500" />
                   <span className="text-2xl font-bold">0G</span>
                 </div>
-                <span className="text-xs text-muted-foreground">Network</span>
+                <span className="text-xs text-muted-foreground">{t('nfts_network')}</span>
               </div>
             </div>
           </div>
@@ -115,7 +116,7 @@ function NFTContent() {
           <Card>
             <CardContent className="flex items-center gap-3 py-3">
               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm font-medium">ResearchNFT Contract</span>
+              <span className="text-sm font-medium">{t('nfts_contract_label')}</span>
               <ExplorerLink
                 type="address"
                 value={CONTRACTS.researchNFT}
@@ -143,13 +144,13 @@ function NFTContent() {
               <div className="rounded-full bg-muted p-4 mb-4">
                 <Inbox className="h-8 w-8 text-muted-foreground" />
               </div>
-              <p className="text-lg font-medium">No NFTs minted yet</p>
+              <p className="text-lg font-medium">{t('nfts_empty')}</p>
               <p className="text-sm text-muted-foreground mt-1 mb-4">
-                Be the first to publish research and receive an NFT.
+                {t('nfts_empty_desc')}
               </p>
               <div className="flex gap-3">
                 <Link href="/upload">
-                  <Button variant="default">Upload Paper</Button>
+                  <Button variant="default">{t('btn_upload_paper')}</Button>
                 </Link>
               </div>
             </div>

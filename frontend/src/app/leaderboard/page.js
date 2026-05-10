@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
+import { useLanguage } from "@/contexts/language"
 
 function MedalBadge({ rank }) {
   if (rank === 0)
@@ -59,6 +60,7 @@ function MedalBadge({ rank }) {
 function LeaderboardContent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { t } = useLanguage()
 
   useEffect(() => {
     fetch(`${getApiUrl()}/api/leaderboard`)
@@ -77,7 +79,7 @@ function LeaderboardContent() {
         <div className="flex-1">
           <div className="container mx-auto max-w-screen-xl px-4 py-12 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading leaderboard...</p>
+            <p className="text-muted-foreground">{t('lb_loading')}</p>
           </div>
         </div>
         <Footer />
@@ -93,10 +95,10 @@ function LeaderboardContent() {
         <section className="border-b bg-muted/30">
           <div className="container mx-auto max-w-screen-xl px-4 py-8 text-center">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Leaderboard
+              {t('lb_title')}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Top contributors and research papers
+              {t('lb_subtitle')}
             </p>
           </div>
         </section>
@@ -106,15 +108,15 @@ function LeaderboardContent() {
             <TabsList className="mb-6">
               <TabsTrigger value="authors" className="gap-1.5">
                 <Users className="h-4 w-4" />
-                Top Authors
+                {t('lb_tab_authors')}
               </TabsTrigger>
               <TabsTrigger value="papers" className="gap-1.5">
                 <Trophy className="h-4 w-4" />
-                Top Papers
+                {t('lb_tab_papers')}
               </TabsTrigger>
               <TabsTrigger value="verified" className="gap-1.5">
                 <CheckCircle className="h-4 w-4" />
-                Verified Papers
+                {t('lb_tab_verified')}
               </TabsTrigger>
             </TabsList>
 
@@ -128,7 +130,7 @@ function LeaderboardContent() {
                         <Inbox className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        No author data yet.
+                        {t('lb_no_authors')}
                       </p>
                     </div>
                   ) : (
@@ -149,7 +151,7 @@ function LeaderboardContent() {
                             </p>
                           </div>
                           <Badge variant="secondary">
-                            {a.count} papers
+                            {a.count} {t('lb_n_papers')}
                           </Badge>
                         </div>
                       ))}
@@ -169,7 +171,7 @@ function LeaderboardContent() {
                         <Inbox className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        No scored papers yet.
+                        {t('lb_no_papers')}
                       </p>
                     </div>
                   ) : (
@@ -200,7 +202,7 @@ function LeaderboardContent() {
                               }
                               className="shrink-0"
                             >
-                              AI: {p.aiScore}
+                              {t('lb_ai_score')} {p.aiScore}
                             </Badge>
                           )}
                         </Link>
@@ -221,7 +223,7 @@ function LeaderboardContent() {
                         <Inbox className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        No verified papers yet.
+                        {t('lb_no_verified')}
                       </p>
                     </div>
                   ) : (

@@ -1,23 +1,27 @@
+"use client"
+
 import Link from "next/link"
 import { BookOpen } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/browse", label: "Browse" },
-  { href: "/upload", label: "Upload" },
-]
-
-const RESOURCE_LINKS = [
-  { href: "/agents", label: "AI Agents" },
-  { href: "/tech", label: "Technology" },
-  { href: "/verify", label: "Verify" },
-  { href: "/analytics", label: "Analytics" },
-  { href: "/leaderboard", label: "Leaderboard" },
-]
+import { useLanguage } from "@/contexts/language"
 
 export function Footer() {
+  const { t } = useLanguage()
   const year = new Date().getFullYear()
+
+  const NAV_LINKS = [
+    { href: "/", label: t('nav_home') },
+    { href: "/browse", label: t('nav_browse') },
+    { href: "/upload", label: t('nav_upload') },
+  ]
+
+  const RESOURCE_LINKS = [
+    { href: "/agents", label: t('footer_nav_agents') },
+    { href: "/tech", label: t('footer_nav_tech') },
+    { href: "/verify", label: t('footer_nav_verify') },
+    { href: "/analytics", label: t('footer_nav_analytics') },
+    { href: "/leaderboard", label: t('footer_nav_leaderboard') },
+  ]
 
   return (
     <footer className="border-t bg-muted/40">
@@ -32,13 +36,13 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              A decentralized research platform powered by AI curation and blockchain micropayments. Making academic research accessible to everyone.
+              {t('footer_desc_new')}
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">Navigation</h4>
+            <h4 className="text-sm font-semibold mb-3">{t('footer_nav')}</h4>
             <ul className="space-y-2">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
@@ -55,7 +59,7 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">Resources</h4>
+            <h4 className="text-sm font-semibold mb-3">{t('footer_resources')}</h4>
             <ul className="space-y-2">
               {RESOURCE_LINKS.map((link) => (
                 <li key={link.href}>
@@ -75,10 +79,10 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            &copy; {year} RumahPeneliti. All rights reserved.
+            &copy; {year} RumahPeneliti. {t('footer_rights')}
           </p>
           <p className="text-xs text-muted-foreground">
-            Powered by{" "}
+            {t('footer_powered_by')}{" "}
             <a
               href="https://chainscan.0g.ai"
               target="_blank"

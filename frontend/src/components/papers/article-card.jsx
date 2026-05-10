@@ -5,6 +5,7 @@ import { BookOpen, Tag, Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/contexts/language"
 
 const STRIP_GRADIENTS = [
   "from-blue-500/10 to-indigo-500/10",
@@ -14,6 +15,7 @@ const STRIP_GRADIENTS = [
 ]
 
 export function ArticleCard({ article, index = 0 }) {
+  const { t } = useLanguage()
   const isFree = !article.price_wei || Number(article.price_wei) === 0
   const priceEth = isFree ? null : (Number(article.price_wei) / 1e18).toFixed(4)
   const gradient = STRIP_GRADIENTS[index % STRIP_GRADIENTS.length]
@@ -39,7 +41,7 @@ export function ArticleCard({ article, index = 0 }) {
           {/* Badges row */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {isFree ? (
-              <Badge variant="success">Free</Badge>
+              <Badge variant="success">{t('price_free')}</Badge>
             ) : (
               <Badge variant="secondary">{priceEth} 0G</Badge>
             )}
@@ -84,10 +86,10 @@ export function ArticleCard({ article, index = 0 }) {
           <div className="flex items-center justify-between pt-1 border-t">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <BookOpen className="h-3 w-3" />
-              <span>AI Curated</span>
+              <span>{t('card_ai_curated')}</span>
             </div>
             <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-              Read more →
+              {t('card_read_more')}
             </span>
           </div>
         </CardContent>

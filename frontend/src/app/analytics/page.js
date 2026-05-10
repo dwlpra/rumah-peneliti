@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
+import { useLanguage } from "@/contexts/language"
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
@@ -53,6 +54,7 @@ function AnalyticsContent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     fetch(`${getApiUrl()}/api/analytics/dashboard`)
@@ -75,10 +77,10 @@ function AnalyticsContent() {
         <section className="border-b bg-muted/30">
           <div className="container mx-auto max-w-screen-xl px-4 py-8">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Platform Analytics
+              {t('analytics_title')}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Real-time insights into RumahPeneliti
+              {t('analytics_subtitle')}
             </p>
           </div>
         </section>
@@ -108,25 +110,25 @@ function AnalyticsContent() {
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               <StatCard
                 icon={FileText}
-                label="Papers"
+                label={t('analytics_papers')}
                 value={stats?.papers || 0}
                 color="text-violet-500"
               />
               <StatCard
                 icon={BookOpen}
-                label="AI Articles"
+                label={t('analytics_articles')}
                 value={stats?.articles || 0}
                 color="text-blue-500"
               />
               <StatCard
                 icon={ShoppingBag}
-                label="Purchases"
+                label={t('analytics_purchases')}
                 value={stats?.purchases || 0}
                 color="text-emerald-500"
               />
               <StatCard
                 icon={Link2}
-                label="Anchored"
+                label={t('analytics_anchored')}
                 value={stats?.papers || 0}
                 color="text-amber-500"
               />
@@ -140,7 +142,7 @@ function AnalyticsContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <TrendingUp className="h-4 w-4" />
-                  Papers (Last 7 Days)
+                  {t('analytics_chart_title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -180,7 +182,7 @@ function AnalyticsContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Users className="h-4 w-4" />
-                  Top Authors
+                  {t('analytics_top_authors')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -237,7 +239,7 @@ function AnalyticsContent() {
                           </p>
                         </div>
                         <Badge variant="secondary" className="text-xs shrink-0">
-                          {a.count} papers
+                          {a.count} {t('analytics_n_papers')}
                         </Badge>
                       </div>
                     ))}
@@ -253,7 +255,7 @@ function AnalyticsContent() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  Difficulty Distribution
+                  {t('analytics_difficulty')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -302,7 +304,7 @@ function AnalyticsContent() {
             {/* Recent Activity */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Recent Activity</CardTitle>
+                <CardTitle className="text-base">{t('analytics_recent')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -346,7 +348,7 @@ function AnalyticsContent() {
                             {a.curated_title?.slice(0, 40)}...
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            AI Curated &middot; {a.created_date}
+                            {t('analytics_ai_curated')} &middot; {a.created_date}
                           </p>
                         </div>
                       </div>

@@ -19,21 +19,26 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/contexts/language"
 
-const STEPS = [
-  { id: "upload", title: "Upload", desc: "Paper uploaded to server", icon: Upload, color: "text-blue-500" },
-  { id: "storage", title: "0G Storage", desc: "Upload to decentralized storage", icon: Database, color: "text-cyan-500" },
-  { id: "da", title: "DA Proof", desc: "Data availability proof", icon: ShieldCheck, color: "text-emerald-500" },
-  { id: "anchor", title: "On-chain Anchor", desc: "Anchor paper hash on blockchain", icon: Link2, color: "text-amber-500" },
-  { id: "ai", title: "AI Curation", desc: "Multi-agent AI pipeline", icon: Brain, color: "text-violet-500" },
-  { id: "nft", title: "NFT Minting", desc: "Mint research NFT (ERC-721)", icon: Award, color: "text-pink-500" },
-]
+function PipelineConfig({ t }) {
+  const STEPS = [
+    { id: "upload", title: t('pl_step_upload_title'), desc: t('pl_step_upload_desc'), icon: Upload, color: "text-blue-500" },
+    { id: "storage", title: t('pl_step_storage_title'), desc: t('pl_step_storage_desc'), icon: Database, color: "text-cyan-500" },
+    { id: "da", title: t('pl_step_da_title'), desc: t('pl_step_da_desc'), icon: ShieldCheck, color: "text-emerald-500" },
+    { id: "anchor", title: t('pl_step_anchor_title'), desc: t('pl_step_anchor_desc'), icon: Link2, color: "text-amber-500" },
+    { id: "ai", title: t('pl_step_ai_title'), desc: t('pl_step_ai_desc'), icon: Brain, color: "text-violet-500" },
+    { id: "nft", title: t('pl_step_nft_title'), desc: t('pl_step_nft_desc'), icon: Award, color: "text-pink-500" },
+  ]
 
-const AI_AGENTS = [
-  { name: "Summarizer", desc: "Generating article & summary" },
-  { name: "Scorer", desc: "Evaluating novelty, clarity, methodology" },
-  { name: "Tagger", desc: "Classifying domain & tags" },
-]
+  const AI_AGENTS = [
+    { name: t('pl_agent_summarizer'), desc: t('pl_agent_summarizer_desc') },
+    { name: t('pl_agent_scorer'), desc: t('pl_agent_scorer_desc') },
+    { name: t('pl_agent_tagger'), desc: t('pl_agent_tagger_desc') },
+  ]
+
+  return { STEPS, AI_AGENTS }
+}
 
 function StatusIcon({ status }) {
   switch (status) {
@@ -48,20 +53,20 @@ function StatusIcon({ status }) {
   }
 }
 
-function StatusBadge({ status }) {
+function StatusBadgeWithT({ status, t }) {
   switch (status) {
     case "running":
-      return <Badge variant="default">Running</Badge>
+      return <Badge variant="default">{t('pl_running')}</Badge>
     case "completed":
-      return <Badge variant="success">Completed</Badge>
+      return <Badge variant="success">{t('pl_completed')}</Badge>
     case "error":
-      return <Badge variant="destructive">Error</Badge>
+      return <Badge variant="destructive">{t('pl_error')}</Badge>
     default:
-      return <Badge variant="secondary">Pending</Badge>
+      return <Badge variant="secondary">{t('pl_pending')}</Badge>
   }
 }
 
-function AgentActivity({ stepState }) {
+function AgentActivity({ stepState, t, AI_AGENTS }) {
   const aiState = stepState.ai
   const isRunning = aiState?.status === "running"
   const isCompleted = aiState?.status === "completed"
@@ -73,7 +78,7 @@ function AgentActivity({ stepState }) {
       <div className="flex items-center gap-1.5 mb-2">
         <Bot className="h-3.5 w-3.5 text-violet-500" />
         <span className="text-xs font-medium text-muted-foreground">
-          {isRunning ? "Agents working in parallel" : "All agents completed"}
+          {isRunning ? t('pl_agents_working') : t('pl_agents_done')}
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -103,7 +108,9 @@ function AgentActivity({ stepState }) {
 }
 
 export function PipelineSteps({ stepState, currentStep }) {
+  const { t } = useLanguage()
   const [expanded, setExpanded] = useState(null)
+  const { STEPS, AI_AGENTS } = PipelineConfig({ t })
 
   const toggleExpand = (stepId) => {
     setExpanded((prev) => (prev === stepId ? null : stepId))
@@ -116,9 +123,9 @@ export function PipelineSteps({ stepState, currentStep }) {
     <div className="space-y-3">
       {/* Progress overview */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold">Pipeline Progress</h3>
+        <h3 className="text-sm font-semibold">{t('pl_progress')}</h3>
         <Badge variant={completedCount === STEPS.length ? "success" : "secondary"}>
-          {completedCount}/{STEPS.length} steps
+          {completedCount}/{STEPS.length} {t('pl_steps')}
         </Badge>
       </div>
 
@@ -161,7 +168,7 @@ export function PipelineSteps({ stepState, currentStep }) {
               </div>
 
               {/* Status */}
-              <StatusBadge status={state.status} />
+              <StatusBadgeWithT status={state.status} t={t} />
 
               {/* Status icon */}
               <StatusIcon status={state.status} />
@@ -185,7 +192,7 @@ export function PipelineSteps({ stepState, currentStep }) {
 
             {/* AI Agent activity display */}
             {step.id === "ai" && (state.status === "running" || state.status === "completed") && (
-              <AgentActivity stepState={stepState} />
+              <AgentActivity stepState={stepState} t={t} AI_AGENTS={AI_AGENTS} />
             )}
 
             {/* Expandable logs */}

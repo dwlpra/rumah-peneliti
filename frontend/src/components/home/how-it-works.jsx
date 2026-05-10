@@ -3,45 +3,48 @@
 import { Upload, Brain, Link2, Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollReveal } from "@/components/shared/scroll-reveal"
+import { useLanguage } from "@/contexts/language"
 
 const STEPS = [
   {
     number: 1,
     icon: Upload,
-    title: "Upload Paper",
-    description: "Submit your research paper in PDF format. Metadata is extracted and stored on 0G decentralized storage.",
+    titleKey: "hiw_step1_title",
+    descKey: "hiw_step1_desc",
   },
   {
     number: 2,
     icon: Brain,
-    title: "AI Curation",
-    description: "Multi-agent AI pipeline analyzes, summarizes, and scores your paper for quality and accessibility.",
+    titleKey: "hiw_step2_title",
+    descKey: "hiw_step2_desc",
   },
   {
     number: 3,
     icon: Link2,
-    title: "On-chain Anchor",
-    description: "Paper hash is anchored on 0G blockchain with a cryptographic proof for permanent verification.",
+    titleKey: "hiw_step3_title",
+    descKey: "hiw_step3_desc",
   },
   {
     number: 4,
     icon: Award,
-    title: "NFT Minting",
-    description: "A unique ERC-721 Research NFT is minted for your paper — verifiable proof of authorship on-chain.",
+    titleKey: "hiw_step4_title",
+    descKey: "hiw_step4_desc",
   },
 ]
 
 export function HowItWorks() {
+  const { t } = useLanguage()
+
   return (
     <section className="border-b bg-background">
       <div className="container mx-auto max-w-screen-xl px-4 py-12 md:py-16">
         {/* Header */}
         <div className="mb-10 text-center">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            How It Works
+            {t('hiw_title')}
           </h2>
           <p className="mt-2 text-muted-foreground">
-            From paper upload to on-chain verification in four steps
+            {t('hiw_subtitle')}
           </p>
         </div>
 
@@ -65,12 +68,12 @@ export function HowItWorks() {
 
                   {/* Title */}
                   <h3 className="mb-2 text-sm font-semibold">
-                    {step.title}
+                    {t(step.titleKey)}
                   </h3>
 
                   {/* Description */}
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {step.description}
+                    {t(step.descKey)}
                   </p>
                 </CardContent>
               </Card>

@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { CONTRACTS } from "@/lib/constants"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
+import { useLanguage } from "@/contexts/language"
 
 function AgentSkeleton() {
   return (
@@ -45,6 +46,7 @@ function AgentsContent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     fetch(`${getApiUrl()}/api/papers/agents`)
@@ -78,14 +80,13 @@ function AgentsContent() {
             <div className="container mx-auto max-w-screen-xl px-4 py-12 text-center">
               <Badge variant="secondary" className="mb-4">
                 <Bot className="mr-1.5 h-3.5 w-3.5" />
-                ERC-7857 Inspired
+                {t('agents_badge')}
               </Badge>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                AI Agent Registry
+                {t('agents_title')}
               </h1>
               <p className="mt-3 text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                Every AI agent in the curation pipeline has a verifiable on-chain identity.
-                Track performance, capabilities, and activity of each autonomous agent.
+                {t('agents_desc')}
               </p>
 
               {/* Stats */}
@@ -95,7 +96,7 @@ function AgentsContent() {
                     <Bot className="h-4 w-4 text-primary" />
                     <span className="text-2xl font-bold">{agents.length}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Agent NFTs</span>
+                  <span className="text-xs text-muted-foreground">{t('agents_nft_count')}</span>
                 </div>
                 <Separator orientation="vertical" className="h-10" />
                 <div className="text-center">
@@ -103,7 +104,7 @@ function AgentsContent() {
                     <Shield className="h-4 w-4 text-emerald-500" />
                     <span className="text-2xl font-bold">{activeAgents}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Active Agents</span>
+                  <span className="text-xs text-muted-foreground">{t('agents_active_count')}</span>
                 </div>
                 <Separator orientation="vertical" className="h-10" />
                 <div className="text-center">
@@ -111,7 +112,7 @@ function AgentsContent() {
                     <FileText className="h-4 w-4 text-blue-500" />
                     <span className="text-2xl font-bold">{totalPapers}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Papers Curated</span>
+                  <span className="text-xs text-muted-foreground">{t('agents_papers_count')}</span>
                 </div>
                 <Separator orientation="vertical" className="h-10" />
                 <div className="text-center">
@@ -119,7 +120,7 @@ function AgentsContent() {
                     <Coffee className="h-4 w-4 text-amber-500" />
                     <span className="text-2xl font-bold">{totalTips.toFixed(4)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">0G Tips Earned</span>
+                  <span className="text-xs text-muted-foreground">{t('agents_tips_count')}</span>
                 </div>
               </div>
             </div>
@@ -130,14 +131,14 @@ function AgentsContent() {
             <Card>
               <CardContent className="flex items-center gap-3 py-3">
                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-sm font-medium">AgentNFT Contract</span>
+                <span className="text-sm font-medium">{t('agents_contract_label')}</span>
                 <ExplorerLink
                   type="address"
                   value={CONTRACTS.agentNFT}
                   className="text-xs"
                 />
                 <Badge variant="outline" className="text-[10px] ml-auto">
-                  ERC-7857 Inspired
+                  {t('agents_badge')}
                 </Badge>
               </CardContent>
             </Card>
@@ -145,7 +146,7 @@ function AgentsContent() {
 
           {/* Agent Grid */}
           <section className="container mx-auto max-w-screen-xl px-4 pb-8">
-            <h2 className="text-lg font-semibold mb-4">Registered Agents</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('agents_registered')}</h2>
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-6">
                 {error}
@@ -162,7 +163,7 @@ function AgentsContent() {
                 <div className="rounded-full bg-muted p-4 mb-4">
                   <Inbox className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <p className="text-lg font-medium">No agents registered yet</p>
+                <p className="text-lg font-medium">{t('agents_no_agents')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -179,17 +180,17 @@ function AgentsContent() {
               <Separator className="mb-8" />
               <div className="flex items-center gap-2 mb-4">
                 <Activity className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">Recent Agent Activity</h2>
+                <h2 className="text-lg font-semibold">{t('agents_recent_title')}</h2>
               </div>
               <Card>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">Paper</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">Agent</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">Score</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">Date</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">{t('agents_th_paper')}</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">{t('agents_th_agent')}</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">{t('agents_th_score')}</th>
+                        <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase">{t('agents_th_date')}</th>
                       </tr>
                     </thead>
                     <tbody>

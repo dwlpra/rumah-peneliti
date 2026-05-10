@@ -24,32 +24,32 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { getApiUrl } from "@/lib/api-url"
 import { PageTransition } from "@/components/shared/page-transition"
+import { useLanguage } from "@/contexts/language"
 
 function InfoCard() {
+  const { t } = useLanguage()
   return (
     <Card>
       <CardContent className="py-8 text-center space-y-4">
         <div className="rounded-full bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center">
           <ShieldCheck className="h-6 w-6 text-primary" />
         </div>
-        <h3 className="text-lg font-semibold">What is Verification?</h3>
+        <h3 className="text-lg font-semibold">{t('verify_what')}</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Enter a paper ID, transaction hash, or storage root to verify its
-          authenticity on-chain. Checks anchor status, NFT minting, and storage
-          on the 0G blockchain.
+          {t('verify_what_desc')}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link2 className="h-4 w-4" />
-            <span>Anchor verification</span>
+            <span>{t('verify_anchor_check')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Award className="h-4 w-4" />
-            <span>NFT minting status</span>
+            <span>{t('verify_nft_check')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileText className="h-4 w-4" />
-            <span>Storage root check</span>
+            <span>{t('verify_storage_check')}</span>
           </div>
         </div>
       </CardContent>
@@ -58,6 +58,7 @@ function InfoCard() {
 }
 
 function ResultCard({ data }) {
+  const { t } = useLanguage()
   const hasAnchor = !!data?.anchor
   const hasNft = !!data?.nft
   const hasAny = hasAnchor || hasNft
@@ -69,10 +70,9 @@ function ResultCard({ data }) {
           <div className="rounded-full bg-destructive/10 mx-auto flex h-12 w-12 items-center justify-center">
             <XCircle className="h-6 w-6 text-destructive" />
           </div>
-          <h3 className="text-lg font-semibold">Not Found</h3>
+          <h3 className="text-lg font-semibold">{t('verify_not_found')}</h3>
           <p className="text-sm text-muted-foreground">
-            No on-chain data was found for this query. The paper may not have
-            been processed through the pipeline yet.
+            {t('verify_not_found_desc')}
           </p>
         </CardContent>
       </Card>
@@ -84,7 +84,7 @@ function ResultCard({ data }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <CheckCircle className="h-5 w-5 text-emerald-500" />
-          Verification Result
+          {t('verify_result')}
         </CardTitle>
         {data.title && (
           <p className="text-sm text-muted-foreground mt-1">{data.title}</p>
@@ -94,26 +94,26 @@ function ResultCard({ data }) {
         {/* Anchor */}
         <div className="rounded-lg border p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Anchor Status</span>
+            <span className="text-sm font-medium">{t('verify_anchor_status')}</span>
             {hasAnchor ? (
               <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-0">
                 <CheckCircle className="mr-1 h-3 w-3" />
-                Confirmed
+                {t('verify_confirmed')}
               </Badge>
             ) : (
-              <Badge variant="secondary">Not Found</Badge>
+              <Badge variant="secondary">{t('verify_not_found_badge')}</Badge>
             )}
           </div>
           {hasAnchor && (
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Transaction:</span>
+                <span className="text-muted-foreground">{t('verify_transaction')}</span>
                 <ExplorerLink type="tx" value={data.anchor.txHash} className="text-xs" />
               </div>
               {data.anchor.storageRoot &&
                 data.anchor.storageRoot !== "0x" + "0".repeat(64) && (
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Storage Root:</span>
+                    <span className="text-muted-foreground">{t('verify_storage_root')}</span>
                     <span className="font-mono text-xs truncate max-w-[300px]">
                       {data.anchor.storageRoot}
                     </span>
@@ -121,7 +121,7 @@ function ResultCard({ data }) {
                 )}
               {data.anchor.timestamp && (
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Timestamp:</span>
+                  <span className="text-muted-foreground">{t('verify_timestamp')}</span>
                   <span className="text-xs">
                     {new Date(
                       data.anchor.timestamp * 1000
@@ -136,24 +136,24 @@ function ResultCard({ data }) {
         {/* NFT */}
         <div className="rounded-lg border p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">NFT Status</span>
+            <span className="text-sm font-medium">{t('verify_nft_status')}</span>
             {hasNft ? (
               <Badge className="bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 border-0">
                 <Award className="mr-1 h-3 w-3" />
-                Minted
+                {t('verify_minted')}
               </Badge>
             ) : (
-              <Badge variant="secondary">Not Found</Badge>
+              <Badge variant="secondary">{t('verify_not_found_badge')}</Badge>
             )}
           </div>
           {hasNft && (
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Token ID:</span>
+                <span className="text-muted-foreground">{t('verify_token_id')}</span>
                 <span className="font-mono text-xs">#{data.nft.tokenId}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Transaction:</span>
+                <span className="text-muted-foreground">{t('verify_transaction')}</span>
                 <ExplorerLink type="tx" value={data.nft.txHash} className="text-xs" />
               </div>
             </div>
@@ -163,9 +163,9 @@ function ResultCard({ data }) {
         {/* Article anchors */}
         {data.articleAnchors?.length > 0 && (
           <div className="rounded-lg border p-4 space-y-2">
-            <span className="text-sm font-medium">Article Anchors</span>
+            <span className="text-sm font-medium">{t('verify_article_anchors')}</span>
             <p className="text-sm text-muted-foreground">
-              {data.articleAnchors.length} article(s) anchored on-chain.
+              {data.articleAnchors.length} {t('verify_article_anchors_desc')}
             </p>
           </div>
         )}
@@ -179,6 +179,7 @@ function VerifyContent() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const { t } = useLanguage()
 
   const handleVerify = async (e) => {
     e.preventDefault()
@@ -209,10 +210,10 @@ function VerifyContent() {
         <section className="border-b bg-muted/30">
           <div className="container mx-auto max-w-screen-xl px-4 py-8 text-center">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Verify Research
+              {t('verify_title')}
             </h1>
             <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Verify the authenticity and on-chain status of research papers.
+              {t('verify_subtitle')}
             </p>
           </div>
         </section>
@@ -226,7 +227,7 @@ function VerifyContent() {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Paper ID, tx hash, or storage root (0x...)..."
+                  placeholder={t('verify_placeholder')}
                   className="pl-10"
                 />
               </div>
@@ -247,7 +248,7 @@ function VerifyContent() {
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">
-                    Verifying on-chain data...
+                    {t('verify_searching')}
                   </span>
                 </div>
                 <Skeleton className="h-4 w-full" />

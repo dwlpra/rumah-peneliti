@@ -22,6 +22,7 @@ import { useWallet } from "@/contexts/wallet"
 import { getApiUrl } from "@/lib/api-url"
 import { WalletModal } from "@/components/shared/wallet-modal"
 import { PageTransition } from "@/components/shared/page-transition"
+import { useLanguage } from "@/contexts/language"
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
@@ -41,6 +42,7 @@ function ProfileContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [walletModalOpen, setWalletModalOpen] = useState(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!address) return
@@ -65,14 +67,14 @@ function ProfileContent() {
                 <Wallet className="h-6 w-6 text-muted-foreground" />
               </div>
               <h2 className="text-lg font-semibold mb-2">
-                Connect Your Wallet
+                {t('profile_connect_title')}
               </h2>
               <p className="text-sm text-muted-foreground mb-6">
-                Connect your wallet to view your profile and on-chain activity.
+                {t('profile_connect_desc')}
               </p>
               <Button onClick={() => setWalletModalOpen(true)} className="gap-2">
                 <Wallet className="h-4 w-4" />
-                Connect Wallet
+                {t('connect_wallet')}
               </Button>
               <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
             </CardContent>
@@ -101,7 +103,7 @@ function ProfileContent() {
                 <User className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Researcher Profile</h1>
+                <h1 className="text-xl font-bold">{t('profile_title')}</h1>
                 <AddressDisplay address={address} />
               </div>
             </div>
@@ -132,19 +134,19 @@ function ProfileContent() {
             <div className="grid grid-cols-3 gap-4">
               <StatCard
                 icon={FileText}
-                label="Papers Uploaded"
+                label={t('profile_papers_uploaded')}
                 value={stats.papersUploaded || 0}
                 color="text-blue-500"
               />
               <StatCard
                 icon={BookOpen}
-                label="Articles Curated"
+                label={t('profile_articles_curated')}
                 value={stats.articlesCurated || 0}
                 color="text-emerald-500"
               />
               <StatCard
                 icon={Award}
-                label="NFTs Earned"
+                label={t('profile_nfts_earned')}
                 value={stats.nftsEarned || 0}
                 color="text-violet-500"
               />
@@ -153,7 +155,7 @@ function ProfileContent() {
 
           {/* My Papers */}
           <div>
-            <h2 className="text-lg font-semibold mb-4">My Papers</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('profile_my_papers')}</h2>
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -169,10 +171,10 @@ function ProfileContent() {
                   <Inbox className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  No papers yet. Upload your first research paper.
+                  {t('profile_no_papers')}
                 </p>
                 <Link href="/upload">
-                  <Button>Upload Paper</Button>
+                  <Button>{t('profile_upload_paper')}</Button>
                 </Link>
               </div>
             ) : (
@@ -180,7 +182,7 @@ function ProfileContent() {
                 {papers.map((paper) => {
                   const nft = nfts.find(n => Number(n.paperId) === paper.id || Number(n.paperId) === paper.journal_id)
                   const isFree = !paper.price_wei || paper.price_wei === "0"
-                  const price0G = isFree ? "Free" : `${(Number(paper.price_wei) / 1e18)} 0G`
+                  const price0G = isFree ? t('price_free') : `${(Number(paper.price_wei) / 1e18)} 0G`
 
                   return (
                     <Link
@@ -204,7 +206,7 @@ function ProfileContent() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {isFree ? (
-                            <Badge variant="secondary" className="text-xs">Free</Badge>
+                            <Badge variant="secondary" className="text-xs">{t('price_free')}</Badge>
                           ) : (
                             <Badge variant="outline" className="text-xs">{price0G}</Badge>
                           )}
@@ -225,7 +227,7 @@ function ProfileContent() {
           {/* Purchases */}
           {purchases.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4">Papers Purchased</h2>
+              <h2 className="text-lg font-semibold mb-4">{t('profile_papers_purchased')}</h2>
               <div className="space-y-3">
                 {purchases.map((purchase, i) => (
                   <div
