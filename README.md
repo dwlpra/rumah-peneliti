@@ -377,7 +377,20 @@ The backend uses a local database for fast reads and caching, but the **source o
 - Paper hashes and metadata are anchored on **0G Chain** via PaperAnchor contract
 - **AI Agent identities** are registered on **0G Chain** via AgentNFT contract (ERC-7857 inspired)
 - A **Ponder indexer** independently indexes all on-chain events into 4 tables
-- If the backend goes down, anyone can rebuild the entire index from on-chain events
+- **Startup sync** (`sync-chain.js`) automatically reconciles DB with on-chain state every time the backend starts
+
+### On-Chain Sync — Rebuild from Anywhere
+
+Like Ponder re-indexing, `sync-chain.js` runs on every backend startup and reconciles the local DB with on-chain contracts:
+
+| Condition | Action |
+|:---|:---|
+| Paper on-chain, not in DB | Insert paper + run AI curation |
+| Paper on-chain, in DB, no article | Run AI curation |
+| Paper in DB, not on-chain | Delete orphan record |
+| Missing metadata (journal_id, nft_token_id, etc.) | Backfill from on-chain |
+
+This means **any fresh server** with the codebase can rebuild its entire state from on-chain data — no manual database migration needed. Deploy to a new server, start the backend, and papers + articles auto-populate.
 
 ---
 
@@ -569,7 +582,8 @@ rumah-peneliti
 │       │   ├── kurasi.js        # AI curation orchestrator (0G → API → Mock)
 │       │   ├── kurasi-core.js   # Core curation logic (prompt building, parsing)
 │       │   ├── nft.js           # ResearchNFT gasless minting
-│       │   └── journal.js       # JournalPayment on-chain service
+│       │   ├── journal.js       # JournalPayment on-chain service
+│       │   └── sync-chain.js    # On-chain sync — rebuilds DB from contracts on startup
 │       ├── middleware/           # JWT auth, error handler
 │       └── db.js                # SQLite setup + auto-seed
 ├── frontend/                    # Next.js 14 App Router

@@ -155,6 +155,10 @@ app.listen(PORT, () => {
   console.log(`🏛️ RumahPeneliti API running on port ${PORT}`);
   console.log(`   Network: 0G Mainnet (Chain ID: 16661)`);
   console.log(`   RPC: ${process.env.RPC_URL || "https://evmrpc.0g.ai"}`);
+
+  // Run on-chain sync after server starts (non-blocking)
+  const { syncChain } = require("./services/sync-chain");
+  syncChain();
 });
 
 module.exports = app;

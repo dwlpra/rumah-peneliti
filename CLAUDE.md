@@ -117,7 +117,8 @@ Key environment variables:
 - `services/kurasi-core.js` — Core curation logic (prompt building, parsing)
 - `services/multi-agent.js` — Multi-agent AI pipeline (Summarizer, Scorer, Tagger)
 - `services/agent-nft.js` — On-chain Agent Identity + tip withdrawal
-- `services/journal.js` — Journal payment service
+- `services/journal.js` — Journal payment service + on-chain access check
+- `services/sync-chain.js` — On-chain sync — rebuilds DB from contracts on startup
 - `services/nft.js` — ResearchNFT gasless minting
 
 ### Frontend (`frontend/src/`)
