@@ -398,7 +398,7 @@ This project integrates **all 4 core 0G components** as the infrastructure layer
 | Component | Role in Agentic Economy | SDK |
 |:---:|:---|:---|
 | **0G Storage** | Stores paper files permanently — the service agents curate. Decentralized hosting means agents' work product outlives any single server. | `ZgFile`, `Indexer` |
-| **0G Compute** | Runs AI agent inference (GLM-5-FP8). Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents pay for their own inference.** | `@0glabs/0g-serving-broker` |
+| **0G Compute** | Runs AI agent inference (GLM-5). Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents pay for their own inference.** | `@0glabs/0g-serving-broker` |
 | **0G DA Layer** | Publishes blob commitments as proof-of-existence for every paper. Ensures data integrity for the content agents work on. | `ethers.js v6` |
 | **0G Chain** | 5 contracts power the entire economy: `JournalPayment` (micropayments), `PaperAnchor` (anchoring), `ResearchNFT` (ownership), `AgenticID` (0G official ERC-7857 agent identity), `AgentTipJar` (agent income + withdrawal). | Hardhat, ethers.js |
 | **Agent Identity** | 0G Agentic ID (ERC-7857) — official standard for verifiable on-chain agent identity with intelligent data hashes. Every curation linked to an agent. | Solidity 0.8.24, ethers.js |
@@ -464,7 +464,7 @@ Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by ident
 <td>
 
 ### Multi-Agent AI Curation (3 Parallel)
-3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute's TEE inference. Each has a distinct role — one generates the article, one scores quality across 4 dimensions, one classifies and tags. All via GLM-5-FP8.
+3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute's TEE inference. Each has a distinct role — one generates the article, one scores quality across 4 dimensions, one classifies and tags. All via GLM-5.
 
 </td>
 <td>
@@ -631,7 +631,7 @@ rumah-peneliti
 | **Agentic Economy** | Agent-as-a-Service via AgenticID (ERC-7857), auto-billing via AgentTipJar → 0G Compute, self-sustaining tip-to-compute loop |
 | Smart Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin v5 — 5 contracts on 0G Mainnet (identity, payments, tipping, anchoring, NFTs) |
 | Agent Identity | 0G Agentic ID (ERC-7857) — official standard for verifiable on-chain agent identity with intelligent data hashes |
-| AI Inference | GLM-5-FP8 via 0G Compute (TEE), Z.AI GLM-5.1 API (fallback) |
+| AI Inference | GLM-5 via 0G Compute (TEE), Z.AI GLM-5.1 API (fallback) |
 | Financial Rails | JournalPayment (micropayments), AgentTipJar (agent income), auto-recycle billing to 0G Compute |
 | 0G Storage | `@0gfoundation/0g-ts-sdk` — Merkle proofs, upload/download |
 | 0G Compute | `@0glabs/0g-serving-broker` — TEE inference, on-chain ledger billing with agent-funded deposits |
