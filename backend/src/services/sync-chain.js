@@ -287,26 +287,18 @@ async function syncChain() {
     }
 
     // 5. Scenario 3: DB papers not on-chain — delete orphans
-    // SAFETY: Skip deletion when contracts are freshly deployed (anchorPapers is empty).
-    // A freshly deployed contract has 0 papers, so ALL DB papers would be falsely flagged as orphans.
     let deleted = 0;
-    if (anchorPapers.length > 0) {
-      for (const dbPaper of dbPapers) {
-        // Skip papers that were just inserted from chain
-        if (dbPaper.anchor_tx_hash === "synced-from-chain") continue;
-        // Only delete papers that have been through the pipeline (have storage_hash)
-        if (!dbPaper.storage_hash) continue;
-        // Check if this storage hash exists on-chain
-        const hash = dbPaper.storage_hash.toLowerCase();
-        const foundOnChain = anchorPapers.some(a => a.storageRoot.toLowerCase() === hash);
-        if (!foundOnChain) {
-          console.log(`[Sync] Deleting orphan paper #${dbPaper.id} "${dbPaper.title}" (not on-chain)`);
-          stmts.deletePaper.run(dbPaper.id);
-          deleted++;
-        }
+    for (const dbPaper of dbPapers) {
+      // Only delete papers that have been through the pipeline (have storage_hash)
+      if (!dbPaper.storage_hash) continue;
+      // Check if this storage hash exists on-chain
+      const hash = dbPaper.storage_hash.toLowerCase();
+      const foundOnChain = anchorPapers.some(a => a.storageRoot.toLowerCase() === hash);
+      if (!foundOnChain) {
+        console.log(`[Sync] Deleting orphan paper #${dbPaper.id} "${dbPaper.title}" (not on-chain)`);
+        stmts.deletePaper.run(dbPaper.id);
+        deleted++;
       }
-    } else {
-      console.log("[Sync] Skipping orphan deletion — contract is fresh (0 papers on-chain)");
     }
 
     console.log(`[Sync] Complete: ${inserted} inserted, ${curated} curated, ${deleted} deleted`);
