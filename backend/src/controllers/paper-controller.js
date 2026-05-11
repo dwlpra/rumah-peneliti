@@ -525,15 +525,28 @@ async function downloadPaper(req, res) {
   }
 
   const filename = paper.title
-    ? paper.title.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 60) + ".txt"
-    : `paper-${id}.txt`;
+    ? paper.title.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 60)
+    : `paper-${id}`;
+
+  // Detect extension from original uploaded file
+  const origExt = paper.file_path?.match(/\.(\w+)$/)?.[1]?.toLowerCase();
+  const ext = origExt || "bin";
+  const contentTypes = {
+    pdf: "application/pdf",
+    txt: "text/plain",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    csv: "text/csv",
+    json: "application/json",
+  };
+  const contentType = contentTypes[ext] || "application/octet-stream";
 
   try {
-    const tmpPath = path.join("/tmp", `0g-dl-${id}-${Date.now()}.txt`);
+    const tmpPath = path.join("/tmp", `0g-dl-${id}-${Date.now()}.${ext}`);
     await downloadFrom0G(paper.storage_hash, tmpPath);
 
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}.${ext}"`);
+    res.setHeader("Content-Type", contentType);
 
     const stream = fs.createReadStream(tmpPath);
     stream.pipe(res);
