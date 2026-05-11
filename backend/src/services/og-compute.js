@@ -37,7 +37,7 @@ async function ensureLedger(minAvailable = 2) {
   // Agentic Economy: sweep tips from AgentTipJar before checking balance
   // This recycles reader tips into 0G Compute funding
   try {
-    const { withdrawAgentTips } = require("./agent-nft");
+    const { withdrawAgentTips } = require("./agent-identity");
     const recycled = await withdrawAgentTips();
     if (recycled > 0) {
       console.log("[0G Compute] Recycled", recycled.toFixed(6), "0G from agent tips");

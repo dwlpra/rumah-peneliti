@@ -42,7 +42,7 @@ But there's a deeper problem with AI platforms today: **AI agents don't have ide
 
 "RumahPeneliti solves this with a self-sustaining Agentic Economy built entirely on 0G.
 
-We have **4 AI agents**, each registered as an NFT on-chain. The AgentNFT contract stores their identity — name, model, capabilities — verifiable on the 0G explorer.
+We have **4 AI agents**, each registered on-chain via **0G Agentic ID (ERC-7857)** — the official 0G standard for verifiable agent identity. Each agent has intelligent data hashes stored on-chain — model, capabilities, and prompts — verifiable on the 0G explorer.
 
 When a researcher uploads a paper, the 6-step pipeline runs:
 1. Paper stored on **0G Storage** — permanent, Merkle-verified
@@ -99,11 +99,11 @@ Step 6 — NFT minted. Done in about 40 seconds."
 
 "Now look at the sidebar. This is the **Agent Identity Card**.
 
-It says: this article was curated by **AI Kurator — Agent NFT #1**. The model is GLM-5-FP8 via 0G Compute."
+It says: this article was curated by **AI Kurator — Agentic ID #0**. The model is GLM-5 via 0G Compute."
 
 **ACTION: Click "View Contract" link**
 
-**VISUAL: 0G Explorer — AgentNFT contract, token #1 details**
+**VISUAL: 0G Explorer — AgenticID contract, token #0 details**
 
 "Click 'View Contract' — it takes me to the 0G Explorer. I can verify the agent's on-chain metadata: name, description, model, capabilities. All stored on-chain.
 
@@ -230,6 +230,6 @@ All on 0G Mainnet. All open source."
 2. **Agent-as-a-Service** — 4 AI agents as on-chain NFTs with verifiable identity
 3. **Automated Agent Billing** — tips auto-recycled to Compute ledger, no manual payment
 4. **All 4 0G Components** — Storage, Compute, DA Layer, Chain deeply integrated
-5. **5 Smart Contracts on Mainnet** — AgentNFT, AgentTipJar, PaperAnchor, ResearchNFT, JournalPayment
+5. **5 Smart Contracts on Mainnet** — AgenticID (ERC-7857), AgentTipJar, PaperAnchor, ResearchNFT, JournalPayment
 6. **Financial Rails** — micropayments with 0% cut, revenue sharing between authors and agents
 7. **Real Product** — not a prototype, end-to-end working pipeline with 9 papers curated

@@ -38,8 +38,8 @@ Data flow: Frontend → Backend API → AI Curation (GLM-5) → 0G Storage uploa
 | JournalPayment | `0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0` |
 | PaperAnchor | `0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7` |
 | ResearchNFT | `0x010a70be3D661B98f69Ab4De1e213CA56C90de4a` |
-| AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` |
-| AgentTipJar | `0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6` |
+| AgenticID (ERC-7857) | `0x82c5e31880929de181E5DF78D60f342168d18115` |
+| AgentTipJar | `0xc215A541aF7ad5072B08641272248801c5590e9a` |
 
 Explorer: `https://chainscan.0g.ai`
 
@@ -97,7 +97,7 @@ Key environment variables:
 - `CONTRACT_ADDRESS` — JournalPayment contract address
 - `PAPER_ANCHOR_ADDRESS` — PaperAnchor contract address
 - `NFT_CONTRACT_ADDRESS` — ResearchNFT contract address
-- `AGENT_NFT_ADDRESS` — AgentNFT contract address
+- `AGENTIC_ID_ADDRESS` — 0G Agentic ID (ERC-7857) contract address
 - `AGENT_TIP_JAR_ADDRESS` — AgentTipJar contract address
 - `NEXT_PUBLIC_API_URL` — Backend API URL (default: `http://localhost:3001`)
 
@@ -116,7 +116,9 @@ Key environment variables:
 - `services/kurasi.js` — AI curation orchestrator
 - `services/kurasi-core.js` — Core curation logic (prompt building, parsing)
 - `services/multi-agent.js` — Multi-agent AI pipeline (Summarizer, Scorer, Tagger)
-- `services/agent-nft.js` — On-chain Agent Identity + tip withdrawal
+- `services/agent-identity.js` — On-chain Agent Identity (AgenticID ERC-7857) + tip withdrawal
+- `services/agent-config.js` — Static agent metadata (name, type, model, capabilities)
+- `services/agentic-id.js` — 0G AgenticID (ERC-7857) on-chain reader
 - `services/journal.js` — Journal payment service + on-chain access check
 - `services/sync-chain.js` — On-chain sync — rebuilds DB from contracts on startup
 - `services/nft.js` — ResearchNFT gasless minting
