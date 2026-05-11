@@ -54,6 +54,14 @@ export function OnChainData({ paperId }) {
   const isZeroRoot = (root) =>
     !root || root === "0x" + "0".repeat(64)
 
+  // Treat placeholder tx hashes as null — they came from sync-chain
+  // and don't represent real blockchain transactions
+  const isPlaceholderTx = (hash) =>
+    !hash || hash === "synced-from-chain" || hash.startsWith("pending")
+
+  const anchorTxHash = isPlaceholderTx(data?.anchor?.txHash) ? null : data.anchor.txHash
+  const nftTxHash = isPlaceholderTx(data?.nft?.txHash) ? null : data.nft.txHash
+
   return (
     <Card className="mt-4">
       <CardHeader className="pb-3">
@@ -70,11 +78,11 @@ export function OnChainData({ paperId }) {
               <span className="text-sm font-semibold">Anchored on 0G</span>
               <Badge variant="success">CONFIRMED</Badge>
             </div>
-            {data.anchor.txHash ? (
+            {anchorTxHash ? (
               <ExplorerLink
                 type="tx"
-                value={data.anchor.txHash}
-                label={`Tx: ${data.anchor.txHash.slice(0, 16)}...`}
+                value={anchorTxHash}
+                label={`Tx: ${anchorTxHash.slice(0, 16)}...`}
                 className="text-xs"
               />
             ) : (
@@ -101,11 +109,11 @@ export function OnChainData({ paperId }) {
                 </span>
                 <Badge variant="secondary">MINTED</Badge>
               </div>
-              {data.nft.txHash ? (
+              {nftTxHash ? (
                 <ExplorerLink
                   type="tx"
-                  value={data.nft.txHash}
-                  label={`Tx: ${data.nft.txHash.slice(0, 16)}...`}
+                  value={nftTxHash}
+                  label={`Tx: ${nftTxHash.slice(0, 16)}...`}
                   className="text-xs"
                 />
               ) : (
