@@ -224,7 +224,7 @@ graph TB
     style AgenticID fill:#f0f9ff,stroke:#0891b2,color:#333
 ```
 
-### Pipeline: Upload to NFT in ~40 Seconds
+### Pipeline: Upload to NFT
 
 ```mermaid
 sequenceDiagram
