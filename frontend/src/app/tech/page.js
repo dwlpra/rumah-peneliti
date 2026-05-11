@@ -10,6 +10,8 @@ import {
   Cpu,
   FileCode,
   Server,
+  Fingerprint,
+  Coffee,
 } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
@@ -76,6 +78,7 @@ const TECH_STACK = [
   { name: "0G Storage", descKey: "tech_storage_desc", icon: Database, statusKey: "tech_status_ok" },
   { name: "0G DA Layer", descKey: "tech_da_desc", icon: Link2, statusKey: "tech_status_ok" },
   { name: "0G Compute", descKey: "tech_compute_desc", icon: Cpu, statusKey: "tech_status_ok" },
+  { name: "0G Agentic ID", descKey: "tech_agentic_desc", icon: Fingerprint, statusKey: "tech_status_ok" },
   { name: "Smart Contracts", descKey: "tech_page_sc_desc", icon: FileCode, statusKey: "tech_status_ok" },
 ]
 
@@ -102,6 +105,20 @@ const DEPLOYED_CONTRACTS = [
     address: CONTRACTS.researchNFT,
     icon: Award,
     color: "text-violet-500",
+  },
+  {
+    name: "AgenticID (ERC-7857)",
+    desc: "0G official on-chain agent identity with intelligent data, cloning, and authorization",
+    address: CONTRACTS.agenticId,
+    icon: Fingerprint,
+    color: "text-cyan-500",
+  },
+  {
+    name: "AgentTipJar",
+    desc: "On-chain tipping for AI agents — readers support agents directly",
+    address: CONTRACTS.agentTipJar,
+    icon: Coffee,
+    color: "text-emerald-500",
   },
 ]
 
@@ -143,7 +160,7 @@ export default function TechPage() {
           <h2 className="text-xl font-semibold mb-6 text-center">
             {t('tech_page_stack')}
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {TECH_STACK.map((tech) => (
               <TechCard key={tech.name} {...tech} />
             ))}
