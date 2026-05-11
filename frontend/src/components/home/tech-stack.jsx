@@ -1,6 +1,6 @@
 "use client"
 
-import { Database, ShieldCheck, Cpu, FileCode } from "lucide-react"
+import { Database, ShieldCheck, Cpu, FileCode, Fingerprint } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollReveal } from "@/components/shared/scroll-reveal"
 import { useLanguage } from "@/contexts/language"
@@ -20,6 +20,11 @@ const TECH_STACK = [
     icon: Cpu,
     nameKey: "tech_compute_name",
     descKey: "tech_compute_desc",
+  },
+  {
+    icon: Fingerprint,
+    nameKey: "tech_agentic_name",
+    descKey: "tech_agentic_desc",
   },
   {
     icon: FileCode,
@@ -53,7 +58,7 @@ export function TechStack() {
 
         {/* Cards Grid */}
         <ScrollReveal stagger>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {TECH_STACK.map(item => {
             const Icon = item.icon
             return (
