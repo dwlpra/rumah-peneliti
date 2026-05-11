@@ -216,12 +216,12 @@ graph TB
     Compute --> Tagger
     Chain --> Ponder
 
-    style Frontend fill:#1a1a2e,stroke:#a78bfa,color:#fff
-    style Backend fill:#1a1a2e,stroke:#34d399,color:#fff
-    style AI fill:#1a1a2e,stroke:#f59e0b,color:#fff
-    style ZeroG fill:#0f0f12,stroke:#60a5fa,color:#fff
-    style Indexer fill:#1a1a2e,stroke:#f97316,color:#fff
-    style AgenticID fill:#1a1a2e,stroke:#00d4ff,color:#fff
+    style Frontend fill:#f0f0ff,stroke:#7c3aed,color:#333
+    style Backend fill:#f0fdf4,stroke:#16a34a,color:#333
+    style AI fill:#fffbeb,stroke:#d97706,color:#333
+    style ZeroG fill:#eff6ff,stroke:#2563eb,color:#333
+    style Indexer fill:#fff7ed,stroke:#ea580c,color:#333
+    style AgenticID fill:#f0f9ff,stroke:#0891b2,color:#333
 ```
 
 ### Pipeline: Upload to NFT in ~40 Seconds
@@ -309,10 +309,10 @@ flowchart LR
 
     K --> L["Agent Identity Card<br/>Readers verify on-chain:<br/>Name · Model · Capabilities"]
 
-    style A fill:#7c3aed,color:#fff
-    style C fill:#2563eb,color:#fff
-    style K fill:#34d399,color:#000
-    style L fill:#00d4ff,color:#000
+    style A fill:#ede9fe,color:#333
+    style C fill:#dbeafe,color:#333
+    style K fill:#d1fae5,color:#333
+    style L fill:#cffafe,color:#333
 ```
 
 ### Smart Contract Architecture
@@ -702,9 +702,9 @@ flowchart LR
     CH --> Widget
     Widget --> J1
 
-    style SDK fill:#7c3aed,color:#fff
-    style Centralized fill:#1a1a2e,stroke:#666,color:#fff
-    style Decentralized fill:#0f0f12,stroke:#60a5fa,color:#fff
+    style SDK fill:#ede9fe,stroke:#7c3aed,color:#333
+    style Centralized fill:#f5f5f5,stroke:#999,color:#333
+    style Decentralized fill:#eff6ff,stroke:#2563eb,color:#333
 ```
 
 - **REST API** — Journals call `POST /api/papers` to upload, anchor, and mint NFTs. One API call triggers the full 6-step pipeline. No need to understand 0G Storage, Compute, or smart contracts.
