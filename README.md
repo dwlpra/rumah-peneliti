@@ -66,7 +66,7 @@ RumahPeneliti fixes both problems using **0G's decentralized infrastructure** an
 - **Agent-as-a-Service** — AI agents registered via 0G Agentic ID (ERC-7857) provide curation services. Readers tip agents for quality work. Agents are verifiable, accountable, and transferable.
 - **Self-sustaining financial loop** — Reader tips are auto-recycled into 0G Compute billing. Agents fund their own inference. Better curation → more tips → more compute. No human subsidy needed.
 - **Permanent storage** on 0G Storage — papers survive any server failure, with Merkle proof verification
-- **On-chain micropayments** — readers pay authors directly in 0G tokens, 0% platform cut
+- **On-chain micropayments** — readers pay authors directly in native 0G, 0% platform cut
 
 | Capability | What It Does | 0G Component |
 |:---:|:---|:---:|
@@ -76,7 +76,7 @@ RumahPeneliti fixes both problems using **0G's decentralized infrastructure** an
 | **AI Curation** | Dense PDFs transformed into readable articles with summaries, scores, and tags | 0G Compute |
 | **On-Chain Agent Identity** | Agents registered via 0G Agentic ID (ERC-7857) — official standard for verifiable agent identity with intelligent data hashes | 0G Chain + Agentic ID |
 | **Verified Agent Identity** | Agents registered via official 0G Agentic ID (ERC-7857) — model, capabilities, prompts hashed on-chain | Agentic ID |
-| **Micropayments** | Readers support authors directly in 0G tokens with 0% platform cut | 0G Chain |
+| **Micropayments** | Readers support authors directly in native 0G with 0% platform cut | 0G Chain |
 | **NFT Minting** | Every curated paper becomes a transferable ERC-721 NFT — researchers own their work | 0G Chain |
 
 ---
@@ -138,7 +138,7 @@ AI agents don't just curate papers — they **earn** and **fund their own comput
 ```
 Reader finds article valuable
         ↓
-Tips agent via AgentTipJar.tipAgent() (on-chain, 0G tokens)
+Tips agent via AgentTipJar.tipAgent() (on-chain, native 0G)
         ↓
 Tips accumulate in contract per agent
         ↓
@@ -442,7 +442,7 @@ Before each AI curation run, `withdrawAgentTips()` sweeps accumulated tips from 
 <td>
 
 ### Micropayments & Revenue Sharing
-Authors set a price in 0G tokens (or free). Readers pay directly to authors via `JournalPayment.purchasePaper()`. 0% platform cut. Free papers accept reader donations. Authors earn, agents earn — both on-chain, both transparent.
+Authors set a price in native 0G (or free). Readers pay directly to authors via `JournalPayment.purchasePaper()`. 0% platform cut. Free papers accept reader donations. Authors earn, agents earn — both on-chain, both transparent.
 
 </td>
 </tr>
@@ -483,7 +483,7 @@ Every 0G component is deeply integrated: **Storage** (permanent file hosting), *
 ### Prerequisites
 - Node.js >= 18
 - Any EVM wallet (MetaMask, Rabby, OKX, Backpack, Coinbase, Trust, and 5+ more)
-- 0G tokens on Mainnet (for transactions)
+- Native 0G on Mainnet (for gas, payments, tips)
 
 ### One-Command Setup
 
@@ -668,7 +668,7 @@ Agents currently earn tips and auto-recycle into 0G Compute, but the backend orc
 - **Agent-owned wallets** — Each Agentic ID maps to its own wallet. Tips go directly to the agent's wallet, not the operator. Agents decide when and how much to spend.
 - **Agent selection market** — Readers choose which agent curates their paper. Higher-rated agents charge more. Competition drives quality up.
 - **Agent marketplace** — Agent identities can be transferred via ERC-7857 clone mechanism. A proven agent with high accuracy scores becomes a valuable on-chain asset. New agents can be deployed by anyone and compete for curation work.
-- **Reputation staking** — Agents stake 0G tokens as a quality bond. If an agent produces consistently poor curation, stakeholders can slash the stake. Skin in the game.
+- **Reputation staking** — Agents stake native 0G as a quality bond. If an agent produces consistently poor curation, stakeholders can slash the stake. Skin in the game.
 
 ### Journal Integration SDK
 
@@ -738,9 +738,9 @@ function getReviewerReputation(address reviewer) external view returns (uint256)
 
 - **Transparent reviews** — Every review stored on-chain with reviewer identity (human wallet or Agentic ID). No more anonymous, unaccountable reviews.
 - **AI + human hybrid** — Papers get both AI agent curation (immediate, consistent) and human peer review (nuanced, expert). Both recorded on-chain.
-- **Reviewer reputation** — Reviewers build on-chain reputation scores. Good reviewers earn tokens. Bad reviews get flagged. Creates incentive alignment.
+- **Reviewer reputation** — Reviewers build on-chain reputation scores. Good reviewers earn 0G. Bad reviews get flagged. Creates incentive alignment.
 - **Review NFTs** — Each peer review mints an NFT to the reviewer. Reviewers own their work product, not the journal.
-- **Dispute mechanism** — Authors can challenge reviews on-chain. Community stakes tokens to vote. Resolved disputes update reviewer reputation.
+- **Dispute mechanism** — Authors can challenge reviews on-chain. Community stakes native 0G to vote. Resolved disputes update reviewer reputation.
 
 ### Summary
 
