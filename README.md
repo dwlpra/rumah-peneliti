@@ -169,8 +169,8 @@ New article created → readers tip → cycle repeats
 ```mermaid
 graph TB
     subgraph Frontend["RumahPeneliti — Next.js 14"]
-        UI["12 Pages<br/>Home · Browse · Upload · Article<br/>Pipeline · Profile · NFTs · Agents<br/>Verify · Analytics · Leaderboard · Tech"]
-        Wallet["Multi-Wallet (10+)<br/>Sign-In · Auth · Micropayments · Tips"]
+        UI["11 Pages<br/>Home · Browse · Upload · Article<br/>Pipeline · Profile · NFTs · Agents<br/>Verify · Analytics · Leaderboard · Tech"]
+        Wallet["Wallet Connect<br/>MetaMask · Sign-In · Auth · Micropayments · Tips"]
         AgentUI["Agent Identity Card<br/>On-Chain Agent Data · Explorer Link"]
     end
 
