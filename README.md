@@ -286,11 +286,11 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[Paper Uploaded] --> B{Single-agent<br/>0G Compute?}
-    B -->|Yes| C[0G Compute Network<br/>GLM-5-FP8 · TEE]
-    B -->|No| D{Multi-agent<br/>pipeline?}
+    A[Paper Uploaded] --> B{0G Compute<br/>Network?}
+    B -->|Yes| C[0G Compute Network<br/>GLM-5 · TEE Inference]
+    B -->|No| D{Multi-agent<br/>API?}
 
-    D --> E["Per-agent fallback chain:<br/>0G Compute → Z.AI GLM-5.1"]
+    D --> E["Z.AI GLM-5.1 API<br/>3 parallel agents"]
     D -->|All fail| F[Mock Data<br/>Final Fallback]
 
     C --> G
@@ -345,8 +345,11 @@ classDiagram
 
     class AgenticID {
         +ERC-7857 — 0G Official Agent Identity
-        +intelligentData(tokenId) IntelligentData[]
-        +getIntelligentDataCount(tokenId) uint256
+        +iMint(to, IntelligentData[]) uint256
+        +getIntelligentDatas(tokenId) IntelligentData[]
+        +iCloneFrom(from, to, tokenId) uint256
+        +authorizeUsage(tokenId, user)
+        +delegateAccess(assistant)
     }
 
     class AgentTipJar {
