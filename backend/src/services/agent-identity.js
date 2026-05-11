@@ -123,14 +123,11 @@ function getAgentStatsFromDB(tokenId) {
   const { stmts } = require("../db");
   if (!stmts.getAgentStats) return null;
 
-  // All 4 pipeline agents work on every paper — query using lead agent (tokenId 0)
-  // But first try the exact tokenId, then fall back to 0
-  let stats = stmts.getAgentStats.get(tokenId);
-  if (!stats || stats.papers_curated === 0) {
-    // Try old AgentNFT IDs (1-4) for backward compat with existing DB records
-    const oldId = tokenId + 1;
-    stats = stmts.getAgentStats.get(oldId);
-  }
+  // All 4 agents collaborate on every paper — Kurator (#0) orchestrates,
+  // Summarizer (#1), Scorer (#2), Tagger (#3) run in parallel.
+  // Every article is the result of all agents working together,
+  // so stats are shared across all agents.
+  let stats = stmts.getAgentStats.get(0); // Always query by lead agent (Kurator #0)
   if (!stats || stats.papers_curated === 0) {
     return { papers_curated: 0, avg_score: 0, last_activity: null };
   }
