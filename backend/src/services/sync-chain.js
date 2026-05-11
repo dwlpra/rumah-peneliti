@@ -115,8 +115,8 @@ async function curatePaper(paperId, title, abstract) {
   try {
     const article = await generateArticle(paperId, title, abstract || "", "");
     const meta = article.meta || article.agent_meta || {};
-    const agentTokenId = meta.agent_token_id || parseInt(process.env.KURATOR_AGENT_TOKEN_ID) || null;
-    const agentNftContract = meta.agent_nft_contract || process.env.AGENT_NFT_ADDRESS || null;
+    const agentTokenId = meta.agent_token_id || 0; // AgenticID token 0 = Kurator
+    const agentIdentityContract = meta.agent_identity_contract || process.env.AGENTIC_ID_ADDRESS || null;
 
     stmts.insertArticle.run(
       paperId,
@@ -130,7 +130,7 @@ async function curatePaper(paperId, title, abstract) {
       article.classification ? JSON.stringify(article.classification) : null,
       article.agent_meta ? JSON.stringify(article.agent_meta) : null,
       agentTokenId,
-      agentNftContract,
+      agentIdentityContract,
     );
     console.log(`[Sync] AI curated paper #${paperId} (${article.mock ? "mock" : "AI"})`);
   } catch (e) {

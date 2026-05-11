@@ -213,7 +213,7 @@ export function AgentIdentity({ article }) {
         {/* On-chain link */}
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            Agent NFT #{agentData.tokenId}
+            0G Agentic ID #{agentData.tokenId}
           </span>
           <a
             href={`${EXPLORER_URL}/address/${agentData.contractAddress}`}
@@ -221,7 +221,7 @@ export function AgentIdentity({ article }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
           >
-            Agent NFT
+            Verify on Explorer
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
@@ -254,7 +254,7 @@ export function AgentIdentity({ article }) {
 
         {!agentData.agenticId && (
           <p className="text-[10px] text-muted-foreground/50 italic">
-            ERC-7857 inspired on-chain agent identity
+            ERC-7857 on-chain agent identity
           </p>
         )}
       </CardContent>

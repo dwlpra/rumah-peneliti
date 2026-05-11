@@ -1,22 +1,28 @@
 /**
- * AgentNFT Service
+ * Agent Identity Service
  *
- * Reads on-chain AI Agent identity from the AgentNFT smart contract.
- * Used to display agent provenance on curated articles.
+ * Reads on-chain AI Agent identity from the 0G Agentic ID (ERC-7857) contract.
+ * Agent metadata (name, type, model, capabilities) comes from agent-config.js.
+ * On-chain data (Intelligent Data, ownership) comes from AgenticID contract.
+ *
+ * DB stats and TipJar functions are preserved from the old agent-nft.js.
+ * Token ID mapping: AgenticID tokens are 0-indexed (0-3), replacing old AgentNFT (1-4).
  */
 
 const { ethers } = require("ethers");
+const { AGENTS, getAgentConfig } = require("./agent-config");
 
 // Lazy evaluation — read env at call time, not module load
 function getRpcUrl() { return process.env.RPC_URL || process.env.ZERO_MAINNET_RPC || "https://evmrpc.0g.ai"; }
-function getAgentNftAddress() { return process.env.AGENT_NFT_ADDRESS || ""; }
+function getAgenticIdAddress() { return process.env.AGENTIC_ID_ADDRESS || "0x82c5e31880929de181E5DF78D60f342168d18115"; }
 function getTipJarAddress() { return process.env.AGENT_TIP_JAR_ADDRESS || ""; }
 
-const ABI = [
-  "function getAgent(uint256 tokenId) external view returns (tuple(uint256 tokenId, string name, string description, uint8 agentType, string model, string capabilities, address creator, uint256 createdAt, uint256 updatedAt, bool active))",
-  "function getAgentByName(string name) external view returns (tuple(uint256 tokenId, string name, string description, uint8 agentType, string model, string capabilities, address creator, uint256 createdAt, uint256 updatedAt, bool active))",
-  "function agentCount() external view returns (uint256)",
+const AGENTIC_ID_ABI = [
+  "function getIntelligentDatas(uint256 tokenId) external view returns (tuple(string dataDescription, bytes32 dataHash)[] memory)",
+  "function tokenURI(uint256 tokenId) external view returns (string)",
   "function ownerOf(uint256 tokenId) external view returns (address)",
+  "function totalSupply() external view returns (uint256)",
+  "function tokenCreator(uint256 tokenId) external view returns (address)",
 ];
 
 const TIP_JAR_ABI = [
@@ -24,20 +30,17 @@ const TIP_JAR_ABI = [
   "function withdraw(uint256 tokenId) external",
 ];
 
-const AGENT_TYPE_NAMES = ["Kurator", "Scorer", "Summarizer", "Tagger", "Reviewer", "Custom"];
-
 let _contract = null;
 let _tipJar = null;
 let _cachedRpcUrl = null;
 
 function getContract() {
-  const addr = getAgentNftAddress();
+  const addr = getAgenticIdAddress();
   const rpc = getRpcUrl();
   if (!addr) return null;
-  // Re-create contract if RPC URL changed or not yet created
   if (!_contract || _cachedRpcUrl !== rpc) {
     const provider = new ethers.JsonRpcProvider(rpc);
-    _contract = new ethers.Contract(addr, ABI, provider);
+    _contract = new ethers.Contract(addr, AGENTIC_ID_ABI, provider);
     _cachedRpcUrl = rpc;
   }
   return _contract;
@@ -54,114 +57,110 @@ function getTipJar() {
   return _tipJar;
 }
 
-function formatAgent(agent) {
+/**
+ * Get a single agent by AgenticID token ID (0-3)
+ * Merges static config + on-chain AgenticID data
+ */
+async function getAgentById(tokenId) {
+  const config = getAgentConfig(parseInt(tokenId));
+  if (!config) return null;
+
+  const contract = getContract();
+  let onChainData = null;
+  if (contract) {
+    try {
+      const [intelligentData, owner, creator] = await Promise.all([
+        contract.getIntelligentDatas(tokenId).catch(() => []),
+        contract.ownerOf(tokenId).catch(() => null),
+        contract.tokenCreator(tokenId).catch(() => null),
+      ]);
+
+      onChainData = {
+        owner,
+        creator,
+        intelligentData: intelligentData.map(d => ({
+          description: d.dataDescription,
+          hash: d.dataHash,
+        })),
+      };
+    } catch (e) {
+      console.warn("[AgentIdentity] Failed to read on-chain data for token", tokenId, ":", e.message);
+    }
+  }
+
   return {
-    tokenId: agent.tokenId.toString(),
-    name: agent.name,
-    description: agent.description,
-    agentType: Number(agent.agentType),
-    agentTypeName: AGENT_TYPE_NAMES[Number(agent.agentType)] || "Unknown",
-    model: agent.model,
-    capabilities: JSON.parse(agent.capabilities || "[]"),
-    creator: agent.creator,
-    createdAt: Number(agent.createdAt),
-    updatedAt: Number(agent.updatedAt),
-    active: agent.active,
-    contractAddress: getAgentNftAddress(),
+    tokenId: tokenId.toString(),
+    name: config.name,
+    description: config.description,
+    agentType: config.type === "Kurator" ? 0 : config.type === "Summarizer" ? 2 : config.type === "Scorer" ? 1 : 3,
+    agentTypeName: config.type,
+    model: config.model,
+    capabilities: config.capabilities,
+    active: true,
+    contractAddress: getAgenticIdAddress(),
+    onChainData,
   };
 }
 
-async function getAgentById(tokenId) {
-  const contract = getContract();
-  if (!contract || !tokenId) return null;
-  try {
-    const agent = await contract.getAgent(tokenId);
-    return formatAgent(agent);
-  } catch (e) {
-    console.warn("[AgentNFT] Failed to get agent:", e.message);
-    return null;
-  }
-}
-
-async function getAgentByName(name) {
-  const contract = getContract();
-  if (!contract) return null;
-  try {
-    const agent = await contract.getAgentByName(name);
-    return formatAgent(agent);
-  } catch (e) {
-    console.warn("[AgentNFT] Failed to get agent by name:", e.message);
-    return null;
-  }
-}
-
 /**
- * Get all agents from the contract by iterating token IDs 1..agentCount()
+ * Get all agents
  */
 async function getAllAgents() {
-  const contract = getContract();
-  if (!contract) return [];
-  try {
-    const count = await contract.agentCount();
-    const total = Number(count);
-    const agents = [];
-    for (let i = 1; i <= total; i++) {
-      try {
-        const agent = await contract.getAgent(i);
-        agents.push(formatAgent(agent));
-      } catch (e) {
-        console.warn(`[AgentNFT] Failed to get agent ${i}:`, e.message);
-      }
-    }
-    return agents;
-  } catch (e) {
-    console.warn("[AgentNFT] Failed to get agent count:", e.message);
-    return [];
+  const agents = [];
+  for (const config of AGENTS) {
+    const agent = await getAgentById(config.agenticId);
+    if (agent) agents.push(agent);
   }
+  return agents;
 }
 
 /**
  * Get agent stats from the DB for a specific agent token ID.
- * Pipeline agents 1-4 collaborate on every paper but each has a specialty.
- * We weight their scores to highlight their primary dimension.
+ * Uses AgenticID token IDs (0-3). All 4 pipeline agents collaborate on every paper.
+ * We query using token 0 (Kurator) as the lead and weight scores by specialty.
  */
 function getAgentStatsFromDB(tokenId) {
   const { stmts } = require("../db");
   if (!stmts.getAgentStats) return null;
-  // All 4 pipeline agents work on every paper — query using lead agent
-  const queryId = (tokenId >= 1 && tokenId <= 4) ? 1 : tokenId;
-  const stats = stmts.getAgentStats.get(queryId);
+
+  // All 4 pipeline agents work on every paper — query using lead agent (tokenId 0)
+  // But first try the exact tokenId, then fall back to 0
+  let stats = stmts.getAgentStats.get(tokenId);
+  if (!stats || stats.papers_curated === 0) {
+    // Try old AgentNFT IDs (1-4) for backward compat with existing DB records
+    const oldId = tokenId + 1;
+    stats = stmts.getAgentStats.get(oldId);
+  }
   if (!stats || stats.papers_curated === 0) {
     return { papers_curated: 0, avg_score: 0, last_activity: null };
   }
+
   const avg_novelty = Math.round(stats.avg_novelty || 0);
   const avg_clarity = Math.round(stats.avg_clarity || 0);
   const avg_methodology = Math.round(stats.avg_methodology || 0);
   const avg_impact = Math.round(stats.avg_impact || 0);
 
   // Each agent specializes in a dimension — give a small boost to their specialty
-  // Agent 1 (Kurator): overall, Agent 2 (Summarizer): clarity, Agent 3 (Scorer): methodology, Agent 4 (Tagger): novelty
+  // Token 0 (Kurator): overall, Token 1 (Summarizer): clarity, Token 2 (Scorer): methodology, Token 3 (Tagger): novelty
   let boost = { novelty: 0, clarity: 0, methodology: 0, impact: 0 };
-  if (tokenId === 2) boost.clarity = 5;
-  else if (tokenId === 3) boost.methodology = 5;
-  else if (tokenId === 4) boost.novelty = 5;
-  // Agent 1 (Kurator) gets a small impact boost as the lead
-  else if (tokenId === 1) boost.impact = 3;
+  if (tokenId === 1) boost.clarity = 5;
+  else if (tokenId === 2) boost.methodology = 5;
+  else if (tokenId === 3) boost.novelty = 5;
+  else if (tokenId === 0) boost.impact = 3;
 
   const final_novelty = Math.min(100, avg_novelty + boost.novelty);
   const final_clarity = Math.min(100, avg_clarity + boost.clarity);
   const final_methodology = Math.min(100, avg_methodology + boost.methodology);
   const final_impact = Math.min(100, avg_impact + boost.impact);
 
-  // Each agent's avg_score weights their specialty more heavily
   let avg_score;
-  if (tokenId === 1) {
+  if (tokenId === 0) {
     avg_score = Math.round((final_novelty + final_clarity + final_methodology + final_impact) / 4);
-  } else if (tokenId === 2) {
+  } else if (tokenId === 1) {
     avg_score = Math.round((final_novelty + final_clarity * 2 + final_methodology + final_impact) / 5);
-  } else if (tokenId === 3) {
+  } else if (tokenId === 2) {
     avg_score = Math.round((final_novelty + final_clarity + final_methodology * 2 + final_impact) / 5);
-  } else if (tokenId === 4) {
+  } else if (tokenId === 3) {
     avg_score = Math.round((final_novelty * 2 + final_clarity + final_methodology + final_impact) / 5);
   } else {
     avg_score = Math.round((final_novelty + final_clarity + final_methodology + final_impact) / 4);
@@ -184,7 +183,15 @@ function getAgentStatsFromDB(tokenId) {
 function getAgentPapersFromDB(tokenId, limit = 10) {
   const { stmts } = require("../db");
   if (!stmts.getAgentPapers) return [];
-  return stmts.getAgentPapers.all(tokenId).slice(0, limit).map(row => {
+
+  // Try new token ID first, then fall back to old AgentNFT ID for backward compat
+  let papers = stmts.getAgentPapers.all(tokenId).slice(0, limit);
+  if (papers.length === 0) {
+    const oldId = tokenId + 1;
+    papers = stmts.getAgentPapers.all(oldId).slice(0, limit);
+  }
+
+  return papers.map(row => {
     let aiScore = null;
     try { aiScore = row.ai_score ? JSON.parse(row.ai_score) : null; } catch (e) {}
     return {
@@ -202,7 +209,7 @@ function getAgentPapersFromDB(tokenId, limit = 10) {
  */
 async function getAgentTipStats(tokenId) {
   const tipJar = getTipJar();
-  if (!tipJar || !tokenId) return { tipBalance: "0", totalTips: "0", tipCount: 0 };
+  if (!tipJar || tokenId == null) return { tipBalance: "0", totalTips: "0", tipCount: 0 };
   try {
     const stats = await tipJar.getAgentStats(tokenId);
     return {
@@ -219,8 +226,7 @@ async function getAgentTipStats(tokenId) {
 
 /**
  * Withdraw accumulated tips from AgentTipJar for all agents owned by the backend wallet.
- * Returns the total amount withdrawn in ETH (0G).
- * The backend wallet owns all agent NFTs, so it can call withdraw() for each.
+ * Uses AgenticID token IDs (0-3).
  */
 async function withdrawAgentTips() {
   const tipJarAddr = getTipJarAddress();
@@ -232,14 +238,8 @@ async function withdrawAgentTips() {
     const wallet = new ethers.Wallet(pk, provider);
     const tipJar = new ethers.Contract(tipJarAddr, TIP_JAR_ABI, wallet);
 
-    // Get agent count
-    const agentContract = getContract();
-    if (!agentContract) return 0;
-    const count = await agentContract.agentCount();
-    const total = Number(count);
-
     let totalWithdrawn = 0;
-    for (let i = 1; i <= total; i++) {
+    for (let i = 0; i < AGENTS.length; i++) {
       try {
         const stats = await tipJar.getAgentStats(i);
         const balance = stats.balance;
@@ -265,4 +265,4 @@ async function withdrawAgentTips() {
   }
 }
 
-module.exports = { getAgentById, getAgentByName, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats, withdrawAgentTips };
+module.exports = { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats, withdrawAgentTips };

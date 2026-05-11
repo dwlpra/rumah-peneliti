@@ -25,7 +25,7 @@ const { mintResearchNFT, getTotalSupply } = require("../services/nft");
 const { registerPaper, getPaperCount, checkOnChainAccess } = require("../services/journal");
 const { getPaperOnChainData, getActivityFeed } = require("../utils/ponder");
 const { getBroker, ensureLedger } = require("../services/og-compute");
-const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats } = require("../services/agent-nft");
+const { getAgentById, getAllAgents, getAgentStatsFromDB, getAgentPapersFromDB, getAgentTipStats } = require("../services/agent-identity");
 const { emitPipelineEvent } = require("./pipeline-controller");
 
 /**
@@ -594,8 +594,8 @@ function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract,
     .then(article => {
       // Step 4: Simpan hasil AI ke database
       const meta = article.meta || article.agent_meta || {};
-      const agentTokenId = meta.agent_token_id || parseInt(process.env.KURATOR_AGENT_TOKEN_ID) || null;
-      const agentNftContract = meta.agent_nft_contract || process.env.AGENT_NFT_ADDRESS || null;
+      const agentTokenId = meta.agent_token_id || 0; // AgenticID token 0 = Kurator
+      const agentIdentityContract = meta.agent_identity_contract || process.env.AGENTIC_ID_ADDRESS || null;
 
       stmts.insertArticle.run(
         paperId,
@@ -609,7 +609,7 @@ function runBackgroundPipeline({ paperId, fileContent, title, authors, abstract,
         article.classification ? JSON.stringify(article.classification) : null,
         article.agent_meta ? JSON.stringify(article.agent_meta) : null,
         agentTokenId,
-        agentNftContract
+        agentIdentityContract
       );
       console.log("[Pipeline] ✅ Step 4 — AI curation done:", paperId, article.mock ? "(mock)" : "(real AI)");
 
@@ -862,7 +862,7 @@ async function getAgentData(req, res) {
   const stats = getAgentStatsFromDB(parseInt(tokenId));
   const tips = await getAgentTipStats(parseInt(tokenId));
   const { getAgenticIdInfo } = require("../services/agentic-id");
-  const agenticId = await getAgenticIdInfo(parseInt(tokenId) - 1); // AgenticID tokens are 0-indexed
+  const agenticId = await getAgenticIdInfo(parseInt(tokenId)); // AgenticID tokens are 0-indexed
   res.json({ ...agent, stats, tips, agenticId });
 }
 
@@ -875,12 +875,10 @@ async function listAgents(req, res) {
   // Get 0G Agentic ID verification data for all agents
   const { getAllAgenticIds } = require("../services/agentic-id");
   const agenticIds = await getAllAgenticIds();
-  // Map by AgenticID token index (0-3) → AgentNFT token ID (1-4)
+  // Map by AgenticID token ID (0-3)
   const agenticMap = {};
   for (const aid of agenticIds) {
-    // AgenticID token 0 = AgentNFT token 1, etc.
-    const agentNftTokenId = parseInt(aid.tokenId) + 1;
-    agenticMap[agentNftTokenId] = aid;
+    agenticMap[aid.tokenId] = aid;
   }
 
   // Attach DB stats + on-chain tip stats + Agentic ID for each agent
@@ -888,7 +886,7 @@ async function listAgents(req, res) {
   for (const agent of agents) {
     const stats = getAgentStatsFromDB(parseInt(agent.tokenId));
     const tips = await getAgentTipStats(parseInt(agent.tokenId));
-    const agenticId = agenticMap[parseInt(agent.tokenId)] || null;
+    const agenticId = agenticMap[agent.tokenId] || agenticMap[parseInt(agent.tokenId)] || null;
     enriched.push({ ...agent, stats, tips, agenticId });
   }
 

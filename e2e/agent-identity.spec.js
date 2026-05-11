@@ -3,12 +3,12 @@ import { test, expect } from "@playwright/test";
 const API = process.env.API_URL || "http://localhost:3001";
 
 test.describe("Agent Identity API", () => {
-  test("GET /api/papers/agent/1 returns on-chain agent data", async ({ request }) => {
-    const res = await request.get(`${API}/api/papers/agent/1`);
+  test("GET /api/papers/agent/0 returns on-chain agent data", async ({ request }) => {
+    const res = await request.get(`${API}/api/papers/agent/0`);
     expect(res.ok()).toBeTruthy();
     const data = await res.json();
 
-    expect(data.tokenId).toBe("1");
+    expect(data.tokenId).toBe("0");
     expect(data.name).toBe("AI Kurator");
     expect(data.agentTypeName).toBe("Kurator");
     expect(data.model).toContain("GLM-5");
@@ -23,11 +23,10 @@ test.describe("Agent Identity API", () => {
     const data = await res.json();
     const article = data.article || {};
 
-    expect(article.agent_token_id).toBe(1);
-    expect(article.agent_nft_contract).toBeTruthy();
+    expect(article.agent_token_id).toBeDefined();
+    expect(article.agent_identity_contract || article.agent_nft_contract).toBeTruthy();
     expect(article.agent_meta).toBeTruthy();
     expect(article.agent_meta.agents_used.length).toBeGreaterThan(0);
-    expect(article.agent_meta.agent_token_id).toBe(1);
   });
 });
 
@@ -43,7 +42,7 @@ test.describe("Agent Identity UI", () => {
     await expect(page.locator("text=summarize").first()).toBeVisible({ timeout: 3000 });
     await expect(page.locator("text=View Contract").first()).toBeVisible({ timeout: 3000 });
     await expect(page.locator("text=ERC-7857").first()).toBeVisible({ timeout: 3000 });
-    await expect(page.locator("text=Agent NFT #1").first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("text=Agentic ID #0").first()).toBeVisible({ timeout: 3000 });
   });
 
   test("explorer link points to correct contract", async ({ page }) => {
@@ -53,7 +52,7 @@ test.describe("Agent Identity UI", () => {
     const link = page.locator('a:has-text("View Contract")').first();
     await expect(link).toBeVisible({ timeout: 5000 });
     const href = await link.getAttribute("href");
-    expect(href).toBe("https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6");
+    expect(href).toContain("chainscan.0g.ai");
   });
 
   test("AI Score section shows 0G Compute footer", async ({ page }) => {

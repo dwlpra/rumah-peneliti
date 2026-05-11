@@ -73,7 +73,7 @@ export function AgentCard({ agent }) {
             <div>
               <h3 className="text-sm font-semibold">{agent.name}</h3>
               <p className="text-xs text-muted-foreground">
-                Agent NFT #{agent.tokenId}
+                Agentic ID #{agent.tokenId}
               </p>
             </div>
           </div>
@@ -258,23 +258,13 @@ export function AgentCard({ agent }) {
         {/* Footer */}
         <div className="mt-auto pt-2 flex items-center gap-3">
           <a
-            href={`${EXPLORER_URL}/address/${CONTRACTS.agentNFT}`}
+            href={`${EXPLORER_URL}/address/${CONTRACTS.agenticId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
+            className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline font-mono"
           >
-            Agent NFT <ExternalLink className="h-3 w-3" />
+            Agentic ID <ExternalLink className="h-3 w-3" />
           </a>
-          {agent.agenticId && (
-            <a
-              href={`https://chainscan.0g.ai/address/${agent.agenticId.contractAddress}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline font-mono"
-            >
-              Agentic ID <ExternalLink className="h-3 w-3" />
-            </a>
-          )}
         </div>
       </CardContent>
     </Card>

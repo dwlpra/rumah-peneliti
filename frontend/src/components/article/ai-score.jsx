@@ -80,7 +80,7 @@ export function AIScore({ score }) {
           )}
           {score.agent_token_id && (
             <span className="ml-1">
-              (On-chain Agent NFT #{score.agent_token_id})
+              (0G Agentic ID #{score.agent_token_id})
             </span>
           )}
         </p>

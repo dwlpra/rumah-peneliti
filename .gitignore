@@ -16,3 +16,4 @@ docs/
 contracts/artifacts/
 contracts/cache/
 backend/data_local/
+TEST-MANUAL.md

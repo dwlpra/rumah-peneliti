@@ -131,18 +131,18 @@ function AgentsContent() {
             <Card>
               <CardContent className="flex flex-wrap items-center gap-3 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-sm font-medium">Agent NFT</span>
-                  <ExplorerLink type="address" value={CONTRACTS.agentNFT} className="text-xs" />
-                </div>
-                <Separator orientation="vertical" className="h-6" />
-                <div className="flex items-center gap-3">
                   <div className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
                   <span className="text-sm font-medium">0G Agentic ID</span>
                   <ExplorerLink type="address" value={CONTRACTS.agenticId || "0x82c5e31880929de181E5DF78D60f342168d18115"} className="text-xs" />
                   <Badge variant="outline" className="text-[10px] border-blue-500 text-blue-600 dark:text-blue-400">
                     ERC-7857
                   </Badge>
+                </div>
+                <Separator orientation="vertical" className="h-6" />
+                <div className="flex items-center gap-3">
+                  <div className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-sm font-medium">Tip Jar</span>
+                  <ExplorerLink type="address" value={CONTRACTS.agentTipJar} className="text-xs" />
                 </div>
               </CardContent>
             </Card>

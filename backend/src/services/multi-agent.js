@@ -248,8 +248,8 @@ async function runMultiAgentPipeline(paperId, title, abstract, textContent) {
       pipeline_time_ms: Date.now() - startTime,
       total_agents: 3,
       successful_agents: agentsUsed.length,
-      agent_token_id: parseInt(process.env.KURATOR_AGENT_TOKEN_ID) || null,
-      agent_nft_contract: process.env.AGENT_NFT_ADDRESS || null,
+      agent_token_id: 0, // AgenticID token 0 = Kurator (lead agent)
+      agent_identity_contract: process.env.AGENTIC_ID_ADDRESS || null,
     },
     mock: false,
   };
@@ -291,8 +291,8 @@ function generateMockResult(title, abstract) {
       pipeline_time_ms: 0,
       total_agents: 3,
       successful_agents: 0,
-      agent_token_id: parseInt(process.env.KURATOR_AGENT_TOKEN_ID) || null,
-      agent_nft_contract: process.env.AGENT_NFT_ADDRESS || null,
+      agent_token_id: 0, // Fallback mock
+      agent_identity_contract: process.env.AGENTIC_ID_ADDRESS || null,
     },
     mock: true,
   };
