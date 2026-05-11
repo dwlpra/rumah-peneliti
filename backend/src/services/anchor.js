@@ -125,11 +125,18 @@ async function anchorArticle(paperId, articleContent) {
   const contract = await getContract();
   const articleHash = toBytes32(articleContent);
 
-  const tx = await contract.setArticle(paperId, articleHash);
-  const receipt = await tx.wait();
-
-  console.log("[Anchor] Article anchored. Paper:", paperId, "Tx:", receipt.hash);
-  return { txHash: receipt.hash };
+  try {
+    const tx = await contract.setArticle(paperId, articleHash);
+    const receipt = await tx.wait();
+    console.log("[Anchor] Article anchored. Paper:", paperId, "Tx:", receipt.hash);
+    return { txHash: receipt.hash };
+  } catch (e) {
+    // setArticle may revert if msg.sender != paper.author (e.g. backend calls on behalf of author)
+    // This is not critical — the article is already stored in DB and 0G Storage.
+    // On-chain article anchor is an optional integrity proof.
+    console.warn("[Anchor] Article anchor skipped (on-chain):", e.message?.substring(0, 80));
+    return { txHash: null, skipped: true };
+  }
 }
 
 /**
