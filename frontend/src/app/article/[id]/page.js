@@ -11,6 +11,7 @@ import {
   Loader2,
   Coffee,
   Wallet,
+  ExternalLink,
 } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
@@ -204,10 +205,23 @@ function ArticleContent() {
         {/* Meta */}
         <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
           {paper?.authors && (
-            <span className="flex items-center gap-1">
-              <Wallet className="h-3.5 w-3.5" />
-              {paper.authors}
-            </span>
+            paper.authors.startsWith("0x") && paper.authors.length === 42 ? (
+              <a
+                href={`https://chainscan.0g.ai/address/${paper.authors}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 font-mono text-primary hover:underline"
+              >
+                <Wallet className="h-3.5 w-3.5" />
+                {paper.authors.slice(0, 6)}...{paper.authors.slice(-4)}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              <span className="flex items-center gap-1">
+                <Wallet className="h-3.5 w-3.5" />
+                {paper.authors}
+              </span>
+            )
           )}
           {paper?.upload_date && (
             <span className="flex items-center gap-1">

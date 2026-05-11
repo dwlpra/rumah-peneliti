@@ -2,7 +2,7 @@ const Database = require("better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 
-const DB_PATH = path.join(__dirname, "..", "data", "rumahpeneliti.db");
+const DB_PATH = path.join(__dirname, "..", "data_local", "rumahpeneliti.db");
 const DB_DIR = path.dirname(DB_PATH);
 if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
 

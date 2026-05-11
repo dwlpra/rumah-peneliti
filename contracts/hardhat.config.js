@@ -4,8 +4,9 @@ require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") }
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.28",
     settings: {
+      evmVersion: "cancun",
       viaIR: true,
       optimizer: { enabled: true, runs: 200 },
     },

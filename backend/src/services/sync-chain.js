@@ -200,7 +200,9 @@ async function syncChain() {
         // but it may not reflect the actual author identity.
         const jp = journalByHash.get(anchor.storageRoot.toLowerCase());
         const title = jp?.title || `Paper #${anchor.id}`;
-        const onChainAuthor = jp?.author || anchor.author;
+        // Best author source: NFT researcher > journal author > anchor author
+        const nftForAuthor = nftByPaperId.get(anchor.id);
+        const onChainAuthor = nftForAuthor?.researcher || jp?.author || anchor.author;
         const price = jp?.price || "0";
 
         const result = db.prepare(
@@ -258,6 +260,13 @@ async function syncChain() {
           db.prepare("UPDATE papers SET anchor_tx_hash = ? WHERE id = ?").run("synced-from-chain", dbPaper.id);
         }
 
+        // Backfill author from NFT researcher if it's a wallet address
+        const nftAuthor = nftByPaperId.get(anchor.id);
+        if (nftAuthor?.researcher && dbPaper.authors?.startsWith("0x")) {
+          db.prepare("UPDATE papers SET authors = ?, author_wallet = ? WHERE id = ?")
+            .run(nftAuthor.researcher, nftAuthor.researcher, dbPaper.id);
+        }
+
         // Backfill journal_id if missing
         if (!dbPaper.journal_id) {
           const jp = journalByHash.get(anchor.storageRoot.toLowerCase());
@@ -278,26 +287,114 @@ async function syncChain() {
     }
 
     // 5. Scenario 3: DB papers not on-chain — delete orphans
+    // SAFETY: Skip deletion when contracts are freshly deployed (anchorPapers is empty).
+    // A freshly deployed contract has 0 papers, so ALL DB papers would be falsely flagged as orphans.
     let deleted = 0;
-    for (const dbPaper of dbPapers) {
-      // Skip papers that were just inserted from chain
-      if (dbPaper.anchor_tx_hash === "synced-from-chain") continue;
-      // Only delete papers that have been through the pipeline (have storage_hash)
-      if (!dbPaper.storage_hash) continue;
-      // Check if this storage hash exists on-chain
-      const hash = dbPaper.storage_hash.toLowerCase();
-      const foundOnChain = anchorPapers.some(a => a.storageRoot.toLowerCase() === hash);
-      if (!foundOnChain) {
-        console.log(`[Sync] Deleting orphan paper #${dbPaper.id} "${dbPaper.title}" (not on-chain)`);
-        stmts.deletePaper.run(dbPaper.id);
-        deleted++;
+    if (anchorPapers.length > 0) {
+      for (const dbPaper of dbPapers) {
+        // Skip papers that were just inserted from chain
+        if (dbPaper.anchor_tx_hash === "synced-from-chain") continue;
+        // Only delete papers that have been through the pipeline (have storage_hash)
+        if (!dbPaper.storage_hash) continue;
+        // Check if this storage hash exists on-chain
+        const hash = dbPaper.storage_hash.toLowerCase();
+        const foundOnChain = anchorPapers.some(a => a.storageRoot.toLowerCase() === hash);
+        if (!foundOnChain) {
+          console.log(`[Sync] Deleting orphan paper #${dbPaper.id} "${dbPaper.title}" (not on-chain)`);
+          stmts.deletePaper.run(dbPaper.id);
+          deleted++;
+        }
       }
+    } else {
+      console.log("[Sync] Skipping orphan deletion — contract is fresh (0 papers on-chain)");
     }
 
     console.log(`[Sync] Complete: ${inserted} inserted, ${curated} curated, ${deleted} deleted`);
 
+    // 6. Backfill real txHash from Ponder indexer
+    await backfillTxHashesFromPonder();
+
   } catch (e) {
     console.warn("[Sync] Failed:", e.message);
+  }
+}
+
+/**
+ * Query Ponder indexer for real txHashes and update DB records
+ * that have placeholder "synced-from-chain" values.
+ */
+async function backfillTxHashesFromPonder() {
+  const ponderUrl = process.env.PONDER_URL || "http://localhost:42069";
+  try {
+    // Query anchor events
+    const anchorRes = await fetch(`${ponderUrl}/graphql`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "{ paperAnchorEventss { items { paperId storageRoot txHash } } }" }),
+    });
+    const anchorData = await anchorRes.json();
+    const anchorEvents = anchorData?.data?.paperAnchorEventss?.items || [];
+
+    // Query NFT events
+    const nftRes = await fetch(`${ponderUrl}/graphql`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "{ researchNFTEventss { items { tokenId paperId txHash } } }" }),
+    });
+    const nftData = await nftRes.json();
+    const nftEvents = nftData?.data?.researchNFTEventss?.items || [];
+
+    let anchorUpdated = 0;
+    let nftUpdated = 0;
+
+    // Build maps: storageHash → txHash (for anchors)
+    const anchorTxByHash = new Map();
+    for (const e of anchorEvents) {
+      if (e.storageRoot && e.txHash) {
+        anchorTxByHash.set(e.storageRoot.toLowerCase(), e.txHash);
+      }
+    }
+    // Build maps: paperId → txHash (for NFTs)
+    const nftTxByPaperId = new Map();
+    for (const e of nftEvents) {
+      if (e.paperId && e.txHash) {
+        nftTxByPaperId.set(e.paperId, e.txHash);
+      }
+    }
+
+    // Update DB papers with placeholder txHash
+    const papers = db.prepare("SELECT id, storage_hash, anchor_tx_hash, nft_tx_hash FROM papers WHERE anchor_tx_hash = 'synced-from-chain' OR nft_tx_hash = 'synced-from-chain'").all();
+    for (const p of papers) {
+      // Anchor txHash
+      if (p.anchor_tx_hash === "synced-from-chain" && p.storage_hash) {
+        const txHash = anchorTxByHash.get(p.storage_hash.toLowerCase());
+        if (txHash) {
+          db.prepare("UPDATE papers SET anchor_tx_hash = ? WHERE id = ?").run(txHash, p.id);
+          anchorUpdated++;
+        }
+      }
+      // NFT txHash
+      if (p.nft_tx_hash === "synced-from-chain") {
+        // Try matching by anchor paperId (on-chain ID)
+        // We need to find the on-chain paperId for this DB paper
+        if (p.storage_hash) {
+          const anchorEvent = anchorEvents.find(e => e.storageRoot?.toLowerCase() === p.storage_hash.toLowerCase());
+          if (anchorEvent) {
+            const txHash = nftTxByPaperId.get(anchorEvent.paperId);
+            if (txHash) {
+              db.prepare("UPDATE papers SET nft_tx_hash = ? WHERE id = ?").run(txHash, p.id);
+              nftUpdated++;
+            }
+          }
+        }
+      }
+    }
+
+    if (anchorUpdated > 0 || nftUpdated > 0) {
+      console.log(`[Sync] TxHash backfill: ${anchorUpdated} anchors, ${nftUpdated} NFTs updated from Ponder`);
+    }
+  } catch (e) {
+    console.warn("[Sync] TxHash backfill skipped (Ponder not ready):", e.message);
   }
 }
 

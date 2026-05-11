@@ -37,7 +37,9 @@ services:
       - PONDER_URL=http://172.19.0.1:42069
 
   indexer:
-    build: ./indexer
+    build:
+      context: .
+      dockerfile: indexer/Dockerfile
     restart: unless-stopped
     ports:
       - "42069:42069"

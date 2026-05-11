@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { OnChainData } from "@/components/article/on-chain-data"
 import { AgentIdentity } from "@/components/article/agent-identity"
+import { ExplorerLink } from "@/components/shared/explorer-link"
 import { useLanguage } from "@/contexts/language"
 import { getApiUrl } from "@/lib/api-url"
 
@@ -46,7 +47,16 @@ export function Sidebar({ article, paper, unlocked, isFree, priceEth, address })
                   {t("label_authors") || "Authors"}
                 </p>
               </div>
-              <p className="text-sm">{paper.authors}</p>
+              {paper.authors.startsWith("0x") && paper.authors.length === 42 ? (
+                <ExplorerLink
+                  type="address"
+                  value={paper.authors}
+                  label={`${paper.authors.slice(0, 6)}...${paper.authors.slice(-4)}`}
+                  className="text-sm"
+                />
+              ) : (
+                <p className="text-sm">{paper.authors}</p>
+              )}
             </div>
           )}
 
