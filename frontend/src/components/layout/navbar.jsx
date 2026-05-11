@@ -123,7 +123,7 @@ export function Navbar() {
                 <DropdownMenuItem key={link.href} asChild>
                   <Link href={link.href} className="flex items-center gap-2 cursor-pointer">
                     <link.icon className="h-4 w-4" />
-                    <span>{link.label}</span>
+                    <span>{link.labelKey ? t(link.labelKey) : link.label}</span>
                   </Link>
                 </DropdownMenuItem>
               ))}
