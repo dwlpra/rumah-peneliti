@@ -1,74 +1,86 @@
-require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 const hre = require("hardhat");
 
 async function main() {
-  const AGENT_NFT_ADDRESS = process.env.AGENT_NFT_ADDRESS;
-  if (!AGENT_NFT_ADDRESS) {
-    console.error("Set AGENT_NFT_ADDRESS in .env");
-    process.exit(1);
-  }
-
+  const AGENTIC_ID = "0x82c5e31880929de181E5DF78D60f342168d18115";
   const [deployer] = await hre.ethers.getSigners();
-  console.log("Minting agents with account:", deployer.address);
-  console.log("AgentNFT contract:", AGENT_NFT_ADDRESS);
+  
+  const AgenticID = await hre.ethers.getContractFactory("AgenticID");
+  const contract = AgenticID.attach(AGENTIC_ID);
 
-  const AgentNFT = await hre.ethers.getContractFactory("AgentNFT");
-  const contract = AgentNFT.attach(AGENT_NFT_ADDRESS);
+  const MINTER_ROLE = await contract.MINTER_ROLE();
+  console.log("Has minter role:", await contract.hasRole(MINTER_ROLE, deployer.address));
 
   const agents = [
     {
-      name: "Summarizer",
-      description: "Generates concise summaries and key takeaways from research papers. Extracts the core contribution, methodology, and findings into accessible language.",
-      agentType: 2, // AgentType.Summarizer
-      model: "GLM-5-FP8 via 0G Compute / Z.AI GLM-5.1 API",
-      capabilities: '["summarize","generate_article","key_takeaways","extract_findings"]',
+      name: "AI Kurator",
+      datas: [
+        { dataDescription: "model:0g-compute-decentralized-inference", dataHash: hre.ethers.id("model:0g-compute") },
+        { dataDescription: "capability:multi-agent-curation", dataHash: hre.ethers.id("capability:curation") },
+        { dataDescription: "capability:scoring-evaluation", dataHash: hre.ethers.id("capability:scoring") },
+        { dataDescription: "capability:summarization", dataHash: hre.ethers.id("capability:summarization") },
+        { dataDescription: "capability:tagging-classification", dataHash: hre.ethers.id("capability:tagging") },
+        { dataDescription: "prompt:research-paper-curation-pipeline", dataHash: hre.ethers.id("prompt:research-curation") },
+      ]
     },
     {
-      name: "Scorer",
-      description: "Evaluates research papers across multiple dimensions: novelty, clarity, methodology, and impact. Produces quantitative AI Research Scores.",
-      agentType: 1, // AgentType.Scorer
-      model: "GLM-5-FP8 via 0G Compute / Z.AI GLM-5.1 API",
-      capabilities: '["score","evaluate","assess_quality","reason"]',
+      name: "AI Scorer",
+      datas: [
+        { dataDescription: "model:0g-compute-decentralized-inference", dataHash: hre.ethers.id("model:0g-compute") },
+        { dataDescription: "capability:scoring-evaluation", dataHash: hre.ethers.id("capability:scoring") },
+        { dataDescription: "prompt:paper-quality-scoring-rubric", dataHash: hre.ethers.id("prompt:paper-scoring") },
+      ]
     },
     {
-      name: "Tagger",
-      description: "Classifies research papers by domain, field, and topic. Generates relevant tags and categorizations for discovery and organization.",
-      agentType: 3, // AgentType.Tagger
-      model: "GLM-5-FP8 via 0G Compute / Z.AI GLM-5.1 API",
-      capabilities: '["tag","classify","categorize","domain_detect"]',
+      name: "AI Summarizer",
+      datas: [
+        { dataDescription: "model:0g-compute-decentralized-inference", dataHash: hre.ethers.id("model:0g-compute") },
+        { dataDescription: "capability:summarization", dataHash: hre.ethers.id("capability:summarization") },
+        { dataDescription: "prompt:paper-summarization-key-findings", dataHash: hre.ethers.id("prompt:paper-summarization") },
+      ]
     },
+    {
+      name: "AI Tagger",
+      datas: [
+        { dataDescription: "model:0g-compute-decentralized-inference", dataHash: hre.ethers.id("model:0g-compute") },
+        { dataDescription: "capability:tagging-classification", dataHash: hre.ethers.id("capability:tagging") },
+        { dataDescription: "prompt:paper-domain-classification", dataHash: hre.ethers.id("prompt:paper-tagging") },
+      ]
+    }
   ];
 
-  for (const agent of agents) {
-    console.log(`\nMinting ${agent.name} agent...`);
-    const tx = await contract.mintAgent(
-      deployer.address,
-      agent.name,
-      agent.description,
-      agent.agentType,
-      agent.model,
-      agent.capabilities
-    );
+  const metadata = [
+    JSON.stringify({ name: "AI Kurator", description: "Multi-agent research curation orchestrator", model: "0G Compute", agentType: "Orchestrator", version: "1.0.0" }),
+    JSON.stringify({ name: "AI Scorer", description: "Evaluates papers across novelty, methodology, clarity, impact", model: "0G Compute", agentType: "Scorer", version: "1.0.0" }),
+    JSON.stringify({ name: "AI Summarizer", description: "Generates concise summaries and key findings", model: "0G Compute", agentType: "Summarizer", version: "1.0.0" }),
+    JSON.stringify({ name: "AI Tagger", description: "Classifies papers by domain, methodology, topics", model: "0G Compute", agentType: "Tagger", version: "1.0.0" }),
+  ];
+
+  for (let i = 0; i < agents.length; i++) {
+    const agent = agents[i];
+    console.log(`\nMinting agent ${i+1}: ${agent.name}...`);
+    
+    // iMintWithRole — mint + set intelligent data in one tx
+    const tx = await contract.iMintWithRole(deployer.address, agent.datas, deployer.address);
     const receipt = await tx.wait();
-    console.log(`  Minted! Tx: ${receipt.hash}`);
-
-    // Read back
-    const count = await contract.agentCount();
-    const data = await contract.getAgent(count);
-    console.log(`  Token ID: ${data.tokenId.toString()}`);
-    console.log(`  Name: ${data.name}`);
-    console.log(`  Type: ${data.agentType} (active: ${data.active})`);
+    console.log(`  Minted! tx: ${receipt.hash}`);
+    
+    const totalSupply = await contract.totalSupply();
+    const tokenId = totalSupply - 1n;
+    console.log(`  Token ID: ${tokenId}`);
+    
+    // Set token URI (metadata)
+    const uriTx = await contract.setTokenURI(tokenId, metadata[i]);
+    await uriTx.wait();
+    console.log(`  Metadata set`);
+    
+    // Verify
+    const idata = await contract.getIntelligentDatas(tokenId);
+    console.log(`  Intelligent data entries: ${idata.length}`);
   }
-
-  const totalAgents = await contract.agentCount();
-  console.log(`\nTotal agents minted: ${totalAgents}`);
-  console.log("\nAdd to .env:");
-  console.log("SUMMARIZER_AGENT_TOKEN_ID=2");
-  console.log("SCORER_AGENT_TOKEN_ID=3");
-  console.log("TAGGER_AGENT_TOKEN_ID=4");
+  
+  console.log("\n✅ All 4 agents minted on 0G Mainnet!");
+  console.log("Contract:", AGENTIC_ID);
+  console.log("Total supply:", (await contract.totalSupply()).toString());
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main().catch(console.error);

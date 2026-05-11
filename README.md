@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/Agentic_Economy-Self_Sustaining-blue?style=for-the-badge" alt="Agentic Economy" />
   <img src="https://img.shields.io/badge/Auto_Billing-Tip_→_Compute-green?style=for-the-badge" alt="Auto Billing" />
   <img src="https://img.shields.io/badge/Multi--Agent-3_+_1_Parallel-orange?style=for-the-badge" alt="Multi-Agent" />
+  <img src="https://img.shields.io/badge/Agentic_ID-ERC_7857-blueviolet?style=for-the-badge" alt="Agentic ID" />
   <img src="https://img.shields.io/badge/Tests-101_Passing-success?style=for-the-badge" alt="101 Tests" />
 </p>
 
@@ -18,6 +19,7 @@
   <a href="https://rumahpeneliti.com">Live App</a> ·
   <a href="https://chainscan.0g.ai/address/0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6">AgentTipJar</a> ·
   <a href="https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6">AgentNFT</a> ·
+  <a href="https://chainscan.0g.ai/address/0x82c5e31880929de181E5DF78D60f342168d18115">AgenticID</a> ·
   <a href="https://chainscan.0g.ai/address/0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0">JournalPayment</a> ·
   <a href="https://chainscan.0g.ai/address/0x010a70be3D661B98f69Ab4De1e213CA56C90de4a">ResearchNFT</a>
 </p>
@@ -73,7 +75,8 @@ RumahPeneliti fixes both problems using **0G's decentralized infrastructure** an
 | **Self-Sustaining Economy** | Reader tips → auto-recycled to fund 0G Compute → agents run more inference → earn more tips | 0G Compute + Chain |
 | **Permanent Storage** | Papers stored on decentralized network with Merkle proofs — survives any server failure | 0G Storage |
 | **AI Curation** | Dense PDFs transformed into readable articles with summaries, scores, and tags | 0G Compute |
-| **On-Chain Agent Identity** | AI agents registered as NFTs with verifiable metadata — every curation is traceable | 0G Chain |
+| **On-Chain Agent Identity** | AI agents registered as NFTs with verifiable metadata — every curation is traceable | 0G Chain + Agentic ID |
+| **Verified Agent Identity** | Agents registered via official 0G Agentic ID (ERC-7857) — model, capabilities, prompts hashed on-chain | Agentic ID |
 | **Micropayments** | Readers support authors directly in 0G tokens with 0% platform cut | 0G Chain |
 | **NFT Minting** | Every curated paper becomes a transferable ERC-721 NFT — researchers own their work | 0G Chain |
 
@@ -122,6 +125,8 @@ Click "View Contract" → 0G Explorer shows full agent metadata
 ### Registered Agents (On-Chain)
 
 All 4 agents are minted as NFTs on `AgentNFT` (`0x9ebf66F0...`). Each has verifiable on-chain metadata:
+
+Additionally, all agents are registered with **0G Agentic ID** (`0x82c5e318...`) — the official 0G ERC-7857 standard. Each agent has hashed intelligent data entries (model, capabilities, prompts) stored on-chain, providing cryptographic proof of agent configuration. This dual-identity system ensures agents are verifiable both via custom metadata and the 0G standard.
 
 | Token ID | Name | Type | Role | Model | Capabilities |
 |:---:|:---|:---:|:---|:---|:---|
@@ -375,7 +380,7 @@ The backend uses a local database for fast reads and caching, but the **source o
 
 - Paper files live on **0G Storage** (decentralized, Merkle-verified, permanent)
 - Paper hashes and metadata are anchored on **0G Chain** via PaperAnchor contract
-- **AI Agent identities** are registered on **0G Chain** via AgentNFT contract (ERC-7857 inspired)
+- **AI Agent identities** are registered on **0G Chain** via AgentNFT contract + **0G Agentic ID** (official ERC-7857 standard) with verifiable intelligent data hashes
 - A **Ponder indexer** independently indexes all on-chain events into 4 tables
 - **Startup sync** (`sync-chain.js`) automatically reconciles DB with on-chain state every time the backend starts
 
@@ -403,8 +408,8 @@ This project integrates **all 4 core 0G components** as the infrastructure layer
 | **0G Storage** | Stores paper files permanently — the service agents curate. Decentralized hosting means agents' work product outlives any single server. | `ZgFile`, `Indexer` |
 | **0G Compute** | Runs AI agent inference (GLM-5-FP8). Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents pay for their own inference.** | `@0glabs/0g-serving-broker` |
 | **0G DA Layer** | Publishes blob commitments as proof-of-existence for every paper. Ensures data integrity for the content agents work on. | `ethers.js v6` |
-| **0G Chain** | 5 contracts power the entire economy: `JournalPayment` (micropayments), `PaperAnchor` (anchoring), `ResearchNFT` (ownership), `AgentNFT` (agent identity), `AgentTipJar` (agent income + withdrawal). | Hardhat, ethers.js |
-| **Agent Identity** | ERC-7857 inspired `AgentNFT` — agents have on-chain identity, metadata, and are transferable. Every curation linked to an agent NFT. Verifiable via explorer. | Solidity 0.8.20, ethers.js |
+| **0G Chain** | 6 contracts power the entire economy: `JournalPayment` (micropayments), `PaperAnchor` (anchoring), `ResearchNFT` (ownership), `AgentNFT` (agent identity), `AgenticID` (0G official ERC-7857), `AgentTipJar` (agent income + withdrawal). | Hardhat, ethers.js |
+| **Agent Identity** | Dual identity system: `AgentNFT` for on-chain metadata + **0G Agentic ID** (`ERC-7857` official standard) for verifiable intelligent data hashes — model, capabilities, and prompts hashed on-chain. Every curation linked to an agent NFT. | Solidity 0.8.24, ethers.js |
 
 ### Contract Addresses (0G Mainnet)
 
@@ -413,7 +418,8 @@ This project integrates **all 4 core 0G components** as the infrastructure layer
 | JournalPayment | `0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0` | Micropayments | [View](https://chainscan.0g.ai/address/0xc6FD8fa40ED06D21FDCA1961B75a7170991422D0) |
 | PaperAnchor | `0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7` | Hash verification | [View](https://chainscan.0g.ai/address/0x335C0b922325dd5214Bb9e7CDcA6a61A24B0d8C7) |
 | ResearchNFT | `0x010a70be3D661B98f69Ab4De1e213CA56C90de4a` | Paper NFTs | [View](https://chainscan.0g.ai/address/0x010a70be3D661B98f69Ab4De1e213CA56C90de4a) |
-| AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` | **AI Agent Identity** (ERC-7857) | [View](https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6) |
+| AgentNFT | `0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6` | **AI Agent Identity** | [View](https://chainscan.0g.ai/address/0x9ebf66F0818db38BD55f1337b8a83E97c8e095C6) |
+| AgenticID | `0x82c5e31880929de181E5DF78D60f342168d18115` | **0G Agentic ID** (ERC-7857 Official) | [View](https://chainscan.0g.ai/address/0x82c5e31880929de181E5DF78D60f342168d18115) |
 | AgentTipJar | `0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6` | **Agent Tipping** (Agentic Economy) | [View](https://chainscan.0g.ai/address/0x7e59BB6ff6C58D03C07bdFC35040b4A08779A9f6) |
 
 ---

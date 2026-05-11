@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bot, ExternalLink, Shield, Activity, Coffee, Loader2 } from "lucide-react"
+import { Bot, ExternalLink, Shield, Activity, Coffee, Loader2, Fingerprint } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -222,16 +222,59 @@ export function AgentCard({ agent }) {
           </p>
         </div>
 
+        {/* 0G Agentic ID Verification */}
+        {agent.agenticId && (
+          <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-2.5 space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Fingerprint className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                0G Agentic ID (ERC-7857)
+              </span>
+            </div>
+            <div className="text-[10px] text-muted-foreground space-y-0.5">
+              <p>Token #{agent.agenticId.tokenId} • {agent.agenticId.intelligentData?.length || 0} on-chain data entries</p>
+              <p>Model: {agent.agenticId.model || agent.agenticId.agentType}</p>
+              {agent.agenticId.capabilities?.length > 0 && (
+                <div className="flex flex-wrap gap-0.5 mt-1">
+                  {agent.agenticId.capabilities.map((cap, i) => (
+                    <span key={i} className="inline-block rounded bg-blue-500/10 px-1 py-0.5 text-[9px] text-blue-600 dark:text-blue-400">
+                      {cap}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <a
+              href={agent.agenticId.explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:underline font-mono"
+            >
+              Verify on Explorer <ExternalLink className="h-2.5 w-2.5" />
+            </a>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="mt-auto pt-2">
+        <div className="mt-auto pt-2 flex items-center gap-3">
           <a
             href={`${EXPLORER_URL}/address/${CONTRACTS.agentNFT}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
           >
-            View Contract <ExternalLink className="h-3 w-3" />
+            Agent NFT <ExternalLink className="h-3 w-3" />
           </a>
+          {agent.agenticId && (
+            <a
+              href={`https://chainscan.0g.ai/address/${agent.agenticId.contractAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline font-mono"
+            >
+              Agentic ID <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -858,10 +858,12 @@ async function getAgentData(req, res) {
   const agent = await getAgentById(tokenId);
   if (!agent) return res.status(404).json({ error: "Agent not found" });
 
-  // Merge DB stats + on-chain tip stats
+  // Merge DB stats + on-chain tip stats + Agentic ID
   const stats = getAgentStatsFromDB(parseInt(tokenId));
   const tips = await getAgentTipStats(parseInt(tokenId));
-  res.json({ ...agent, stats, tips });
+  const { getAgenticIdInfo } = require("../services/agentic-id");
+  const agenticId = await getAgenticIdInfo(parseInt(tokenId) - 1); // AgenticID tokens are 0-indexed
+  res.json({ ...agent, stats, tips, agenticId });
 }
 
 /**
@@ -870,12 +872,24 @@ async function getAgentData(req, res) {
 async function listAgents(req, res) {
   const agents = await getAllAgents();
 
-  // Attach DB stats + on-chain tip stats for each agent
+  // Get 0G Agentic ID verification data for all agents
+  const { getAllAgenticIds } = require("../services/agentic-id");
+  const agenticIds = await getAllAgenticIds();
+  // Map by AgenticID token index (0-3) → AgentNFT token ID (1-4)
+  const agenticMap = {};
+  for (const aid of agenticIds) {
+    // AgenticID token 0 = AgentNFT token 1, etc.
+    const agentNftTokenId = parseInt(aid.tokenId) + 1;
+    agenticMap[agentNftTokenId] = aid;
+  }
+
+  // Attach DB stats + on-chain tip stats + Agentic ID for each agent
   const enriched = [];
   for (const agent of agents) {
     const stats = getAgentStatsFromDB(parseInt(agent.tokenId));
     const tips = await getAgentTipStats(parseInt(agent.tokenId));
-    enriched.push({ ...agent, stats, tips });
+    const agenticId = agenticMap[parseInt(agent.tokenId)] || null;
+    enriched.push({ ...agent, stats, tips, agenticId });
   }
 
   // Get recent activity across all agents

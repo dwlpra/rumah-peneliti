@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bot, ExternalLink, Shield, Activity, Coffee, Loader2 } from "lucide-react"
+import { Bot, ExternalLink, Shield, Activity, Coffee, Loader2, Fingerprint } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -221,14 +221,42 @@ export function AgentIdentity({ article }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
           >
-            View Contract
+            Agent NFT
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
 
-        <p className="text-[10px] text-muted-foreground/50 italic">
-          ERC-7857 inspired on-chain agent identity
-        </p>
+        {/* 0G Agentic ID Verification */}
+        {agentData.agenticId && (
+          <div className="rounded-md border border-blue-500/20 bg-blue-500/5 p-2.5 space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Fingerprint className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                0G Agentic ID
+              </span>
+              <Badge variant="outline" className="text-[9px] border-blue-500 text-blue-600 dark:text-blue-400 ml-auto">
+                ERC-7857
+              </Badge>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Token #{agentData.agenticId.tokenId} • {agentData.agenticId.intelligentData?.length || 0} on-chain data hashes
+            </p>
+            <a
+              href={agentData.agenticId.explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:underline font-mono"
+            >
+              Verify on Explorer <ExternalLink className="h-2.5 w-2.5" />
+            </a>
+          </div>
+        )}
+
+        {!agentData.agenticId && (
+          <p className="text-[10px] text-muted-foreground/50 italic">
+            ERC-7857 inspired on-chain agent identity
+          </p>
+        )}
       </CardContent>
     </Card>
   )
