@@ -1,4 +1,5 @@
 import { getApiUrl } from "./api-url";
+import { authFetch } from "./auth";
 
 const API = () => getApiUrl();
 
@@ -27,7 +28,7 @@ export async function fetchArticle(id) {
 }
 
 export async function uploadPaper(formData) {
-  const res = await fetch(`${API()}/api/papers`, {
+  const res = await authFetch(`${API()}/api/papers`, {
     method: "POST",
     body: formData,
   });
@@ -39,7 +40,7 @@ export async function uploadPaper(formData) {
 }
 
 export async function purchasePaper(paperId, buyerWallet, txHash, amount) {
-  const res = await fetch(`${API()}/api/papers/${paperId}/purchase`, {
+  const res = await authFetch(`${API()}/api/papers/${paperId}/purchase`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ buyer_wallet: buyerWallet, tx_hash: txHash, amount }),
