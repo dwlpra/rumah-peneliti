@@ -484,6 +484,16 @@ Every 0G component is deeply integrated: **Storage** (permanent file hosting), *
 - Any EVM wallet (MetaMask, Rabby, OKX, Backpack, Coinbase, Trust, and 5+ more)
 - Native 0G on Mainnet (for gas, payments, tips)
 
+### Notes for Judges / Reviewers
+
+**No special test account needed.** The live app at [rumahpeneliti.com](https://rumahpeneliti.com) is fully functional without login.
+
+- **Browse & Read:** All papers and AI-curated articles are publicly accessible — no wallet required
+- **Upload & Interact:** Connect any EVM wallet with native 0G on Mainnet for gas
+- **0G Faucet:** Get test 0G at [faucet.0g.ai](https://faucet.0g.ai) (if needed for testnet), or use any wallet with mainnet 0G
+- **Live API:** All endpoints are public — `curl https://api.rumahpeneliti.com/api/health`
+- **On-chain Verification:** All 5 contracts are live on 0G Mainnet, verifiable on [chainscan.0g.ai](https://chainscan.0g.ai)
+
 ### One-Command Setup
 
 ```bash
