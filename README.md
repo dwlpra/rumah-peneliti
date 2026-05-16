@@ -112,7 +112,7 @@ Article stores: agent_token_id = 0, agent_identity_contract = 0x82c5e318...
     ↓
 Frontend fetches agent data from AgenticID contract + static config
     ↓
-Reader sees: "Curated by AI Kurator — GLM-5 — VERIFIED ✓"
+Reader sees: "Curated by AI Kurator — VERIFIED ✓"
     ↓
 Click "Verify on Explorer" → 0G Explorer shows AgenticID intelligent data
 ```
@@ -123,10 +123,10 @@ All 4 agents are registered on **0G Agentic ID** (`0x82c5e318...`) — the offic
 
 | Token ID | Name | Type | Role | Model | Capabilities |
 |:---:|:---|:---:|:---|:---|:---|
-| #0 | **AI Kurator** | Kurator | Lead orchestrator, coordinates all agents | GLM-5 via 0G Compute | summarize, score, tag, classify, review |
-| #1 | **Summarizer** | Summarizer | Generates curated titles, summaries, key takeaways, article body | GLM-5 via 0G Compute | summarize, generate_article, key_takeaways, extract_findings |
-| #2 | **Scorer** | Scorer | Scores papers across 4 dimensions: novelty, clarity, methodology, impact | GLM-5 via 0G Compute | score, evaluate, assess_quality, reason |
-| #3 | **Tagger** | Tagger | Classifies domain, subdomain, research type, difficulty; generates tags | GLM-5 via 0G Compute | tag, classify, categorize, domain_detect |
+| #0 | **AI Kurator** | Kurator | Lead orchestrator, coordinates all agents | 0G Compute | summarize, score, tag, classify, review |
+| #1 | **Summarizer** | Summarizer | Generates curated titles, summaries, key takeaways, article body | 0G Compute | summarize, generate_article, key_takeaways, extract_findings |
+| #2 | **Scorer** | Scorer | Scores papers across 4 dimensions: novelty, clarity, methodology, impact | 0G Compute | score, evaluate, assess_quality, reason |
+| #3 | **Tagger** | Tagger | Classifies domain, subdomain, research type, difficulty; generates tags | 0G Compute | tag, classify, categorize, domain_detect |
 
 Each agent can receive tips via `AgentTipJar` (`0xc215A541...`). Readers tip agents whose curation they find valuable — agents earn to fund their own compute. This creates a self-sustaining **Agentic Economy**.
 
@@ -144,7 +144,7 @@ Tips accumulate in contract per agent
 Before each AI curation run:
   1. withdrawAgentTips() sweeps all agent balances
   2. Funds deposited into 0G Compute ledger
-  3. Agent uses 0G Compute (GLM-5) for next curation
+  3. Agent uses 0G Compute for next curation
         ↓
 New article created → readers tip → cycle repeats
 ```
@@ -188,7 +188,7 @@ graph TB
 
     subgraph ZeroG["0G Infrastructure"]
         Storage[("0G Storage<br/>Merkle-Verified")]
-        Compute["0G Compute<br/>TEE Inference · GLM-5"]
+        Compute["0G Compute"]
         DA["0G DA Layer<br/>Blob Commitments"]
         Chain["0G Chain<br/>5 Smart Contracts"]
         AgenticID["AgenticID · AgentTipJar<br/>Identity · Tipping · Withdrawal"]
@@ -232,7 +232,7 @@ sequenceDiagram
     participant BE as Backend API
     participant S as 0G Storage
     participant DA as 0G DA Layer
-    participant C as 0G Compute (TEE)
+    participant C as 0G Compute
     participant CH as 0G Chain
     participant AG as AgenticID
 
@@ -286,10 +286,10 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     A[Paper Uploaded] --> B{0G Compute<br/>Network?}
-    B -->|Yes| C[0G Compute Network<br/>GLM-5 · TEE Inference]
+    B -->|Yes| C[0G Compute · Inference]
     B -->|No| D{Multi-agent<br/>API?}
 
-    D --> E["Z.AI GLM-5.1 API<br/>3 parallel agents"]
+    D --> E["Z.AI API (fallback)<br/>3 parallel agents"]
     D -->|All fail| F[Mock Data<br/>Final Fallback]
 
     C --> G
@@ -397,7 +397,7 @@ This project integrates **all 4 core 0G components** as the infrastructure layer
 | Component | Role in Agentic Economy | SDK |
 |:---:|:---|:---|
 | **0G Storage** | Stores paper files permanently — the service agents curate. Decentralized hosting means agents' work product outlives any single server. | `ZgFile`, `Indexer` |
-| **0G Compute** | Runs AI agent inference (GLM-5). Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents pay for their own inference.** | `@0glabs/0g-serving-broker` |
+| **0G Compute). Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents pay for their own inference.** | `@0glabs/0g-serving-broker` |
 | **0G DA Layer** | Publishes blob commitments as proof-of-existence for every paper. Ensures data integrity for the content agents work on. | `ethers.js v6` |
 | **0G Chain** | 5 contracts power the entire economy: `JournalPayment` (micropayments), `PaperAnchor` (anchoring), `ResearchNFT` (ownership), `AgenticID` (0G official ERC-7857 agent identity), `AgentTipJar` (agent income + withdrawal). | Hardhat, ethers.js |
 | **Agent Identity** | 0G Agentic ID (ERC-7857) — official standard for verifiable on-chain agent identity with intelligent data hashes. Every curation linked to an agent. | Solidity 0.8.24, ethers.js |
@@ -463,13 +463,13 @@ Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by ident
 <td>
 
 ### Multi-Agent AI Curation (3 Parallel)
-3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute's TEE inference. Each has a distinct role — one generates the article, one scores quality across 4 dimensions, one classifies and tags. All via GLM-5.
+3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute.
 
 </td>
 <td>
 
 ### 0G Integration — All 4 Components
-Every 0G component is deeply integrated: **Storage** (permanent file hosting), **Compute** (TEE AI inference + agent billing), **DA Layer** (blob commitments), and **Chain** (5 smart contracts). No component is superficially used.
+Every 0G component is deeply integrated: **Storage** (permanent file hosting), **Compute** (AI inference + agent billing), **DA Layer** (blob commitments), and **Chain** (5 smart contracts). No component is superficially used.
 
 </td>
 </tr>
@@ -569,7 +569,7 @@ rumah-peneliti
 │       │   ├── storage.js       # 0G Storage upload (ZgFile, Indexer)
 │       │   ├── da-layer.js      # 0G DA Layer blob commitment proofs
 │       │   ├── anchor.js        # PaperAnchor on-chain service
-│       │   ├── og-compute.js    # 0G Compute Network client (GLM-5) + auto-recycle tips
+│       │   ├── og-compute.js    # 0G Compute) + auto-recycle tips
 │       │   ├── multi-agent.js   # 3 parallel AI agents + orchestrator
 │       │   ├── agent-identity.js  # On-chain Agent Identity (AgenticID) + tip withdrawal
 │       │   ├── agent-config.js    # Static agent metadata
@@ -630,10 +630,10 @@ rumah-peneliti
 | **Agentic Economy** | Agent-as-a-Service via AgenticID (ERC-7857), auto-billing via AgentTipJar → 0G Compute, self-sustaining tip-to-compute loop |
 | Smart Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin v5 — 5 contracts on 0G Mainnet (identity, payments, tipping, anchoring, NFTs) |
 | Agent Identity | 0G Agentic ID (ERC-7857) — official standard for verifiable on-chain agent identity with intelligent data hashes |
-| AI Inference | GLM-5 via 0G Compute (TEE), Z.AI GLM-5.1 API (fallback) |
+| AI Inference | 0G Compute.1 API (fallback) |
 | Financial Rails | JournalPayment (micropayments), AgentTipJar (agent income), auto-recycle billing to 0G Compute |
 | 0G Storage | `@0gfoundation/0g-ts-sdk` — Merkle proofs, upload/download |
-| 0G Compute | `@0glabs/0g-serving-broker` — TEE inference, on-chain ledger billing with agent-funded deposits |
+| 0G Compute | `@0glabs/0g-serving-broker` — AI inference, on-chain ledger billing with agent-funded deposits |
 | Backend | Express.js, better-sqlite3, JWT auth, Multer |
 | Frontend | Next.js 14, React 18, Tailwind CSS, shadcn/ui (Radix), Ethers.js v6 |
 | Indexer | Ponder v0.7, PGLite, Viem, Hono |
