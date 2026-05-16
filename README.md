@@ -176,7 +176,7 @@ graph TB
     subgraph Backend["Express.js API"]
         API["REST API<br/>11 Controllers · 8 Routes"]
         Auth["JWT Auth<br/>Nonce → Sign → Verify"]
-        Pipeline["6-Step Pipeline<br/>Upload → DA → Anchor → Register → AI → Article → NFT"]
+        Pipeline["6-Step Pipeline<br/>Upload → Storage → DA → Anchor → AI Curation → NFT Mint"]
         AgentSvc["Agent Service<br/>Read Agent Data · Withdraw Tips"]
     end
 
@@ -184,6 +184,7 @@ graph TB
         Summarizer["Summarizer<br/>Agentic ID #1"]
         Scorer["Scorer<br/>Agentic ID #2"]
         Tagger["Tagger<br/>Agentic ID #3"]
+        Reviewer["Kurator<br/>Agentic ID #0"]
     end
 
     subgraph ZeroG["0G Infrastructure"]
@@ -213,6 +214,7 @@ graph TB
     Compute --> Summarizer
     Compute --> Scorer
     Compute --> Tagger
+    Compute --> Reviewer
     Chain --> Ponder
 
     style Frontend fill:#f0f0ff,stroke:#7c3aed,color:#333
@@ -298,6 +300,7 @@ flowchart LR
 
     subgraph G["4 Agents — Promise.allSettled()"]
         direction TB
+        K["Kurator · Agentic ID #0<br/>orchestrate · review · classify"]
         S["Summarizer · Agentic ID #1<br/>curated_title · summary<br/>key_takeaways · body"]
         SC["Scorer · Agentic ID #2<br/>novelty · clarity<br/>methodology · impact"]
         T["Tagger · Agentic ID #3<br/>tags · domain · subdomain<br/>research_type · difficulty"]
@@ -455,7 +458,7 @@ Every curated article records which Agentic ID performed the curation. Readers v
 <td>
 
 ### Full Pipeline — End to End
-Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by identified agent) → Article Anchor → NFT Mint. Steps 1-3 are synchronous, steps 4-6 run async with polling progress updates. Every step touches a different 0G component.
+Upload → AI Curation (by identified agent) → 0G Storage → DA Proof → On-Chain Anchor → NFT Mint. Every step touches a different 0G component. Fully automated.
 
 </td>
 </tr>
