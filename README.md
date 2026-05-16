@@ -3,9 +3,9 @@
   <img src="https://img.shields.io/badge/Decentralized_Journal-On__Chain_Publishing-9cf?style=for-the-badge" alt="Decentralized Journal" />
   <img src="https://img.shields.io/badge/Agentic_Economy-Self_Sustaining-blue?style=for-the-badge" alt="Agentic Economy" />
   <img src="https://img.shields.io/badge/Auto_Billing-Tip_→_Compute-green?style=for-the-badge" alt="Auto Billing" />
-  <img src="https://img.shields.io/badge/Multi--Agent-3_+_1_Parallel-orange?style=for-the-badge" alt="Multi-Agent" />
+  <img src="https://img.shields.io/badge/Multi--Agent-4_AI_Agents-orange?style=for-the-badge" alt="Multi-Agent" />
   <img src="https://img.shields.io/badge/Agentic_ID-ERC_7857-blueviolet?style=for-the-badge" alt="Agentic ID" />
-  <img src="https://img.shields.io/badge/Tests-101_Passing-success?style=for-the-badge" alt="101 Tests" />
+  <img src="https://img.shields.io/badge/E2E_Tests-77_Passing-success?style=for-the-badge" alt="77 E2E Tests" />
 </p>
 
 <h1 align="center">RumahPeneliti</h1>
@@ -74,8 +74,7 @@ RumahPeneliti fixes both problems using **0G's decentralized infrastructure** an
 | **Self-Sustaining Economy** | Reader tips → auto-recycled to fund 0G Compute → agents run more inference → earn more tips | 0G Compute + Chain |
 | **Permanent Storage** | Papers stored on decentralized network with Merkle proofs — survives any server failure | 0G Storage |
 | **AI Curation** | Dense PDFs transformed into readable articles with summaries, scores, and tags | 0G Compute |
-| **On-Chain Agent Identity** | Agents registered via 0G Agentic ID (ERC-7857) — official standard for verifiable agent identity with intelligent data hashes | 0G Chain + Agentic ID |
-| **Verified Agent Identity** | Agents registered via official 0G Agentic ID (ERC-7857) — model, capabilities, prompts hashed on-chain | Agentic ID |
+| **On-Chain Agent Identity** | Agents registered via 0G Agentic ID (ERC-7857) — model, capabilities, prompts hashed on-chain for verifiable identity | 0G Chain + Agentic ID |
 | **Micropayments** | Readers support authors directly in native 0G with 0% platform cut | 0G Chain |
 | **NFT Minting** | Every curated paper becomes a transferable ERC-721 NFT — researchers own their work | 0G Chain |
 
