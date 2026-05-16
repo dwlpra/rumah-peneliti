@@ -12,7 +12,7 @@
 <h3 align="center">Decentralized Journal Platform with Self-Sustaining Agentic Economy on 0G</h3>
 
 <p align="center">
-  <i>Research papers live forever on-chain. AI agents curate them, earn tips from readers, and auto-fund their own compute. No publisher middleman, no single point of failure — a closed-loop agent economy powering a decentralized academic journal.</i>
+  <i>Research papers live forever on-chain. AI agents curate them, earn tips from readers, and auto-recycle tips into compute costs. No publisher middleman, no single point of failure — a closed-loop agent economy powering a decentralized academic journal.</i>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 
 ---
 
-> **RumahPeneliti** — a **decentralized journal platform** where research papers are stored permanently on-chain via 0G Storage, curated by AI agents with verifiable on-chain identities via 0G Agentic ID (ERC-7857), and minted as NFTs owned by authors. Readers tip agents whose work they value. Tips are **automatically recycled into 0G Compute billing** — agents fund their own inference costs. Authors set prices and receive payments directly with **0% platform cut**. The result: a self-sustaining **Agentic Economy** powering a censorship-resistant academic journal, fully on 0G Mainnet.
+> **RumahPeneliti** — a **decentralized journal platform** where research papers are stored permanently on-chain via 0G Storage, curated by AI agents with verifiable on-chain identities via 0G Agentic ID (ERC-7857), and minted as NFTs owned by authors. Readers tip agents whose work they value. Tips are **automatically recycled into 0G Compute billing** — agents earn to fund their own inference. Authors set prices and receive payments directly with **0% platform cut**. The result: a self-sustaining **Agentic Economy** powering a censorship-resistant academic journal, fully on 0G Mainnet.
 
 ---
 
@@ -180,7 +180,7 @@ graph TB
         AgentSvc["Agent Service<br/>Read Agent Data · Withdraw Tips"]
     end
 
-    subgraph AI["Multi-Agent Pipeline — 3 Parallel"]
+    subgraph AI["Multi-Agent Pipeline — 4 Agents"]
         Summarizer["Summarizer<br/>Agentic ID #1"]
         Scorer["Scorer<br/>Agentic ID #2"]
         Tagger["Tagger<br/>Agentic ID #3"]
@@ -258,7 +258,7 @@ sequenceDiagram
 
     Note over BE: Step 4 — AI Curation (async)
     BE->>BE: Auto-recycle agent tips → deposit to 0G Compute
-    BE->>C: 3 parallel agents via 0G Compute
+    BE->>C: 4 AI agents via 0G Compute
     C-->>BE: Summary + Score + Tags (merged)
     Note over BE: Saves article with agent_token_id
 
@@ -289,14 +289,14 @@ flowchart LR
     B -->|Yes| C[0G Compute · Inference]
     B -->|No| D{Multi-agent<br/>API?}
 
-    D --> E["Z.AI API (fallback)<br/>3 parallel agents"]
+    D --> E["Z.AI API (fallback)<br/>4 AI agents"]
     D -->|All fail| F[Mock Data<br/>Final Fallback]
 
     C --> G
     E --> G
     F --> G
 
-    subgraph G["3 Parallel Agents — Promise.allSettled()"]
+    subgraph G["4 Agents — Promise.allSettled()"]
         direction TB
         S["Summarizer · Agentic ID #1<br/>curated_title · summary<br/>key_takeaways · body"]
         SC["Scorer · Agentic ID #2<br/>novelty · clarity<br/>methodology · impact"]
@@ -392,12 +392,12 @@ This means **any fresh server** with the codebase can rebuild its entire state f
 
 ## 0G Integration Proof
 
-This project integrates **all 4 core 0G components** as the infrastructure layer for a self-sustaining **Agentic Economy**:
+This project integrates **all 5 0G components** as the infrastructure layer for a self-sustaining **Agentic Economy**:
 
 | Component | Role in Agentic Economy | SDK |
 |:---:|:---|:---|
 | **0G Storage** | Stores paper files permanently — the service agents curate. Decentralized hosting means agents' work product outlives any single server. | `ZgFile`, `Indexer` |
-| **0G Compute). Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents pay for their own inference.** | `@0glabs/0g-serving-broker` |
+| **0G Compute** | Runs AI agent inference. Agent tips are auto-deposited into the Compute ledger via `broker.ledger.depositFund()`. **Agents fund their own inference.** | `@0glabs/0g-serving-broker` |
 | **0G DA Layer** | Publishes blob commitments as proof-of-existence for every paper. Ensures data integrity for the content agents work on. | `ethers.js v6` |
 | **0G Chain** | 5 contracts power the entire economy: `JournalPayment` (micropayments), `PaperAnchor` (anchoring), `ResearchNFT` (ownership), `AgenticID` (0G official ERC-7857 agent identity), `AgentTipJar` (agent income + withdrawal). | Hardhat, ethers.js |
 | **Agent Identity** | 0G Agentic ID (ERC-7857) — official standard for verifiable on-chain agent identity with intelligent data hashes. Every curation linked to an agent. | Solidity 0.8.24, ethers.js |
@@ -455,21 +455,21 @@ Every curated article records which Agentic ID performed the curation. Readers v
 <td>
 
 ### Full Pipeline — End to End
-Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by identified agent) → Article Anchor → NFT Mint. The entire flow completes in ~40 seconds. Steps 1-3 are synchronous, steps 4-6 run async with polling progress updates. Every step touches a different 0G component.
+Upload → 0G Storage → DA Proof → On-Chain Anchor → AI Curation (by identified agent) → Article Anchor → NFT Mint. Steps 1-3 are synchronous, steps 4-6 run async with polling progress updates. Every step touches a different 0G component.
 
 </td>
 </tr>
 <tr>
 <td>
 
-### Multi-Agent AI Curation (3 Parallel)
-3 parallel agents (Summarizer, Scorer, Tagger) run through 0G Compute.
+### Multi-Agent AI Curation (4 Agents)
+4 agents run through 0G Compute: Summarizer, Scorer, Tagger, and Reviewer (Kurator).
 
 </td>
 <td>
 
-### 0G Integration — All 4 Components
-Every 0G component is deeply integrated: **Storage** (permanent file hosting), **Compute** (AI inference + agent billing), **DA Layer** (blob commitments), and **Chain** (5 smart contracts). No component is superficially used.
+### 0G Integration — All 5 Components
+Every 0G component is deeply integrated: **Storage** (permanent file hosting), **Compute** (AI inference + agent billing), **DA Layer** (blob commitments), **Chain** (5 smart contracts), and **Agentic ID** (verifiable agent identity). No component is superficially used.
 
 </td>
 </tr>
@@ -569,8 +569,8 @@ rumah-peneliti
 │       │   ├── storage.js       # 0G Storage upload (ZgFile, Indexer)
 │       │   ├── da-layer.js      # 0G DA Layer blob commitment proofs
 │       │   ├── anchor.js        # PaperAnchor on-chain service
-│       │   ├── og-compute.js    # 0G Compute) + auto-recycle tips
-│       │   ├── multi-agent.js   # 3 parallel AI agents + orchestrator
+│       │   ├── og-compute.js    # 0G Compute Network + auto-recycle tips
+│       │   ├── multi-agent.js   # 4 AI agents + orchestrator
 │       │   ├── agent-identity.js  # On-chain Agent Identity (AgenticID) + tip withdrawal
 │       │   ├── agent-config.js    # Static agent metadata
 │       │   ├── agentic-id.js      # 0G AgenticID (ERC-7857) reader
@@ -583,7 +583,7 @@ rumah-peneliti
 │       └── db.js                # SQLite setup + auto-seed
 ├── frontend/                    # Next.js 14 App Router
 │   └── src/
-│       ├── app/                 # 12 pages (home, browse, upload, article, pipeline, nfts, agents...)
+│       ├── app/                 # 11 pages (home, browse, upload, article, pipeline, nfts, agents...)
 │       ├── components/
 │       │   ├── article/         # AI chat, score, agent-identity, on-chain-data, sidebar, paywall
 │       │   ├── shared/          # Wallet modal, theme toggle, language switcher, explorer link, route-loading/error
@@ -615,10 +615,10 @@ rumah-peneliti
 │   ├── ponder.schema.ts         # 4 tables schema
 │   └── src/                     # Event handlers + Hono REST API
 └── e2e/                         # End-to-end test suite
-    ├── frontend.spec.js         # 17 Playwright UI tests
-    ├── agent-identity.spec.js   # 6 agent identity E2E tests
-    ├── api-pipeline.test.js     # 16 Vitest API pipeline tests
-    └── full-e2e.test.js         # Full HTTP-level E2E (standalone)
+    ├── frontend.spec.js         # Playwright UI tests
+    ├── agent-identity.spec.js   # Agent identity E2E tests
+    ├── api-pipeline.test.js     # Vitest API pipeline tests
+    └── full-e2e.test.js         # 77 HTTP-level E2E tests (standalone)
 ```
 
 ---
@@ -630,7 +630,7 @@ rumah-peneliti
 | **Agentic Economy** | Agent-as-a-Service via AgenticID (ERC-7857), auto-billing via AgentTipJar → 0G Compute, self-sustaining tip-to-compute loop |
 | Smart Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin v5 — 5 contracts on 0G Mainnet (identity, payments, tipping, anchoring, NFTs) |
 | Agent Identity | 0G Agentic ID (ERC-7857) — official standard for verifiable on-chain agent identity with intelligent data hashes |
-| AI Inference | 0G Compute.1 API (fallback) |
+| AI Inference | 0G Compute Network, Z.AI API (fallback) |
 | Financial Rails | JournalPayment (micropayments), AgentTipJar (agent income), auto-recycle billing to 0G Compute |
 | 0G Storage | `@0gfoundation/0g-ts-sdk` — Merkle proofs, upload/download |
 | 0G Compute | `@0glabs/0g-serving-broker` — AI inference, on-chain ledger billing with agent-funded deposits |
@@ -638,7 +638,7 @@ rumah-peneliti
 | Frontend | Next.js 14, React 18, Tailwind CSS, shadcn/ui (Radix), Ethers.js v6 |
 | Indexer | Ponder v0.7, PGLite, Viem, Hono |
 | Blockchain | 0G Mainnet (Chain ID 16661) |
-| Testing | Vitest (API), Playwright (E2E) — 16 API + 17 UI + 6 agent identity + 66 E2E assertions = 101 tests |
+| Testing | 77 E2E tests passing (HTTP-level), covering auth, upload, pipeline, purchase, API, and agent identity |
 
 ---
 
